@@ -1,0 +1,82 @@
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: #1c1c1c;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+  }
+  
+  .logo {
+    font-size: 40px;
+    font-weight: bold;
+    background: linear-gradient(to right, white, blueviolet);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: transform 0.3s ease;
+  }
+  
+  .logo:hover {
+    transform: scale(1.1);
+  }
+  
+  .nav-links {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-right: 40px; /* Margen derecho agregado */
+  }
+  
+  .nav-button {
+    background-color: transparent;
+    border: 2px solid blueviolet;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+  }
+  
+  .nav-button:hover {
+    background-color: blueviolet;
+    color: black;
+    box-shadow: 0 4px 6px rgba(128, 0, 128, 0.6);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .navbar {
+      padding: 10px 20px;
+    }
+  
+    .logo {
+      font-size: 30px;
+    }
+  
+    .nav-links {
+      gap: 10px;
+      margin-right: 20px; /* Ajusta el margen para dispositivos más pequeños */
+    }
+  
+    .nav-button {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .logo {
+      font-size: 24px;
+    }
+  
+    .nav-links {
+      flex-direction: column;
+      gap: 10px;
+      margin-right: 0; /* Elimina el margen en dispositivos móviles */
+    }
+  }
