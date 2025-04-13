@@ -1,27 +1,26 @@
+// server.js
+require('dotenv').config(); // Carga tus variables de entorno
 const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bodyParser = require('body-parser');
+const connectDB = require('./config/db');
+const personaRoutes = require('./routes/personaRoutes');
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
+// Conecta a MongoDB Atlas
+connectDB();
 
-// Configuración de la base de datos
-const DB_URL = 'mongodb://localhost:27017/tu_base_de_datos'; // Ajusta la URL según tu configuración
-mongoose.connect(DB_URL, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Conexión a MongoDB exitosa'))
-  .catch((err) => console.error('Error al conectar a MongoDB:', err));
+// Middleware para parsear JSON
+app.use(express.json());
 
-// Rutas
+// Ruta para la API de Personas (ruta base: /api/personas)
+app.use('/api/persona', personaRoutes);
+
+// Ruta de ejemplo para verificar que el servidor esté corriendo
 app.get('/', (req, res) => {
-    res.send('¡Backend Express está funcionando!');
+  res.send('Backend Express funcionando');
 });
 
-// Puerto
-const PORT = 5000; // Cambia el puerto si es necesario
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
