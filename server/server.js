@@ -1,10 +1,18 @@
 // server.js
 require('dotenv').config(); // Carga tus variables de entorno
+const cors = require('cors'); // Importa el paquete cors
 const express = require('express');
 const connectDB = require('./config/db');
 const personaRoutes = require('./routes/personaRoutes');
+const peliculaRoutes = require('./routes/peliculaRoutes');
+const serieRoutes = require('./routes/serieRoutes')
 
 const app = express();
+
+// Configura Cors para permitir solicitudes desde http://localhost:3000
+app.use(cors({
+    origin: "http://localhost:3000",
+  }));
 
 // Conecta a MongoDB Atlas
 connectDB();
@@ -14,8 +22,9 @@ app.use(express.json());
 
 // Ruta para la API de Personas (ruta base: /api/personas)
 app.use('/api/persona', personaRoutes);
+app.use('/api/peliculas', peliculaRoutes);
+app.use('/api/series' , serieRoutes);
 
-// Ruta de ejemplo para verificar que el servidor esté corriendo
 app.get('/', (req, res) => {
   res.send('Backend Express funcionando');
 });
