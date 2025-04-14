@@ -6,6 +6,8 @@ const connectDB = require('./config/db');
 const personaRoutes = require('./routes/personaRoutes');
 const peliculaRoutes = require('./routes/peliculaRoutes');
 const serieRoutes = require('./routes/serieRoutes')
+const videojuegoRoutes = require('./routes/videojuegoRoutes');
+const albumRoutes = require('./routes/albumRoutes');
 
 const app = express();
 
@@ -24,6 +26,8 @@ app.use(express.json());
 app.use('/api/persona', personaRoutes);
 app.use('/api/peliculas', peliculaRoutes);
 app.use('/api/series' , serieRoutes);
+app.use('/api/videojuegos', videojuegoRoutes);
+app.use('/api/albums', albumRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend Express funcionando');
