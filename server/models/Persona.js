@@ -42,7 +42,7 @@ const personaSchema = new mongoose.Schema({
   contraseña: { type: String, required: true },
   rol: { 
     type: String, 
-    enum: ['Usuario', 'Crítico', 'Moderador', 'Administrador'],
+    enum: ['Usuario', 'Critico', 'Moderador', 'Administrador'],
     default: 'Usuario'
   },
   imagenPerfil: { type: String },

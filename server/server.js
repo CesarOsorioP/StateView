@@ -9,6 +9,9 @@ const serieRoutes = require('./routes/serieRoutes')
 const videojuegoRoutes = require('./routes/videojuegoRoutes');
 const albumRoutes = require('./routes/albumRoutes');
 const authRoutes = require('./routes/authRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
+const commentRoutes = require('./routes/commentRoutes');
+
 
 const app = express();
 
@@ -30,6 +33,8 @@ app.use('/api/series' , serieRoutes);
 app.use('/api/videojuegos', videojuegoRoutes);
 app.use('/api/albums', albumRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/comments', commentRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend Express funcionando');

@@ -1,5 +1,7 @@
+// src/components/Login.js
 import React, { useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import "./Login.css";
 
 const Login = () => {
@@ -7,6 +9,8 @@ const Login = () => {
   const [contraseña, setContraseña] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -14,16 +18,17 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/login", {
-        email,
-        contraseña,
-      });
-      console.log("Token recibido:", response.data.token);
-      // Guarda el token en localStorage u otro almacenamiento
-      localStorage.setItem("token", response.data.token);
-      setIsLoading(false);
+      const result = await login(email, contraseña);
+      
+      if (result.success) {
+        // Redireccionar al usuario a la página principal
+        navigate("/");
+      } else {
+        setError(result.error);
+      }
     } catch (error) {
-      setError(error.response?.data?.error || "Error al iniciar sesión");
+      setError("Error al iniciar sesión");
+    } finally {
       setIsLoading(false);
     }
   };

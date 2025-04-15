@@ -24,4 +24,19 @@ async function obtenerAlbumes(req, res) {
   }
 }
 
-module.exports = { refreshAlbum, obtenerAlbumes };
+// Función adicional para obtener la información de un álbum individual
+async function obtenerAlbumPorId(req, res) {
+  try {
+    // Se asume que en tu modelo el campo único es 'album_id'
+    const { albumId } = req.params;
+    const album = await Album.findOne({ album_id: albumId });
+    if (!album) {
+      return res.status(404).json({ error: 'Álbum no encontrado' });
+    }
+    res.json(album);
+  } catch (error) {
+    res.status(500).json({ error: `Error obteniendo el álbum: ${error.message}` });
+  }
+}
+
+module.exports = { refreshAlbum, obtenerAlbumes, obtenerAlbumPorId };
