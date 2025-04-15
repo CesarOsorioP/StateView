@@ -1,28 +1,32 @@
+// src/App.js
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import LandingPage from "./pages/LandingPage";
-import Signup from "./pages/SignupPage";
-import Login from "./pages/LoginPage";
-import Navbar from "./components/Landing/Navbar.jsx";
-import Footer from "./components/Landing/Footer.jsx"; // Importamos el componente Footer
+import { AuthProvider } from "./context/AuthContext";
+import Navbar from "./components/Landing/Navbar";
+import Landing from "./pages/LandingPage";
+import Login from "./components/Login/Login";
+import Signup from "./components/SignUp/SignUp";
+import Footer from "./components/Landing/Footer"
+import AlbumPage from "./pages/AlbumPage";
+import AlbumDetail from "./pages/AlbumDetail"
+// Importa otros componentes según sea necesario
 
 const App = () => {
   return (
-    <Router>
-      <div className="app-container"> {/* Agregamos un contenedor para estructurar la página */}
+    <AuthProvider>
+      <Router>
         <Navbar />
-        
-        <main className="content"> {/* Envolvemos las rutas en un main para mejor estructura */}
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login />} />
-          </Routes>
-        </main>
-        
-        <Footer /> {/* Agregamos el componente Footer */}
-      </div>
-    </Router>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/albumes" element={<AlbumPage />} />
+          <Route path="/albumes/:albumId" element={<AlbumDetail />} />
+          {/* Agrega más rutas según sea necesario */}
+        </Routes>
+        <Footer />
+      </Router>
+    </AuthProvider>
   );
 };
 
