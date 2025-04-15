@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
 import "../../styles/Landing.css";
 
 const images = [
@@ -21,7 +19,6 @@ const Landing = () => {
 
   return (
     <div className="landing-page">
-      <Navbar />
       <div
         className="hero"
         style={{ backgroundImage: `url(${images[currentImage]})` }}
@@ -35,7 +32,7 @@ const Landing = () => {
           <button className="cta-button">Únete ahora y comparte tu opinión</button>
         </div>
       </div>
-      <Footer />
+
     </div>
   );
 };
