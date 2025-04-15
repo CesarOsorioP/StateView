@@ -1,82 +1,111 @@
-/* Navbar */
+/* Navbar Principal */
 .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 30px;
-    background-color: #1c1c1c;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background-color: #151515; /* Color elegante y oscuro */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6); /* Sombra más definida */
+  width: 100%;
+  z-index: 1000;
+  box-sizing: border-box; /* Asegura que el padding no afecte el ancho total */
+  /* Eliminado: position: fixed; y top: 0; para quitar comportamiento sticky */
+}
+
+/* Logo */
+.logo {
+  font-size: 36px;
+  font-weight: bold;
+  background: linear-gradient(to right, #ff7f50, #6a5acd); /* Gradiente */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.1);
+}
+
+/* Container para los botones de navegación */
+.nav-links {
+  display: flex;
+  gap: 20px; /* Mayor separación entre botones */
+  align-items: center;
+  margin-right: 10px; /* Añadido: desplaza los botones hacia la izquierda */
+  padding-right: 10px; /* Añadido: espacio adicional en el lado derecho */
+}
+
+/* Botones de Navegación */
+.nav-button {
+  text-decoration: none;
+  background-color: transparent;
+  border: 2px solid #6a5acd; /* Color del borde */
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 20px; /* Reducido ligeramente de 24px a 20px */
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  text-align: center;
+  display: inline-block; /* Mejora el comportamiento en línea */
+  white-space: nowrap; /* Añadido: evita que el texto se envuelva */
+}
+
+.nav-button:hover {
+  background-color: #6a5acd;
+  color: #ffffff; /* Mejor contraste */
+  box-shadow: 0 6px 12px rgba(106, 90, 205, 0.5);
+  transform: translateY(-2px); /* Efecto de elevación más sutil */
+}
+
+.nav-button:active {
+  transform: translateY(0); /* Regresa a su posición al hacer clic */
+}
+
+/* Responsive Design: Ajustes para Dispositivos Más Pequeños */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 15px 20px;
+    /* Mantenemos el layout horizontal para pantallas medias */
   }
-  
+
   .logo {
-    font-size: 40px;
-    font-weight: bold;
-    background: linear-gradient(to right, white, blueviolet);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    transition: transform 0.3s ease;
+    font-size: 28px;
   }
-  
-  .logo:hover {
-    transform: scale(1.1);
-  }
-  
+
   .nav-links {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    margin-right: 40px; /* Margen derecho agregado */
+    gap: 12px;
+    margin-right: 0; /* Eliminamos el margen en pantallas más pequeñas */
   }
-  
+
   .nav-button {
-    background-color: transparent;
-    border: 2px solid blueviolet;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 10px 20px;
-    border-radius: 25px;
-    transition: all 0.3s ease;
+    padding: 8px 18px;
+    font-size: 14px;
   }
-  
-  .nav-button:hover {
-    background-color: blueviolet;
-    color: black;
-    box-shadow: 0 4px 6px rgba(128, 0, 128, 0.6);
+}
+
+/* Para pantallas muy pequeñas, cambiamos a disposición vertical */
+@media (max-width: 600px) {
+  .navbar {
+    flex-direction: column;
+    padding: 12px 15px;
   }
-  
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .navbar {
-      padding: 10px 20px;
-    }
-  
-    .logo {
-      font-size: 30px;
-    }
-  
-    .nav-links {
-      gap: 10px;
-      margin-right: 20px; /* Ajusta el margen para dispositivos más pequeños */
-    }
-  
-    .nav-button {
-      padding: 8px 16px;
-      font-size: 14px;
-    }
+
+  .logo {
+    margin-bottom: 15px;
+    font-size: 24px;
   }
-  
-  @media (max-width: 480px) {
-    .logo {
-      font-size: 24px;
-    }
-  
-    .nav-links {
-      flex-direction: column;
-      gap: 10px;
-      margin-right: 0; /* Elimina el margen en dispositivos móviles */
-    }
+
+  .nav-links {
+    width: 100%;
+    justify-content: center;
+    gap: 10px;
+    padding-right: 0; /* Eliminamos el padding en modo móvil */
   }
+
+  .nav-button {
+    font-size: 13px;
+    padding: 7px 14px;
+  }
+}
