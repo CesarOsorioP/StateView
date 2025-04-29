@@ -80,7 +80,6 @@ const Landing = () => {
 
   // Vista para usuarios NO autenticados
   const GuestView = () => (
-    
     <div className="landing-page">
       <div
         className="hero"
