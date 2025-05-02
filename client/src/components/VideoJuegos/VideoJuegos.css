@@ -1,0 +1,42 @@
+/* Videojuegos.css - Estilos específicos para el componente Videojuegos */
+.content-page {
+  padding: 25px 15px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #000;
+  color: #fff;
+}
+
+/* Tema verde para videojuegos */
+.games-theme .content-header h1,
+.games-theme .content-header h1:after,
+.games-theme .content-developer,
+.games-theme .filter-group label {
+  color: #00cc66; /* Verde gaming */
+}
+
+.games-theme .filters-container,
+.games-theme .content-actions,
+.games-theme .no-results {
+  background-color: rgba(0, 204, 102, 0.1);
+  border-color: rgba(0, 204, 102, 0.2);
+}
+
+/* Resto de estilos base */
+.content-header {
+  text-align: center;
+  margin-bottom: 25px;
+  position: relative;
+}
+
+/* ... (copiar todos los demás estilos base) ... */
+
+/* Estilos específicos para videojuegos */
+.game-platform {
+  display: inline-block;
+  font-size: 0.75rem;
+  background-color: #333;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 5px;
+}
