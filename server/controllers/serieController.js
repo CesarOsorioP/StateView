@@ -1,4 +1,3 @@
-// controllers/serieController.js
 const { saveSerieFromOMDb } = require('../services/serieService');
 const Serie = require('../models/Serie');
 
