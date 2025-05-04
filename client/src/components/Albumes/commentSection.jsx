@@ -1,11 +1,11 @@
-// src/components/CommentSection.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { 
   FaThumbsUp, FaRegThumbsUp, FaEdit, FaTrash, FaCheck, FaTimes
 } from 'react-icons/fa';
 import './commentSection.css';
+
 
 const CommentSection = ({ reviewId, toggleComments }) => {
   const { user } = useAuth();
@@ -19,12 +19,8 @@ const CommentSection = ({ reviewId, toggleComments }) => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState('');
   
-  // Cargar comentarios
-  useEffect(() => {
-    loadComments();
-  }, [reviewId]);
-  
-  const loadComments = async () => {
+  // Cargar comentarios - useCallback para evitar recrear la función en cada render
+  const loadComments = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(`http://localhost:5000/api/comments?reviewId=${reviewId}`);
@@ -34,8 +30,12 @@ const CommentSection = ({ reviewId, toggleComments }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [reviewId]);
 
+  useEffect(() => {
+    loadComments();
+  }, [loadComments]);
+  
   // Verificar si el usuario ha dado like a un comentario
   const hasUserLikedComment = (comment) => {
     if (!user || !comment.liked_comment) return false;

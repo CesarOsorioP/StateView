@@ -83,7 +83,6 @@ const updateComment = async (req, res) => {
   }
 };
 
-// Obtiene los comentarios de una reseña (filtrando por reviewId)
 const getComments = async (req, res) => {
   try {
     const { reviewId } = req.query;
@@ -92,13 +91,14 @@ const getComments = async (req, res) => {
     }
     
     const comments = await Comment.find({ reviewId })
-      .populate('userId', 'nombre email username'); // Para traer datos del usuario que comentó
+      .populate('userId', 'nombre email username');
     
     res.json(comments);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener los comentarios: ' + error.message });
   }
 };
+
 
 // Elimina un comentario
 const deleteComment = async (req, res) => {

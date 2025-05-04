@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -26,22 +26,24 @@ const ReviewSection = ({ albumId, album }) => {
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
 
-  // Obtener reseñas para el álbum
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        if (album && album._id) {
-          const response = await axios.get(`http://localhost:5000/api/reviews?itemId=${album._id}`);
-          setReviews(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching reviews:", error);
-      } finally {
-        setLoadingReviews(false);
+  // Obtener reseñas para el álbum usando useCallback
+  const fetchReviews = useCallback(async () => {
+    try {
+      if (album && album._id) {
+        const response = await axios.get(`http://localhost:5000/api/reviews?itemId=${album._id}`);
+        setReviews(response.data);
       }
-    };
-    fetchReviews();
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    } finally {
+      setLoadingReviews(false);
+    }
   }, [album]);
+
+  // Cargar reseñas cuando cambia el álbum
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   // Determinar si el usuario ya tiene una reseña para este álbum
   const currentUserId = user?.id || user?._id;
@@ -185,14 +187,7 @@ const ReviewSection = ({ albumId, album }) => {
     } catch (error) {
       console.error("Error al cambiar el estado del like:", error);
       // En caso de error, revertimos el cambio optimista haciendo una recarga de las reseñas
-      if (album && album._id) {
-        try {
-          const response = await axios.get(`http://localhost:5000/api/reviews?itemId=${album._id}`);
-          setReviews(response.data);
-        } catch (reloadError) {
-          console.error("Error al recargar reseñas:", reloadError);
-        }
-      }
+      fetchReviews();
     }
   };
 
@@ -381,7 +376,7 @@ const ReviewSection = ({ albumId, album }) => {
         <div className="reviews-list">
           {reviews
             .filter(review => !(user && ((typeof review.userId === 'object' && review.userId._id === currentUserId) || 
-                                        (typeof review.userId === 'string' && review.userId === currentUserId))))
+                                       (typeof review.userId === 'string' && review.userId === currentUserId))))
             .map((review) => (
               <div key={review._id} className="review-card">
                 <div className="review-header">
@@ -428,7 +423,14 @@ const ReviewSection = ({ albumId, album }) => {
             ))}
         </div>
       ) : (
-        <p>No hay reseñas disponibles.</p>
+        <p className="no-reviews">No hay reseñas aún. ¡Sé el primero en reseñar este álbum!</p>
+      )}
+
+      {/* Mensaje para usuarios no autenticados */}
+      {!user && (
+        <div className="login-prompt">
+          <p>Inicia sesión para dejar tu reseña y puntuar este álbum.</p>
+        </div>
       )}
     </div>
   );
