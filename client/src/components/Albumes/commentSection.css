@@ -1,11 +1,14 @@
-/* src/components/CommentSection.css */
+/* commentSection.css - Estilo para la sección de comentarios */
 .comments-container {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #f9f9f9;
+    margin-top: 20px;
+    background-color: #111;
     border-radius: 8px;
+    padding: 15px;
+    border: 1px solid rgba(138, 43, 226, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
   
+  /* Formulario para nuevos comentarios */
   .comment-form {
     margin-bottom: 20px;
     display: flex;
@@ -13,205 +16,304 @@
   }
   
   .comment-form textarea {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    width: 100%;
     min-height: 80px;
-    margin-bottom: 10px;
-    font-family: inherit;
+    padding: 12px;
+    background-color: #222;
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 1rem;
+    margin-bottom: 15px;
     resize: vertical;
+    transition: border-color 0.2s ease;
+  }
+  
+  .comment-form textarea:focus {
+    border-color: blueviolet;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
   }
   
   .comment-form button {
     align-self: flex-end;
-    padding: 8px 16px;
-    background-color: #4a76a8;
+    background-color: blueviolet;
     color: white;
     border: none;
-    border-radius: 4px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.95rem;
     cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
+  }
+  
+  .comment-form button:hover {
+    background-color: #9932CC;
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    transform: translateY(-2px);
   }
   
   .comment-form button:disabled {
-    background-color: #cccccc;
+    background-color: #555;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
   
-  .comment-form button:not(:disabled):hover {
-    background-color: #3d6293;
-  }
-  
+  /* Lista de comentarios */
   .comments-list {
     display: flex;
     flex-direction: column;
     gap: 15px;
   }
   
-  .comment-item {
-    background-color: white;
-    border-radius: 8px;
-    padding: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease;
+  .loading-message, .no-comments {
+    text-align: center;
+    color: #aaa;
+    padding: 15px;
+    font-size: 0.95rem;
   }
   
+  /* Elemento de comentario individual */
+  .comment-item {
+    background-color: #191919;
+    border-radius: 6px;
+    padding: 12px;
+    border: 1px solid rgba(138, 43, 226, 0.15);
+    transition: transform 0.2s ease;
+  }
+  
+  .comment-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Highlight animation para cuando se resalta un comentario */
+  .highlight-comment {
+    animation: highlight-pulse 1.5s ease;
+  }
+  
+  @keyframes highlight-pulse {
+    0% { background-color: #191919; }
+    50% { background-color: rgba(138, 43, 226, 0.2); }
+    100% { background-color: #191919; }
+  }
+  
+  /* Cabecera del comentario */
   .comment-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(138, 43, 226, 0.1);
+  }
+  
+  .comment-header strong {
+    color: #ddd;
     font-size: 0.9rem;
   }
   
   .comment-date {
-    color: #777;
+    color: #888;
     font-size: 0.8rem;
   }
   
   .edited-label {
     font-style: italic;
-    font-size: 0.8rem;
-    color: #888;
+    color: #777;
   }
   
+  /* Texto del comentario */
   .comment-text {
-    margin: 5px 0 10px;
+    color: #ccc;
     line-height: 1.4;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
     word-break: break-word;
   }
   
+  /* Formulario de edición de comentario */
+  .edit-comment-form {
+    margin-bottom: 10px;
+  }
+  
+  .edit-comment-form textarea {
+    width: 100%;
+    min-height: 70px;
+    padding: 10px;
+    background-color: #222;
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+    resize: vertical;
+  }
+  
+  .edit-comment-form textarea:focus {
+    border-color: blueviolet;
+    outline: none;
+  }
+  
+  /* Botones para acciones de comentarios */
   .comment-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 10px;
   }
   
   .like-button {
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 10px;
-    border: none;
-    background: none;
-    color: #555;
-    font-size: 0.9rem;
-    cursor: pointer;
+    padding: 5px 8px;
     border-radius: 4px;
-    transition: background-color 0.2s;
+    background-color: transparent;
+    color: #aaa;
+    border: 1px solid #333;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
   
-  .like-button:hover {
-    background-color: #f0f0f0;
+  .like-button:hover:not(:disabled) {
+    background-color: #333;
+    color: #ddd;
   }
   
   .like-button.liked {
-    color: #4a76a8;
+    color: blueviolet;
+    border-color: rgba(138, 43, 226, 0.4);
+    background-color: rgba(138, 43, 226, 0.05);
   }
   
+  .like-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  /* Acciones para el propietario del comentario */
   .owner-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
   }
   
   .edit-button, .delete-button {
-    background: none;
-    border: none;
-    color: #666;
-    cursor: pointer;
-    font-size: 0.9rem;
-    padding: 5px;
+    padding: 5px 8px;
     border-radius: 4px;
-    transition: all 0.2s;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+  }
+  
+  .edit-button {
+    background-color: #333;
+    color: #ddd;
   }
   
   .edit-button:hover {
-    color: #4a76a8;
-    background-color: rgba(74, 118, 168, 0.1);
+    background-color: #444;
+  }
+  
+  .delete-button {
+    background-color: rgba(220, 20, 60, 0.1);
+    color: #ff6b6b;
+    border: 1px solid rgba(220, 20, 60, 0.2);
   }
   
   .delete-button:hover {
-    color: #e74c3c;
-    background-color: rgba(231, 76, 60, 0.1);
+    background-color: rgba(220, 20, 60, 0.2);
   }
   
-  .edit-comment-form {
-    margin: 5px 0;
-  }
-  
-  .edit-comment-form textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    min-height: 60px;
-    margin-bottom: 10px;
-    font-family: inherit;
-    resize: vertical;
-  }
-  
+  /* Botones de guardar/cancelar edición */
   .edit-actions {
     display: flex;
-    justify-content: flex-end;
     gap: 10px;
+    justify-content: flex-end;
   }
   
   .save-button, .cancel-button {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: none;
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 6px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.2s;
   }
   
   .save-button {
-    background-color: #4caf50;
+    background-color: blueviolet;
     color: white;
+    transition: all 0.2s ease;
   }
   
-  .save-button:hover {
-    background-color: #3d8b40;
+  .save-button:hover:not(:disabled) {
+    background-color: #9932CC;
   }
   
   .save-button:disabled {
-    background-color: #cccccc;
+    opacity: 0.6;
     cursor: not-allowed;
   }
   
   .cancel-button {
-    background-color: #f44336;
-    color: white;
+    background-color: #444;
+    color: #ddd;
   }
   
   .cancel-button:hover {
-    background-color: #d32f2f;
+    background-color: #555;
   }
   
-  .loading-message {
-    text-align: center;
-    color: #666;
-    padding: 20px 0;
+  /* Responsive Styles */
+  @media (max-width: 768px) {
+    .comments-container {
+      padding: 12px;
+    }
+    
+    .comment-form textarea {
+      min-height: 70px;
+      padding: 10px;
+    }
+    
+    .comment-actions {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .owner-actions {
+      margin-top: 8px;
+    }
   }
   
-  .no-comments {
-    text-align: center;
-    color: #888;
-    padding: 20px 0;
-    font-style: italic;
-  }
-  
-  /* Animación para resaltar un comentario */
-  @keyframes highlight {
-    0% { background-color: white; }
-    50% { background-color: #fff8e1; }
-    100% { background-color: white; }
-  }
-  
-  .highlight-comment {
-    animation: highlight 2s ease;
+  @media (max-width: 576px) {
+    .comments-container {
+      padding: 10px;
+    }
+    
+    .comment-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    
+    .comment-item {
+      padding: 10px 8px;
+    }
+    
+    .edit-actions {
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .save-button, .cancel-button {
+      width: 100%;
+      justify-content: center;
+    }
   }

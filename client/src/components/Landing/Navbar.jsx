@@ -10,8 +10,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    // No necesitamos navegar porque el cambio en el estado de autenticación
-    // actualizará automáticamente los componentes
+    // Al cambiar el estado de autenticación, se actualizarán los componentes automáticamente
   };
 
   const toggleUserMenu = () => {
@@ -50,7 +49,7 @@ const Navbar = () => {
         {user ? (
           <div className="user-menu-container">
             <div className="user-avatar" onClick={toggleUserMenu}>
-              {/* Puedes usar una imagen de perfil o las iniciales del usuario */}
+              {/* Uso de la primera letra del email como avatar */}
               <span className="avatar-circle">
                 {user.email.charAt(0).toUpperCase()}
               </span>
@@ -62,6 +61,31 @@ const Navbar = () => {
                 <Link to="/mis-reseñas">Mis Reseñas</Link>
                 <Link to="/favoritos">Favoritos</Link>
                 <Link to="/configuracion">Configuración</Link>
+
+                {/* Opciones exclusivas para Administradores */}
+                {user.rol === "Administrador" && (
+                  <>
+                    <Link to="/crear-admin">Crear Administrador</Link>
+                    <Link to="/crear-moderador">Crear Moderador</Link>
+                  </>
+                )}
+
+                {/* Opciones exclusivas para Moderadores */}
+                {user.rol === "Moderador" && (
+                  <>
+                    <Link to="/gestionar-advertencias">Gestionar Advertencias</Link>
+                    {/* Puedes agregar más funcionalidades para moderadores aquí */}
+                  </>
+                )}
+
+                {/* Opciones exclusivas para Críticos */}
+                {user.rol === "Critico" && (
+                  <>
+                    <Link to="/mis-insignias">Mis Insignias</Link>
+                    {/* Otras funcionalidades exclusivas para críticos */}
+                  </>
+                )}
+
                 <button onClick={handleLogout} className="logout-button">
                   Cerrar Sesión
                 </button>
