@@ -24,4 +24,22 @@ async function obtenerVideojuegos(req, res) {
   }
 }
 
-module.exports = { refreshVideojuego, obtenerVideojuegos };
+// Función para obtener la información de un videojuego individual por ID
+async function obtenerVideojuegoPorId(req, res) {
+
+  try {
+    // Se asume que en tu modelo el campo único es 'game_id'
+    const { gameId } = req.params;
+    const videojuego = await Videojuego.findOne({ juego_id: gameId });
+    console.log('ID de videojuego solicitado:', gameId);
+    if (!videojuego) {
+      return res.status(404).json({ error: 'Videojuego no encontrado' });
+    }
+    
+    res.json(videojuego);
+  } catch (error) {
+    res.status(500).json({ error: `Error obteniendo el videojuego: ${error.message}` });
+  }
+}
+
+module.exports = { refreshVideojuego, obtenerVideojuegos, obtenerVideojuegoPorId };
