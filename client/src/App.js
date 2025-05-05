@@ -10,10 +10,7 @@ import Footer from "./components/Landing/Footer"
 import AlbumPage from "./pages/AlbumPage";
 import AlbumDetail from "./pages/AlbumDetail"
 import OlvideContraseñaPage from "./components/OlvideContraseña/OlvideContraseña"; 
-import VideoJuegos from "./components/VideoJuegos/VideoJuegos";
-import Peliculas from "./components/Peliculas/Peliculas";
 
-import Series from "./components/Series/Series";
 
 const App = () => {
   return (
@@ -27,9 +24,6 @@ const App = () => {
           <Route path="/albumes" element={<AlbumPage />} />
           <Route path="/albumes/:albumId" element={<AlbumDetail />} />
           <Route path="/olvide-contrasena" element={<OlvideContraseñaPage />} /> 
-          <Route path="/peliculas" element={<Peliculas />} />
-          <Route path="/VideoJuegos" element={<VideoJuegos />} />
-          <Route path="/series" element={<Series />} />
           {/* Agrega más rutas según sea necesario */}
         </Routes>
         <Footer />
