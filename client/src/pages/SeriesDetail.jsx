@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { FaHeart, FaRegHeart, FaTv } from 'react-icons/fa';
-import ReviewSection from '../components/Albumes/ReviewSection';
+import ReviewSection from '../components/Series/ReviewSection';
 import "./pageStyles/SeriesDetail.css";
 
 const SeriesDetail = () => {
