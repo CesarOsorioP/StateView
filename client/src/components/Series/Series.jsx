@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "./Series.css";
-import "../api/api.js"
+import "./api/api"
 
 const Series = () => {
   const [series, setSeries] = useState([]);
