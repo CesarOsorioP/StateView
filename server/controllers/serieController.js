@@ -46,4 +46,18 @@ async function obtenerSeriePorId(req, res) {
   }
 }
 
-module.exports = { refreshSerie, obtenerSeries, obtenerSeriePorId };
+
+async function eliminarSerie(req, res) {
+  try {
+    const { serieId } = req.params;
+    const serie = await Serie.findOneAndDelete({ serie_id: serieId });
+    if (!serie) {
+      return res.status(404).json({ error: 'Serie no encontrada' });
+    }
+    res.json({ message: 'Serie eliminada correctamente', data: serie });
+  } catch (error) {
+    res.status(500).json({ error: `Error eliminando la serie: ${error.message}` });
+  }
+}
+
+module.exports = { refreshSerie, obtenerSeries, obtenerSeriePorId, eliminarSerie};

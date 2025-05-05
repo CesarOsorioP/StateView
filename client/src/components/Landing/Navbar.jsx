@@ -68,6 +68,7 @@ const Navbar = () => {
                     <Link to="/crear-admin">Crear Administrador</Link>
                     <Link to="/gestionar-moderador">Gestionar Moderador</Link>
                     <Link to="/gestionar-usuario">Gestionar Usuario</Link>
+                    <Link to="/gestionar-contenido">Gestionar Contenido</Link>
                     <Link to="/gestionar-advertencias">Gestionar Advertencias</Link>
                     <Link to="/mis-insignias">Mis Insignias</Link>
                   </>

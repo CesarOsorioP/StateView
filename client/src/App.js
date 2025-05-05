@@ -18,6 +18,7 @@ import PeliculaDetail from "./pages/PeliculaDetail";
 
 // Importa el componente de gestión de usuarios (acceso para admin y moderadores)
 import UserManagement from "./components/Admin/UserManagement";
+import ContentManagement from "./components/Admin/ContentManager"
 
 const App = () => {
   return (
@@ -38,6 +39,7 @@ const App = () => {
           <Route path="/peliculas/:movieId" element={<PeliculaDetail />} />
           {/* Ruta para la gestión de usuarios (acceso restringido a Administradores y Moderadores) */}
           <Route path="/gestionar-usuario" element={<UserManagement />} />
+          <Route path="/gestionar-contenido" element={<ContentManagement />} />
         </Routes>
         <Footer />
       </Router>

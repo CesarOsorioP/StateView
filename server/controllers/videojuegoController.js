@@ -42,4 +42,17 @@ async function obtenerVideojuegoPorId(req, res) {
   }
 }
 
-module.exports = { refreshVideojuego, obtenerVideojuegos, obtenerVideojuegoPorId };
+async function eliminarVideojuego(req, res) {
+  try {
+    const { juegoId } = req.params;
+    const juego = await Videojuego.findOneAndDelete({ juego_id: juegoId });
+    if (!juego) {
+      return res.status(404).json({ error: 'Videojuego no encontrado' });
+    }
+    res.json({ message: 'Videojuego eliminado correctamente', data: juego });
+  } catch (error) {
+    res.status(500).json({ error: `Error eliminando el videojuego: ${error.message}` });
+  }
+}
+
+module.exports = { refreshVideojuego, obtenerVideojuegos, obtenerVideojuegoPorId, eliminarVideojuego};
