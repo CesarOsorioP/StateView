@@ -10,7 +10,7 @@ import Footer from "./components/Landing/Footer"
 import AlbumPage from "./pages/AlbumPage";
 import AlbumDetail from "./pages/AlbumDetail"
 import OlvideContraseñaPage from "./components/OlvideContraseña/OlvideContraseña"; 
-import VideoJuegos from "./components/VideoJuegos/Videojuegos";
+import VideoJuegos from "./components/VideoJuegos/VideoJuegos";
 import Peliculas from "./components/Peliculas/Peliculas";
 
 import Series from "./components/Series/Series";
