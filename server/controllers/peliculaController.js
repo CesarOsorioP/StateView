@@ -24,4 +24,21 @@ async function obtenerPeliculas(req, res) {
   }
 }
 
-module.exports = { refreshPelicula, obtenerPeliculas };
+// Función para obtener la información de una película individual por ID
+async function obtenerPeliculaPorId(req, res) {
+  try {
+    // Se asume que en tu modelo el campo único es 'pelicula_id'
+    const { movieId } = req.params;
+    const pelicula = await Pelicula.findOne({ pelicula_id: movieId });
+    console.log('ID de película solicitada:', movieId);
+    if (!pelicula) {
+      return res.status(404).json({ error: 'Película no encontrada' });
+    }
+    
+    res.json(pelicula);
+  } catch (error) {
+    res.status(500).json({ error: `Error obteniendo la película: ${error.message}` });
+  }
+}
+
+module.exports = { refreshPelicula, obtenerPeliculas, obtenerPeliculaPorId };

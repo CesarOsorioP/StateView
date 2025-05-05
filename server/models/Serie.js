@@ -28,4 +28,4 @@ const serieSchema = new Schema({
   temporadas: { type: [temporadaSchema], default: [] }  // Arreglo de temporadas
 });
 
-module.exports = mongoose.model("series", serieSchema);
+module.exports = mongoose.model("Serie", serieSchema);
