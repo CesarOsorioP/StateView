@@ -1,10 +1,9 @@
+// src/components/SeriesDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { 
-  FaHeart, FaRegHeart, FaTv
-} from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaTv } from 'react-icons/fa';
 import ReviewSection from '../components/Albumes/ReviewSection';
 import "./pageStyles/SeriesDetail.css";
 
@@ -18,14 +17,13 @@ const SeriesDetail = () => {
   const [liked, setLiked] = useState(false);
   const [watched, setWatched] = useState(false);
 
-  // Obtener detalles de la serie
   useEffect(() => {
     const fetchSeriesDetail = async () => {
       try {
         const response = await axios.get(`http://localhost:5000/api/series/${seriesId}`);
         setSeries(response.data);
         
-        // Verificar si el usuario tiene marcado como "me gusta" o "ya vista"
+        // Verificar si el usuario tiene marcado "me gusta" o "ya vista"
         if (user) {
           try {
             const userPrefsResponse = await axios.get(
@@ -46,6 +44,7 @@ const SeriesDetail = () => {
         setLoadingSeries(false);
       }
     };
+
     fetchSeriesDetail();
   }, [seriesId, user]);
 
@@ -84,55 +83,69 @@ const SeriesDetail = () => {
       {loadingSeries ? (
         <p>Cargando detalles de la serie...</p>
       ) : series ? (
-        <div className="series-info">
-          <img src={series.imagen} alt={series.titulo} className="series-cover" />
-          <div className="series-meta">
-            <h2>{series.titulo}</h2>
-            <p><strong>Creador: </strong>{series.creador}</p>
-            <p><strong>Plataformas: </strong>{series.plataformas}</p>
-            <p><strong>Género: </strong>{series.genero}</p>
-            <p><strong>Temporadas: </strong>{series.temporadas}</p>
-            <p>
-              <strong>Fecha de estreno: </strong>
-              {new Date(series.fecha_estreno).toLocaleDateString("es-ES", {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </p>
-            
-            {/* Botones de Me gusta y Ya vista */}
-            {user && (
-              <div className="series-actions">
-                <button 
-                  className={`action-button ${liked ? 'active' : ''}`}
-                  onClick={() => handlePreferenceToggle('liked')}
-                  title={liked ? "Quitar me gusta" : "Me gusta"}
-                >
-                  {liked ? <FaHeart /> : <FaRegHeart />}
-                  <span>{liked ? "Me gusta" : "Me gusta"}</span>
-                </button>
-                
-                <button 
-                  className={`action-button ${watched ? 'active' : ''}`}
-                  onClick={() => handlePreferenceToggle('watched')}
-                  title={watched ? "Marcar como no vista" : "Marcar como vista"}
-                >
-                  <FaTv />
-                  <span>{watched ? "Vista" : "Marcar como vista"}</span>
-                </button>
+        <>
+          <div className="series-info">
+            <img src={series.poster} alt={series.titulo} className="series-cover" />
+            <div className="series-meta">
+              <h2>{series.titulo}</h2>
+              <p><strong>Creador: </strong>{series.creador}</p>
+              <p><strong>Plataformas: </strong>{series.plataformas}</p>
+              <p><strong>Género: </strong>{series.genero}</p>
+              
+              {/* Mostrar la cantidad de temporadas */}
+              <p><strong>Temporadas: </strong>{series.temporadas.length}</p>
+              
+              {/* Alternativamente, iterar sobre el arreglo para listar detalles de cada temporada */}
+              <div>
+                <strong>Listado de Temporadas:</strong>
+                <ul>
+                  {series.temporadas.map((temporada) => (
+                    <li key={temporada._id}>
+                      Temporada {temporada.temporada_numero} — {temporada.episodios ? temporada.episodios.length : 0} episodios
+                    </li>
+                  ))}
+                </ul>
               </div>
-            )}
+              
+              <p>
+                <strong>Fecha de estreno: </strong>
+                {new Date(series.fechaInicio).toLocaleDateString("es-ES", {
+                  year: 'numeric'
+                
+                })}
+              </p>
+              
+              {/* Botones de "Me gusta" y "Marcar como vista" para usuarios logueados */}
+              {user && (
+                <div className="series-actions">
+                  <button 
+                    className={`action-button ${liked ? 'active' : ''}`}
+                    onClick={() => handlePreferenceToggle('liked')}
+                    title={liked ? "Quitar me gusta" : "Me gusta"}
+                  >
+                    {liked ? <FaHeart /> : <FaRegHeart />}
+                    <span>{liked ? "Me gusta" : "Me gusta"}</span>
+                  </button>
+                  
+                  <button 
+                    className={`action-button ${watched ? 'active' : ''}`}
+                    onClick={() => handlePreferenceToggle('watched')}
+                    title={watched ? "Marcar como no vista" : "Marcar como vista"}
+                  >
+                    <FaTv />
+                    <span>{watched ? "Vista" : "Marcar como vista"}</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+          <hr />
+          {/* Componente de reseñas */}
+          <ReviewSection seriesId={seriesId} series={series} />
+        </>
       ) : (
         <p>Serie no encontrada</p>
       )}
-
-      <hr />
-
-      {/* Componente ReviewSection que maneja toda la lógica de reseñas */}
-      {series && <ReviewSection seriesId={seriesId} series={series} />}
     </div>
   );
 };

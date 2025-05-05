@@ -36,7 +36,6 @@ async function obtenerSeriePorId(req, res) {
     // Se asume que en tu modelo el campo único es 'series_id'
     const { seriesId } = req.params;
     const serie = await Serie.findOne({ serie_id: seriesId });
-    console.log('ID de serie solicitado:', seriesId);
     if (!serie) {
       return res.status(404).json({ error: 'Serie no encontrada' });
     }
