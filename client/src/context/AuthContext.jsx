@@ -16,7 +16,11 @@ export const AuthProvider = ({ children }) => {
           const response = await axios.get('http://localhost:5000/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` }
           });
-          setUser(response.data);
+          // Si la respuesta tiene la propiedad 'tipoUsuario', la mapeamos a 'rol'
+          setUser({
+            ...response.data,
+            rol: response.data.tipoUsuario || response.data.rol
+          });
         } catch (error) {
           localStorage.removeItem('token');
           setUser(null);
@@ -34,10 +38,11 @@ export const AuthProvider = ({ children }) => {
       
       // Almacenamos el token y actualizamos el estado del usuario
       localStorage.setItem("token", response.data.token);
+      // Asignamos la propiedad 'rol' para mayor consistencia
       setUser({
         id: response.data.id,
         email,
-        tipoUsuario: response.data.tipoUsuario,
+        rol: response.data.tipoUsuario, // Mapea a 'rol'
         nombre: response.data.nombre
       });
       

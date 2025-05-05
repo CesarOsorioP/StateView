@@ -10,12 +10,14 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    // Al cambiar el estado de autenticación, se actualizarán los componentes automáticamente
   };
 
   const toggleUserMenu = () => {
     setShowUserMenu(!showUserMenu);
   };
+
+  // Ahora usamos 'user.rol' ya que se asigna correctamente en AuthContext
+  const isAdmin = user && user.rol === "Administrador";
 
   return (
     <nav className="navbar">
@@ -49,7 +51,6 @@ const Navbar = () => {
         {user ? (
           <div className="user-menu-container">
             <div className="user-avatar" onClick={toggleUserMenu}>
-              {/* Uso de la primera letra del email como avatar */}
               <span className="avatar-circle">
                 {user.email.charAt(0).toUpperCase()}
               </span>
@@ -62,27 +63,13 @@ const Navbar = () => {
                 <Link to="/favoritos">Favoritos</Link>
                 <Link to="/configuracion">Configuración</Link>
 
-                {/* Opciones exclusivas para Administradores */}
-                {user.rol === "Administrador" && (
+                {isAdmin && (
                   <>
                     <Link to="/crear-admin">Crear Administrador</Link>
-                    <Link to="/crear-moderador">Crear Moderador</Link>
-                  </>
-                )}
-
-                {/* Opciones exclusivas para Moderadores */}
-                {user.rol === "Moderador" && (
-                  <>
+                    <Link to="/gestionar-moderador">Gestionar Moderador</Link>
+                    <Link to="/gestionar-usuario">Gestionar Usuario</Link>
                     <Link to="/gestionar-advertencias">Gestionar Advertencias</Link>
-                    {/* Puedes agregar más funcionalidades para moderadores aquí */}
-                  </>
-                )}
-
-                {/* Opciones exclusivas para Críticos */}
-                {user.rol === "Critico" && (
-                  <>
                     <Link to="/mis-insignias">Mis Insignias</Link>
-                    {/* Otras funcionalidades exclusivas para críticos */}
                   </>
                 )}
 

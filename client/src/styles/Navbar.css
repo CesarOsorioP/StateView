@@ -21,13 +21,14 @@
 .logo {
   font-size: 28px;
   font-weight: bold;
-
+  background: linear-gradient(90deg, #ff7f50, #9370db);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   transition: all 0.3s ease;
   text-shadow: 0 0 15px rgba(106, 90, 205, 0.4);
 }
+
 
 .logo a {
   text-decoration: none;
