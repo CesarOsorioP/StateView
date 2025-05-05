@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "./Series.css";
+import "./api/api.js"
 
 const Series = () => {
   const [series, setSeries] = useState([]);
@@ -15,7 +16,7 @@ const Series = () => {
   useEffect(() => {
     const fetchSeries = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/series");
+        const response = await axios.get("/api/series");
         setSeries(response.data);
         setLoading(false);
       } catch (error) {
