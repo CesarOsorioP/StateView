@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   FaHeart, FaRegHeart, FaGamepad
 } from 'react-icons/fa';
-import ReviewSection from '../components/Albumes/ReviewSection';
+import ReviewSection from '../components//Videojuegos/ReviewSection';
 import "./pageStyles/VideojuegosDetail.css";
 
 const GameDetail = () => {
