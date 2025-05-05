@@ -31,4 +31,19 @@ async function obtenerSeries(req, res) {
   }
 }
 
-module.exports = { refreshSerie, obtenerSeries };
+async function obtenerSeriePorId(req, res) {
+  try {
+    // Se asume que en tu modelo el campo único es 'series_id'
+    const { seriesId } = req.params;
+    const serie = await Serie.findOne({ serie_id: seriesId });
+    console.log('ID de serie solicitado:', seriesId);
+    if (!serie) {
+      return res.status(404).json({ error: 'Serie no encontrada' });
+    }
+    res.json(serie);
+  } catch (error) {
+    res.status(500).json({ error: `Error obteniendo la serie: ${error.message}` });
+  }
+}
+
+module.exports = { refreshSerie, obtenerSeries, obtenerSeriePorId };
