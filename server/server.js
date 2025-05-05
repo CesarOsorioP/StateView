@@ -11,6 +11,9 @@ const albumRoutes = require('./routes/albumRoutes');
 const authRoutes = require('./routes/authRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const moderadorRoutes = require('./routes/moderadorRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const criticoRoutes = require('./routes/criticoRoutes');
 
 
 const app = express();
@@ -35,6 +38,9 @@ app.use('/api/albums', albumRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/moderador', moderadorRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/critico', criticoRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend Express funcionando');

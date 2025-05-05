@@ -1,379 +1,210 @@
-/* AlbumDetail.css - Versión Responsive Mejorada */
+/* AlbumDetail.css - Versión Optimizada */
 .album-detail-page {
-    padding: 25px 15px;
-    max-width: 1000px;
-    margin: 0 auto;
-    background-color: #000;
-    color: #fff;
-  }
-  
-  /* Sección de información del álbum */
-  .album-info {
-    display: flex;
-    flex-direction: row;
-    margin-bottom: 30px;
-    background-color: #111;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(138, 43, 226, 0.2);
+  padding: 25px 15px;
+  max-width: 1000px;
+  margin: 0 auto;
+  background-color: #000;
+  color: #fff;
+}
+
+/* Sección de información del álbum */
+.album-info {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 30px;
+  background-color: #111;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(138, 43, 226, 0.2);
+}
+
+.album-cover {
+  width: 240px;
+  height: 240px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.album-meta {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.album-meta h2 {
+  font-size: 1.8rem;
+  color: blueviolet;
+  margin-bottom: 15px;
+  margin-top: 0;
+}
+
+.album-meta p {
+  margin: 8px 0;
+  font-size: 1.1rem;
+  color: #ddd;
+}
+
+.album-meta p strong {
+  color: #aaa;
+}
+
+/* Botones de acción (Me gusta y Ya escuchado) */
+.album-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  border-radius: 20px;
+  background-color: #222;
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  color: #ddd;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  background-color: #333;
+  transform: translateY(-2px);
+}
+
+.action-button.active {
+  background-color: rgba(138, 43, 226, 0.2);
+  border-color: blueviolet;
+  color: #fff;
+}
+
+.action-button svg {
+  font-size: 1.2rem;
+}
+
+.action-button.active svg {
+  color: blueviolet;
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.4), transparent);
+  margin: 25px 0;
+}
+
+/* Mensaje de carga */
+.album-detail-page p:first-child {
+  text-align: center;
+  padding: 20px;
+  color: #aaa;
+  font-size: 1.1rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 992px) {
+  .album-detail-page {
+    padding: 20px 15px;
   }
   
   .album-cover {
-    width: 240px;
-    height: 240px;
-    object-fit: cover;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    width: 220px;
+    height: 220px;
+  }
+  
+  .album-meta h2 {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .album-info {
+    flex-direction: column;
+  }
+  
+  .album-cover {
+    width: 100%;
+    height: auto;
+    max-width: 300px;
+    margin: 0 auto;
+    border-radius: 8px;
+    margin-top: 15px;
   }
   
   .album-meta {
     padding: 20px;
-    flex: 1;
+    text-align: center;
   }
   
   .album-meta h2 {
-    font-size: 1.8rem;
-    color: blueviolet;
-    margin-bottom: 15px;
-    margin-top: 0;
+    font-size: 1.5rem;
   }
   
   .album-meta p {
-    margin: 8px 0;
-    font-size: 1.1rem;
-    color: #ddd;
+    font-size: 1rem;
   }
   
-  .album-meta p strong {
-    color: #aaa;
+  .album-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .album-detail-page {
+    padding: 15px 10px;
   }
   
-  hr {
-    border: none;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.4), transparent);
-    margin: 25px 0;
-  }
-  
-  /* Sección de reseñas */
-  .album-reviews {
-    margin-top: 20px;
-  }
-  
-  .album-reviews h3 {
-    font-size: 1.6rem;
-    color: blueviolet;
-    margin-bottom: 20px;
-    position: relative;
-    display: inline-block;
-  }
-  
-  .album-reviews h3:after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 60px;
-    height: 3px;
-    background: linear-gradient(90deg, blueviolet, transparent);
-  }
-  
-  /* Formulario de reseña */
-  .review-form {
-    background-color: #111;
-    padding: 15px;
+  .album-info {
     border-radius: 8px;
-    margin-bottom: 25px;
-    border: 1px solid rgba(138, 43, 226, 0.2);
   }
   
-  .review-form textarea {
-    width: 100%;
-    min-height: 120px;
-    padding: 12px;
-    background-color: #222;
-    border: 1px solid rgba(138, 43, 226, 0.3);
-    border-radius: 6px;
-    color: #fff;
-    font-size: 1rem;
-    margin-bottom: 15px;
-    resize: vertical;
-    transition: border-color 0.2s ease;
+  .album-cover {
+    max-width: 240px;
   }
   
-  .review-form textarea:focus {
-    border-color: blueviolet;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
+  .album-meta {
+    padding: 15px 12px;
   }
   
-  .rating-input {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
+  .album-meta h2 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
   }
   
-  .rating-input label {
-    margin-right: 10px;
-    font-size: 1rem;
-    color: #ccc;
+  .album-meta p {
+    font-size: 0.95rem;
+    margin: 6px 0;
   }
   
-  .rating-input input {
-    padding: 8px 12px;
-    background-color: #222;
-    border: 1px solid rgba(138, 43, 226, 0.3);
-    border-radius: 6px;
-    color: #fff;
-    width: 80px;
-    font-size: 1rem;
-    transition: border-color 0.2s ease;
-  }
-  
-  .rating-input input:focus {
-    border-color: blueviolet;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
-  }
-  
-  .review-form button {
-    background-color: blueviolet;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .review-form button:hover {
-    background-color: #9932CC;
-    box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
-    transform: translateY(-2px);
-  }
-  
-  /* Lista de reseñas */
-  .reviews-list {
-    display: flex;
+  .album-actions {
     flex-direction: column;
-    gap: 15px;
-  }
-  
-  .review-card {
-    background-color: #111;
-    border-radius: 8px;
-    padding: 15px;
-    border: 1px solid rgba(138, 43, 226, 0.2);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease;
-  }
-  
-  .review-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    border-color: rgba(138, 43, 226, 0.4);
-  }
-  
-  .review-header {
-    display: flex;
-    justify-content: space-between;
+    gap: 10px;
     align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid rgba(138, 43, 226, 0.1);
   }
   
-  .review-header strong {
-    color: #ddd;
-    font-size: 0.95rem;
+  .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .album-detail-page {
+    padding: 10px 8px;
   }
   
-  .review-date {
-    color: #888;
-    font-size: 0.85rem;
+  .album-cover {
+    max-width: 200px;
   }
   
-  .review-text {
-    color: #ccc;
-    line-height: 1.5;
-    margin-bottom: 10px;
-    font-size: 1rem;
+  .album-meta h2 {
+    font-size: 1.3rem;
   }
   
-  .review-rating {
-    color: violet;
-    font-size: 0.95rem;
-    font-weight: 600;
+  .album-meta p {
+    font-size: 0.9rem;
   }
-  
-  /* Mensaje de carga */
-  .album-detail-page p:first-child {
-    text-align: center;
-    padding: 20px;
-    color: #aaa;
-    font-size: 1.1rem;
-  }
-  
-  /* Responsive Styles - Mejorados */
-  @media (max-width: 992px) {
-    .album-detail-page {
-      padding: 20px 15px;
-    }
-    
-    .album-cover {
-      width: 220px;
-      height: 220px;
-    }
-    
-    .album-meta h2 {
-      font-size: 1.7rem;
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .album-info {
-      flex-direction: column;
-    }
-    
-    .album-cover {
-      width: 100%;
-      height: auto;
-      max-width: 300px;
-      margin: 0 auto;
-      border-radius: 8px;
-      margin-top: 15px;
-    }
-    
-    .album-meta {
-      padding: 20px;
-      text-align: center;
-    }
-    
-    .album-meta h2 {
-      font-size: 1.5rem;
-    }
-    
-    .album-meta p {
-      font-size: 1rem;
-    }
-    
-    .album-reviews h3 {
-      font-size: 1.4rem;
-      margin-left: auto;
-      margin-right: auto;
-      text-align: center;
-      display: block;
-    }
-    
-    .album-reviews h3:after {
-      left: 50%;
-      transform: translateX(-50%);
-    }
-    
-    .review-form {
-      padding: 12px;
-    }
-  }
-  
-  @media (max-width: 576px) {
-    .album-detail-page {
-      padding: 15px 10px;
-    }
-    
-    .album-info {
-      border-radius: 8px;
-    }
-    
-    .album-cover {
-      max-width: 240px;
-    }
-    
-    .album-meta {
-      padding: 15px 12px;
-    }
-    
-    .album-meta h2 {
-      font-size: 1.4rem;
-      margin-bottom: 10px;
-    }
-    
-    .album-meta p {
-      font-size: 0.95rem;
-      margin: 6px 0;
-    }
-    
-    .review-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
-    }
-    
-    .review-form textarea {
-      min-height: 100px;
-      padding: 10px;
-      font-size: 0.95rem;
-    }
-    
-    .rating-input {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 5px;
-    }
-    
-    .rating-input input {
-      width: 100%;
-      max-width: 100%;
-    }
-    
-    .review-form button {
-      width: 100%;
-      padding: 12px;
-    }
-    
-    .review-card {
-      padding: 12px 10px;
-    }
-    
-    .review-text {
-      font-size: 0.95rem;
-    }
-  }
-  
-  @media (max-width: 380px) {
-    .album-detail-page {
-      padding: 10px 8px;
-    }
-    
-    .album-cover {
-      max-width: 200px;
-    }
-    
-    .album-meta h2 {
-      font-size: 1.3rem;
-    }
-    
-    .album-meta p {
-      font-size: 0.9rem;
-    }
-    
-    .album-reviews h3 {
-      font-size: 1.3rem;
-    }
-    
-    .review-form {
-      padding: 10px 8px;
-    }
-    
-    .review-form textarea {
-      min-height: 80px;
-    }
-    
-    .review-text {
-      font-size: 0.9rem;
-    }
-    
-    .review-rating, .review-date, .review-header strong {
-      font-size: 0.85rem;
-    }
-  }
+}

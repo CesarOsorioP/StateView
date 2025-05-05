@@ -10,13 +10,14 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    // No necesitamos navegar porque el cambio en el estado de autenticación
-    // actualizará automáticamente los componentes
   };
 
   const toggleUserMenu = () => {
     setShowUserMenu(!showUserMenu);
   };
+
+  // Ahora usamos 'user.rol' ya que se asigna correctamente en AuthContext
+  const isAdmin = user && user.rol === "Administrador";
 
   return (
     <nav className="navbar">
@@ -50,7 +51,6 @@ const Navbar = () => {
         {user ? (
           <div className="user-menu-container">
             <div className="user-avatar" onClick={toggleUserMenu}>
-              {/* Puedes usar una imagen de perfil o las iniciales del usuario */}
               <span className="avatar-circle">
                 {user.email.charAt(0).toUpperCase()}
               </span>
@@ -62,6 +62,18 @@ const Navbar = () => {
                 <Link to="/mis-reseñas">Mis Reseñas</Link>
                 <Link to="/favoritos">Favoritos</Link>
                 <Link to="/configuracion">Configuración</Link>
+
+                {isAdmin && (
+                  <>
+                    <Link to="/crear-admin">Crear Administrador</Link>
+                    <Link to="/gestionar-moderador">Gestionar Moderador</Link>
+                    <Link to="/gestionar-usuario">Gestionar Usuario</Link>
+                    <Link to="/gestionar-contenido">Gestionar Contenido</Link>
+                    <Link to="/gestionar-advertencias">Gestionar Advertencias</Link>
+                    <Link to="/mis-insignias">Mis Insignias</Link>
+                  </>
+                )}
+
                 <button onClick={handleLogout} className="logout-button">
                   Cerrar Sesión
                 </button>

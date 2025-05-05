@@ -1,0 +1,455 @@
+/* src/styles/UserManagement.css */
+/* Estilos unificados para la gestión de usuarios con tema oscuro */
+
+.user-management-page {
+    padding: 25px 15px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #000;
+    color: #fff;
+    min-height: calc(100vh - 80px); /* Ajuste para el navbar */
+  }
+  
+  /* Encabezados de página */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+    padding-bottom: 10px;
+  }
+  
+  .user-management-page h1 {
+    color: blueviolet;
+    font-size: 2rem;
+    margin-bottom: 0;
+    transition: transform 0.3s ease;
+  }
+  
+  .user-management-page h1:hover {
+    transform: scale(1.02);
+  }
+  
+  .user-management-page h2 {
+    color: violet;
+    font-size: 1.5rem;
+    margin: 25px 0 15px;
+    transition: transform 0.3s ease;
+  }
+  
+  .user-management-page h2:hover {
+    transform: scale(1.02);
+  }
+  
+  /* Botón de crear usuario */
+  .create-button {
+    padding: 10px 16px;
+    background-color: blueviolet;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+  }
+  
+  .create-button:hover {
+    background-color: violet;
+    transform: scale(1.05);
+  }
+  
+  /* Mensajes de estado */
+  .status-message {
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+  
+  .error-message {
+    background-color: rgba(255, 0, 0, 0.1);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 0, 0, 0.3);
+  }
+  
+  .success-message {
+    background-color: rgba(0, 255, 0, 0.1);
+    color: #4eff4e;
+    border: 1px solid rgba(0, 255, 0, 0.3);
+  }
+  
+  /* Tabla de usuarios */
+  .user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.15);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .user-table thead {
+    background-color: rgba(138, 43, 226, 0.2);
+  }
+  
+  .user-table th {
+    border-bottom: 1px solid rgba(138, 43, 226, 0.4);
+    padding: 12px 15px;
+    text-align: left;
+    color: violet;
+    font-weight: bold;
+  }
+  
+  .user-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(138, 43, 226, 0.2);
+    transition: background-color 0.3s ease;
+  }
+  
+  .user-table tr:hover td {
+    background-color: rgba(138, 43, 226, 0.05);
+  }
+  
+  .user-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  /* Botones de acciones en la tabla */
+  .action-button {
+    background-color: transparent;
+    border: 1px solid blueviolet;
+    color: blueviolet;
+    padding: 6px 12px;
+    margin-right: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .action-button:hover {
+    background-color: blueviolet;
+    color: white;
+    transform: scale(1.05);
+  }
+  
+  .action-button.delete {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+  }
+  
+  .action-button.delete:hover {
+    background-color: #ff6b6b;
+    color: white;
+  }
+  
+  /* Línea separadora con gradiente */
+  .gradient-divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.4), transparent);
+    margin: 25px 0;
+  }
+  
+  /* Formulario de usuario */
+  .user-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: rgba(17, 17, 17, 0.8);
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .user-form:hover {
+    box-shadow: 0 0 20px rgba(138, 43, 226, 0.2);
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .form-group label {
+    font-size: 0.9rem;
+    color: #ccc;
+    margin-bottom: 5px;
+  }
+  
+  .form-input {
+    padding: 10px 12px;
+    background-color: #222;
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    border-radius: 5px;
+    color: white;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: blueviolet;
+    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
+  }
+  
+  .form-select {
+    padding: 10px 12px;
+    background-color: #222;
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    border-radius: 5px;
+    color: white;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23blueviolet' d='M6 8.825l4.6-4.6c.3-.3.3-.8 0-1.1-.3-.3-.8-.3-1.1 0L6 6.625 2.5 3.125c-.3-.3-.8-.3-1.1 0-.3.3-.3.8 0 1.1l4.6 4.6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .form-select:focus {
+    outline: none;
+    border-color: blueviolet;
+    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
+  }
+  
+  /* Botones del formulario */
+  .form-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  
+  .form-button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+  }
+  
+  .form-button.primary {
+    background-color: blueviolet;
+    color: white;
+  }
+  
+  .form-button.primary:hover {
+    background-color: violet;
+    transform: scale(1.05);
+  }
+  
+  .form-button.secondary {
+    background-color: transparent;
+    border: 1px solid #666;
+    color: #ccc;
+  }
+  
+  .form-button.secondary:hover {
+    background-color: #333;
+    border-color: #999;
+  }
+  
+  .form-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  /* Bloque de carga */
+  .loading-block {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    width: 100%;
+    background-color: rgba(17, 17, 17, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(138, 43, 226, 0.2);
+  }
+  
+  .loading-spinner {
+    border: 4px solid rgba(138, 43, 226, 0.1);
+    border-left: 4px solid blueviolet;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Mensaje de acceso denegado */
+  .access-denied {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    text-align: center;
+    background-color: rgba(255, 0, 0, 0.05);
+    border: 1px solid rgba(255, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 30px;
+    margin: 50px auto;
+    max-width: 600px;
+  }
+  
+  .access-denied h2 {
+    color: #ff6b6b;
+    margin-bottom: 15px;
+  }
+  
+  .access-denied p {
+    color: #ddd;
+    line-height: 1.6;
+  }
+  
+  /* Estilos para el modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    backdrop-filter: blur(5px);
+  }
+  
+  .modal-content {
+    background-color: #111;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 0 25px rgba(138, 43, 226, 0.3);
+    animation: modalFadeIn 0.3s;
+    border: 1px solid rgba(138, 43, 226, 0.4);
+  }
+  
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+    background-color: rgba(138, 43, 226, 0.1);
+  }
+  
+  .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: violet;
+  }
+  
+  .close-modal-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+  }
+  
+  .close-modal-button:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: rotate(90deg);
+  }
+  
+  /* Scrollbar personalizado para el modal */
+  .modal-content::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .modal-content::-webkit-scrollbar-track {
+    background: #222;
+    border-radius: 0 10px 10px 0;
+  }
+  
+  .modal-content::-webkit-scrollbar-thumb {
+    background: rgba(138, 43, 226, 0.5);
+    border-radius: 10px;
+  }
+  
+  .modal-content::-webkit-scrollbar-thumb:hover {
+    background: blueviolet;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .user-form {
+      padding: 20px 15px;
+    }
+    
+    .user-table th,
+    .user-table td {
+      padding: 10px 8px;
+      font-size: 0.9rem;
+    }
+    
+    .action-button {
+      padding: 5px 8px;
+      font-size: 0.8rem;
+    }
+  
+    .page-header {
+      flex-direction: column;
+      gap: 15px;
+      align-items: flex-start;
+    }
+  
+    .create-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .user-management-page {
+      padding: 15px 10px;
+    }
+    
+    .user-table {
+      display: block;
+      overflow-x: auto;
+    }
+    
+    .form-buttons {
+      flex-direction: column;
+    }
+    
+    .form-button {
+      width: 100%;
+    }
+  
+    .modal-content {
+      max-height: 95vh;
+    }
+  }
