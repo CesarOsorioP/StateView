@@ -20,7 +20,7 @@ const app = express();
 // ✅ CORS: permite tanto localhost como Vercel
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://state-view-g30alwl4j-cesars-projects-caee5b77.vercel.app'
+  'https://state-view.vercel.app'
 ];
 
 app.use(cors({
