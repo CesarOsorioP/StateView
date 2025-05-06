@@ -5,7 +5,7 @@ import {
   FaThumbsUp, FaRegThumbsUp, FaEdit, FaTrash, FaCheck, FaTimes
 } from 'react-icons/fa';
 import './commentSection.css';
-
+import api from '../../api/api'
 
 const CommentSection = ({ reviewId, toggleComments }) => {
   const { user } = useAuth();
