@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fa';
 import ReviewSection from '../components/Albumes/ReviewSection';
 import "./pageStyles/AlbumDetail.css";
-import api from '../../api/api'
+import api from '../api/api';
 
 const AlbumDetail = () => {
   const { albumId } = useParams();

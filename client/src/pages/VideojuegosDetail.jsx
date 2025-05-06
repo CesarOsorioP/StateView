@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fa';
 import ReviewSection from '../components//Videojuegos/ReviewSection';
 import "./pageStyles/VideojuegosDetail.css";
-import api from '../../api/api'
+import api from '../api/api';
 
 const GameDetail = () => {
   const { gameId } = useParams();
