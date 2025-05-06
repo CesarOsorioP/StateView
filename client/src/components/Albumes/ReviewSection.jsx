@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
 import "./reviewSection.css";
+import api from '../../api/api'
 
 const ReviewSection = ({ albumId, album }) => {
   const { user } = useAuth();

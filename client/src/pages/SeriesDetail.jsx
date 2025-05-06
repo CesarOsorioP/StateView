@@ -66,7 +66,7 @@ const SeriesDetail = () => {
         setWatched(updatedValue);
       }
 
-      await aoi.post(
+      await api.post(
         `/api/seriesPreferences/${seriesId}`,
         { [type]: updatedValue },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }

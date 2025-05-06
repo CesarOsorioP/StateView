@@ -5,6 +5,7 @@ import {
   FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
+import api from '../../api/api'
 
 // Constante para los tipos de modelos
 const MODEL_TYPES = {
