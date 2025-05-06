@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fa';
 import ReviewSection from '../components//Videojuegos/ReviewSection';
 import "./pageStyles/VideojuegosDetail.css";
+import api from '../../api/api'
 
 const GameDetail = () => {
   const { gameId } = useParams();
@@ -22,14 +23,14 @@ const GameDetail = () => {
   useEffect(() => {
     const fetchGameDetail = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/videojuegos/${gameId}`);
+        const response = await api.get(`/api/videojuegos/${gameId}`);
         setGame(response.data);
         
         // Verificar si el usuario tiene marcado como "me gusta" o "ya jugado"
         if (user) {
           try {
-            const userPrefsResponse = await axios.get(
-              `http://localhost:5000/api/gamePreferences/${gameId}`,
+            const userPrefsResponse = await api.get(
+              `/api/gamePreferences/${gameId}`,
               { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
             );
             if (userPrefsResponse.data) {
@@ -66,8 +67,8 @@ const GameDetail = () => {
         setPlayed(updatedValue);
       }
 
-      await axios.post(
-        `http://localhost:5000/api/gamePreferences/${gameId}`,
+      await api.post(
+        `/api/gamePreferences/${gameId}`,
         { [type]: updatedValue },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );

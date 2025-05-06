@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fa';
 import ReviewSection from '../components/Albumes/ReviewSection';
 import "./pageStyles/AlbumDetail.css";
+import api from '../../api/api'
 
 const AlbumDetail = () => {
   const { albumId } = useParams();
@@ -22,14 +23,14 @@ const AlbumDetail = () => {
   useEffect(() => {
     const fetchAlbumDetail = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/albums/${albumId}`);
+        const response = await api.get(`/api/albums/${albumId}`);
         setAlbum(response.data);
         
         // Verificar si el usuario tiene marcado como "me gusta" o "ya escuchado"
         if (user) {
           try {
-            const userPrefsResponse = await axios.get(
-              `http://localhost:5000/api/albumPreferences/${albumId}`,
+            const userPrefsResponse = await api.get(
+              `/api/albumPreferences/${albumId}`,
               { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
             );
             if (userPrefsResponse.data) {
@@ -66,8 +67,8 @@ const AlbumDetail = () => {
         setListened(updatedValue);
       }
 
-      await axios.post(
-        `http://localhost:5000/api/albumPreferences/${albumId}`,
+      await api.post(
+        `/api/albumPreferences/${albumId}`,
         { [type]: updatedValue },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
