@@ -5,7 +5,7 @@ import {
   FaThumbsUp, FaRegThumbsUp, FaEdit, FaTrash, FaCheck, FaTimes
 } from 'react-icons/fa';
 import './commentSection.css';
-
+import api from '../../api/api'
 
 const CommentSection = ({ reviewId, toggleComments }) => {
   const { user } = useAuth();
@@ -23,7 +23,7 @@ const CommentSection = ({ reviewId, toggleComments }) => {
   const loadComments = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/comments?reviewId=${reviewId}`);
+      const response = await api.get(`/api/comments?reviewId=${reviewId}`);
       setComments(response.data);
     } catch (error) {
       console.error("Error al cargar comentarios:", error);
@@ -97,12 +97,12 @@ const CommentSection = ({ reviewId, toggleComments }) => {
       
       if (hasLiked) {
         // Si ya tiene like, lo quitamos
-        await axios.delete(`http://localhost:5000/api/comments/${commentId}/unlike`, {
+        await api.delete(`/api/comments/${commentId}/unlike`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       } else {
         // Si no tiene like, lo añadimos
-        await axios.post(`http://localhost:5000/api/comments/${commentId}/like`, {}, {
+        await api.post(`/api/comments/${commentId}/like`, {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       }
@@ -127,8 +127,8 @@ const CommentSection = ({ reviewId, toggleComments }) => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/comments",
+      const response = await api.post(
+        "/api/comments",
         { reviewId, comment_txt: newComment },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -179,8 +179,8 @@ const CommentSection = ({ reviewId, toggleComments }) => {
     }
 
     try {
-      const response = await axios.put(
-        `http://localhost:5000/api/comments/${commentId}`,
+      const response = await api.put(
+        `/api/comments/${commentId}`,
         { comment_txt: editCommentText },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -207,7 +207,7 @@ const CommentSection = ({ reviewId, toggleComments }) => {
     }
 
     try {
-      await axios.delete(`http://localhost:5000/api/comments/${commentId}`, {
+      await api.delete(`/api/comments/${commentId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       

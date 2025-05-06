@@ -30,7 +30,7 @@ const ReviewSection = ({ albumId, album }) => {
   const fetchReviews = useCallback(async () => {
     try {
       if (album && album._id) {
-        const response = await axios.get(`http://localhost:5000/api/reviews?itemId=${album._id}`);
+        const response = await api.get(`/api/reviews?itemId=${album._id}`);
         setReviews(response.data);
       }
     } catch (error) {
@@ -175,12 +175,12 @@ const ReviewSection = ({ albumId, album }) => {
       
       if (hasLiked) {
         // Si ya tiene like, lo quitamos
-        await axios.delete(`http://localhost:5000/api/reviews/${reviewId}/unlike`, {
+        await api.delete(`/api/reviews/${reviewId}/unlike`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       } else {
         // Si no tiene like, lo añadimos
-        await axios.post(`http://localhost:5000/api/reviews/${reviewId}/like`, {}, {
+        await api.post(`/api/reviews/${reviewId}/like`, {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       }
@@ -224,7 +224,7 @@ const ReviewSection = ({ albumId, album }) => {
     };
 
     try {
-      const response = await axios.post("http://localhost:5000/api/reviews", reviewData, {
+      const response = await api.post("/api/reviews", reviewData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -253,7 +253,7 @@ const ReviewSection = ({ albumId, album }) => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.put(`http://localhost:5000/api/reviews/${userReview._id}`, {
+      const response = await api.put(`/api/reviews/${userReview._id}`, {
         review_txt: editReviewText,
         rating: editRating
       }, {
@@ -272,7 +272,7 @@ const ReviewSection = ({ albumId, album }) => {
   const handleDelete = async () => {
     if(window.confirm('¿Estás seguro de eliminar tu reseña?')){
       try {
-        await axios.delete(`http://localhost:5000/api/reviews/${userReview._id}`, {
+        await api.delete(`/api/reviews/${userReview._id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setReviews(prev => prev.filter(review => review._id !== userReview._id));

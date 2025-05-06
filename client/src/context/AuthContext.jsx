@@ -1,6 +1,7 @@
 // src/context/AuthContext.js
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import api from '../../api/api'
 
 const AuthContext = createContext();
 
@@ -13,7 +14,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await axios.get('http://localhost:5000/api/auth/me', {
+          const response = await api.get('/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` }
           });
           // Si la respuesta tiene la propiedad 'tipoUsuario', la mapeamos a 'rol'
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, contraseña) => {
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/login", { email, contraseña });
+      const response = await api.post("/api/auth/login", { email, contraseña });
       
       // Almacenamos el token y actualizamos el estado del usuario
       localStorage.setItem("token", response.data.token);

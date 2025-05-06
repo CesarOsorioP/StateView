@@ -5,6 +5,7 @@ import {
   FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
+import api from '../../api/api'
 
 // Constante para los tipos de modelos
 const MODEL_TYPES = {
@@ -44,7 +45,7 @@ const MovieReviewSection = ({ movieId, movie }) => {
       const movieIdentifier = movie?._id || movie?.pelicula_id;
       
       if (movieIdentifier) {
-        const response = await axios.get(`http://localhost:5000/api/reviews?itemId=${movieIdentifier}`);
+        const response = await api.get(`/api/reviews?itemId=${movieIdentifier}`);
         setReviews(response.data);
       }
     } catch (error) {
@@ -197,12 +198,12 @@ const MovieReviewSection = ({ movieId, movie }) => {
       
       if (hasLiked) {
         // Si ya tiene like, lo quitamos
-        await axios.delete(`http://localhost:5000/api/reviews/${reviewId}/unlike`, {
+        await api.delete(`/api/reviews/${reviewId}/unlike`, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
         // Si no tiene like, lo añadimos
-        await axios.post(`http://localhost:5000/api/reviews/${reviewId}/like`, {}, {
+        await api.post(`/api/reviews/${reviewId}/like`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
@@ -265,7 +266,7 @@ const MovieReviewSection = ({ movieId, movie }) => {
         throw new Error("No se encontró token de autenticación");
       }
       
-      const response = await axios.post("http://localhost:5000/api/reviews", reviewData, {
+      const response = await api.post("/api/reviews", reviewData, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -310,7 +311,7 @@ const MovieReviewSection = ({ movieId, movie }) => {
         throw new Error("No se encontró token de autenticación");
       }
       
-      const response = await axios.put(`http://localhost:5000/api/reviews/${userReview._id}`, {
+      const response = await api.put(`/api/reviews/${userReview._id}`, {
         review_txt: editReviewText,
         rating: editRating
       }, {
@@ -345,7 +346,7 @@ const MovieReviewSection = ({ movieId, movie }) => {
           throw new Error("No se encontró token de autenticación");
         }
         
-        await axios.delete(`http://localhost:5000/api/reviews/${userReview._id}`, {
+        await api.delete(`/api/reviews/${userReview._id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         

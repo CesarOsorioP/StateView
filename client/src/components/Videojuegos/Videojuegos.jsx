@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import api from '../../api/api'
 
 const Videojuegos = () => {
   const [videojuegos, setVideojuegos] = useState([]);
@@ -14,7 +15,7 @@ const Videojuegos = () => {
   useEffect(() => {
     const fetchVideojuegos = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/videojuegos");
+        const response = await api.get("/api/videojuegos");
         setVideojuegos(response.data);
         setLoading(false);
       } catch (error) {

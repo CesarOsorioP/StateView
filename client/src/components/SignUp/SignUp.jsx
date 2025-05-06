@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./Signup.css";
+import api from '../../api/api'
 
 const Signup = () => {
   const [nombre, setNombre] = useState("");
@@ -30,7 +31,7 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/signup", {
+      const response = await api.post("/api/auth/signup", {
         nombre,
         email,
         contraseña,
