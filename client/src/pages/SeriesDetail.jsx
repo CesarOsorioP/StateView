@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { FaHeart, FaRegHeart, FaTv } from 'react-icons/fa';
 import ReviewSection from '../components/Series/ReviewSection';
 import "./pageStyles/SeriesDetail.css";
-import api from '../../api/api'
+import api from '../api/api';
 
 const SeriesDetail = () => {
   const { seriesId } = useParams();

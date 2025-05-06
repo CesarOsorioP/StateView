@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fa';
 import ReviewSection from '../components/Peliculas/ReviewSection';
 import "./pageStyles/PeliculaDetail.css";
-import api from '../../api/api'
+import api from '../api/api';
 
 const PeliculaDetail = () => {
   const { movieId } = useParams();
