@@ -60,17 +60,18 @@ const Navbar = () => {
               <div className="user-dropdown">
                 <Link to="/perfil">Mi Perfil</Link>
                 <Link to="/mis-reseñas">Mis Reseñas</Link>
+                <Link to="/listas">Mis Listas</Link>
                 <Link to="/favoritos">Favoritos</Link>
                 <Link to="/configuracion">Configuración</Link>
 
                 {isAdmin && (
                   <>
-                    <Link to="/crear-admin">Crear Administrador</Link>
-                    <Link to="/gestionar-moderador">Gestionar Moderador</Link>
-                    <Link to="/gestionar-usuario">Gestionar Usuario</Link>
-                    <Link to="/gestionar-contenido">Gestionar Contenido</Link>
-                    <Link to="/gestionar-advertencias">Gestionar Advertencias</Link>
-                    <Link to="/mis-insignias">Mis Insignias</Link>
+                      <Link to="/crear-admin">Crear Administrador</Link>
+                      <Link to="/gestionar-moderador">Gestionar Moderador</Link>
+                      <Link to="/gestionar-usuario">Gestionar Usuario</Link>
+                      <Link to="/gestionar-contenido">Gestionar Contenido</Link>
+                      <Link to="/gestionar-advertencias">Gestionar Advertencias</Link>
+                      <Link to="/mis-insignias">Mis Insignias</Link>
                   </>
                 )}
 
