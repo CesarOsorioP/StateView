@@ -1,4 +1,3 @@
-// services/serieService.js
 const axios = require("axios");
 const Serie = require("../models/Serie");
 
@@ -15,8 +14,8 @@ async function fetchEpisodeDetail(episodeId) {
         r: "json"
       }
     });
-    if (response.data.Response === "False") {
-      throw new Error(response.data.Error);
+    if (!response.data || response.data.Response === "False") {
+      throw new Error(response.data?.Error || "No se pudo obtener información del episodio.");
     }
     return response.data;
   } catch (error) {
@@ -40,26 +39,27 @@ async function fetchSerieDesdeOMDb(title) {
         r: "json"
       }
     });
-    if (serieRes.data.Response === "False") {
-      throw new Error(serieRes.data.Error);
+
+    if (!serieRes.data || serieRes.data.Response === "False") {
+      throw new Error(serieRes.data?.Error || "Serie no encontrada en OMDb API.");
     }
+
     const data = serieRes.data;
     const serie_id = data.imdbID;
     const titulo = data.Title;
-    const creadores = data.Writer; // Usamos Writer como "creadores"
+    const creadores = data.Writer;
     const actores = data.Actors;
     const genero = data.Genre;
-    
-    // Extraer sinopsis de la serie (Plot)
-    const sinopsis = data.Plot; 
+    const sinopsis = data.Plot;
+    const poster = data.Poster; // Extraer la imagen
 
-    // Procesar el campo Year para obtener fecha de inicio y fecha final.
-    let fecha_inicio = "";
-    let fecha_final = "";
+    // Procesar el campo Year para obtener fechaInicio y fechaFinal
+    let fechaInicio = "";
+    let fechaFinal = "";
     if (data.Year) {
       const parts = data.Year.split("–");
-      fecha_inicio = parts[0] || "";
-      fecha_final = parts[1] || "";
+      fechaInicio = parts[0] || "";
+      fechaFinal = parts[1] || "";
     }
 
     const totalSeasons = parseInt(data.totalSeasons, 10);
@@ -74,12 +74,14 @@ async function fetchSerieDesdeOMDb(title) {
           Season: season
         }
       });
-      if (seasonRes.data.Response === "False") {
-        console.warn(`No se obtuvieron datos para la temporada ${season}: ${seasonRes.data.Error}`);
+
+      if (!seasonRes.data || seasonRes.data.Response === "False") {
+        console.warn(`No se obtuvieron datos para la temporada ${season}: ${seasonRes.data?.Error || "No disponible"}`);
         continue;
       }
-      const seasonData = seasonRes.data;
       
+      const seasonData = seasonRes.data;
+
       // Para cada episodio de la temporada, obtenemos detalles adicionales.
       const episodiosPromises = seasonData.Episodes.map(async (episode) => {
         const episodeDetail = await fetchEpisodeDetail(episode.imdbID);
@@ -93,29 +95,25 @@ async function fetchSerieDesdeOMDb(title) {
       });
       const episodios = await Promise.all(episodiosPromises);
 
-      const temporadaObj = {
+      temporadas.push({
         temporada_id: `${serie_id}-S${season}`,
         temporada_numero: season,
-        episodios: episodios
-      };
-
-      temporadas.push(temporadaObj);
+        episodios
+      });
     }
 
-    // Armar el objeto de la serie, incluyendo la sinopsis
-    const serieDatos = {
+    return {
       serie_id,
       titulo,
       creadores,
       actores,
       genero,
-      fecha_inicio,
-      fecha_final,
       sinopsis,
+      poster,
+      fechaInicio,
+      fechaFinal,
       temporadas
     };
-
-    return serieDatos;
   } catch (error) {
     console.error("Error obteniendo serie desde OMDb:", error.message);
     throw error;
@@ -131,8 +129,7 @@ async function saveSerieFromOMDb(title) {
     let serie = await Serie.findOne({ serie_id: serieDatos.serie_id });
     if (!serie) {
       serie = new Serie(serieDatos);
-      const savedSerie = await serie.save();
-      return savedSerie;
+      await serie.save();
     }
     return serie;
   } catch (error) {

@@ -50,9 +50,11 @@ async function login(req, res) {
       rol: persona.rol
     };
 
+    // Genera el token
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    
+    console.log("Token generado:", token); // Log para verificar el token
 
-    // Retornamos el id junto con el resto de los datos
     res.status(200).json({
       token,
       tipoUsuario: persona.rol,
@@ -63,6 +65,7 @@ async function login(req, res) {
     res.status(500).json({ error: error.message });
   }
 }
+
 
 // Nueva función para obtener los datos del usuario actual
 async function getCurrentUser(req, res) {

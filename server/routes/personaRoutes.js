@@ -1,9 +1,7 @@
-// routes/personaRoutes.js
 const express = require('express');
 const router = express.Router();
 
-// Importa o define el controlador para las personas.
-// Asegúrate de que en controllers/personaController.js existan las funciones mencionadas.
+// Importa correctamente las funciones desde el controlador
 const {
   crearPersona,
   obtenerPersonas,

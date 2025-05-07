@@ -38,5 +38,17 @@ async function obtenerAlbumPorId(req, res) {
     res.status(500).json({ error: `Error obteniendo el álbum: ${error.message}` });
   }
 }
+async function eliminarAlbum(req, res) {
+  try {
+    const { albumId } = req.params;
+    const album = await Album.findOneAndDelete({ album_id: albumId });
+    if (!album) {
+      return res.status(404).json({ error: 'Álbum no encontrado' });
+    }
+    res.json({ message: 'Álbum eliminado correctamente', data: album });
+  } catch (error) {
+    res.status(500).json({ error: `Error eliminando el álbum: ${error.message}` });
+  }
+}
 
-module.exports = { refreshAlbum, obtenerAlbumes, obtenerAlbumPorId };
+module.exports = { refreshAlbum, obtenerAlbumes, obtenerAlbumPorId, eliminarAlbum };

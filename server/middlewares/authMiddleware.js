@@ -29,10 +29,16 @@ const protect = (req, res, next) => {
 
 /**
  * Middleware para restringir el acceso a ciertos roles.
- * Recibe una lista de roles permitidos y verifica si req.user.rol está incluido.
+ * Si el usuario es Administrador, se le permite el acceso sin importar los roles indicados.
+ * En otros casos se valida que el rol del usuario esté incluido en la lista de roles permitidos.
  */
 const restrictTo = (...roles) => {
   return (req, res, next) => {
+    // Si el usuario es Administrador, otorga acceso inmediato
+    if (req.user.rol === 'Administrador') {
+      return next();
+    }
+    // En caso contrario, verifica si el rol del usuario se encuentra entre los roles permitidos
     if (!roles.includes(req.user.rol)) {
       return res
         .status(403)

@@ -8,7 +8,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // Verificar si el usuario tiene un token al cargar la página
   useEffect(() => {
     const checkLoggedIn = async () => {
       const token = localStorage.getItem('token');
@@ -17,7 +16,11 @@ export const AuthProvider = ({ children }) => {
           const response = await axios.get('http://localhost:5000/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` }
           });
-          setUser(response.data);
+          // Si la respuesta tiene la propiedad 'tipoUsuario', la mapeamos a 'rol'
+          setUser({
+            ...response.data,
+            rol: response.data.tipoUsuario || response.data.rol
+          });
         } catch (error) {
           localStorage.removeItem('token');
           setUser(null);
@@ -28,19 +31,24 @@ export const AuthProvider = ({ children }) => {
     
     checkLoggedIn();
   }, []);
-  
+
   const login = async (email, contraseña) => {
     try {
       const response = await axios.post("http://localhost:5000/api/auth/login", { email, contraseña });
-      localStorage.setItem("token", response.data.token);
       
-      // Incluimos el id en el estado del usuario
+      // Almacenamos el token y actualizamos el estado del usuario
+      localStorage.setItem("token", response.data.token);
+      // Asignamos la propiedad 'rol' para mayor consistencia
       setUser({
         id: response.data.id,
         email,
-        tipoUsuario: response.data.tipoUsuario,
+        rol: response.data.tipoUsuario, // Mapea a 'rol'
         nombre: response.data.nombre
       });
+      
+      // Mostrar en la consola el token y el tipo de usuario
+      console.log("Token recibido:", response.data.token);
+      console.log("Tipo de Usuario:", response.data.tipoUsuario);
       
       return { success: true, data: response.data };
     } catch (error) {
@@ -50,7 +58,7 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
-  
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);

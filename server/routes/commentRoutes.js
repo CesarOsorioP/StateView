@@ -1,13 +1,29 @@
 // routes/commentRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createComment, getComments } = require('../controllers/commentController');
+const { protect } = require('../middlewares/authMiddleware');
+const {
+  createComment,
+  getComments,
+  likeComment,
+  unlikeComment,
+  deleteComment,
+  updateComment,
+} = require('../controllers/commentController');
 
-// Endpoint para crear un nuevo comentario
-router.post('/', createComment);
+// Crear un comentario (requiere autenticación)
+router.post('/', protect, createComment);
 
-// Endpoint para obtener los comentarios de una reseña específica
-// Ejemplo: GET /api/comments/60e... (donde el parámetro es el reviewId)
-router.get('/:reviewId', getComments);
+// Obtener comentarios filtrando por reviewId (p. ej., /api/comments?reviewId=...)
+router.get('/', getComments);
+
+router.put('/:commentId', protect, updateComment);
+// Dar "me gusta" a un comentario (requiere autenticación)
+router.post('/:commentId/like', protect, likeComment);
+
+
+// Remover "me gusta" de un comentario (requiere autenticación)
+router.delete('/:commentId/like', protect, unlikeComment);
+router.delete('/:commentId', protect, deleteComment);
 
 module.exports = router;

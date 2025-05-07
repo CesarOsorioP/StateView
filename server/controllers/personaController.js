@@ -1,4 +1,3 @@
-// controllers/personaController.js
 const bcrypt = require('bcrypt');
 const Persona = require('../models/Persona');
 
@@ -44,6 +43,7 @@ async function obtenerPersonas(req, res) {
     const personas = await Persona.find();
     res.status(200).json({ data: personas });
   } catch (error) {
+    console.error("Error en obtenerPersonas:", error);
     res.status(500).json({ error: error.message });
   }
 }
@@ -73,7 +73,7 @@ async function editarPersona(req, res) {
     const { id } = req.params;
     const actualizacion = { ...req.body };
 
-    // Si se actualiza la contraseña, tiene que volver a hashearse
+    // Si se actualiza la contraseña, vuelve a hashearla
     if (req.body.contraseña) {
       const saltRounds = 10;
       actualizacion.contraseña = await bcrypt.hash(req.body.contraseña, saltRounds);
@@ -108,7 +108,7 @@ async function eliminarPersona(req, res) {
 module.exports = {
   crearPersona,
   obtenerPersonas,
-  obtenerPersona,
+  obtenerPersona, // Función corregida (debe ser singular)
   editarPersona,
   eliminarPersona
 };

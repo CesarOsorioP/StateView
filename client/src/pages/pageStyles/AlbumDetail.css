@@ -1,0 +1,210 @@
+/* AlbumDetail.css - Versión Optimizada */
+.album-detail-page {
+  padding: 25px 15px;
+  max-width: 1000px;
+  margin: 0 auto;
+  background-color: #000;
+  color: #fff;
+}
+
+/* Sección de información del álbum */
+.album-info {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 30px;
+  background-color: #111;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(138, 43, 226, 0.2);
+}
+
+.album-cover {
+  width: 240px;
+  height: 240px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.album-meta {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.album-meta h2 {
+  font-size: 1.8rem;
+  color: blueviolet;
+  margin-bottom: 15px;
+  margin-top: 0;
+}
+
+.album-meta p {
+  margin: 8px 0;
+  font-size: 1.1rem;
+  color: #ddd;
+}
+
+.album-meta p strong {
+  color: #aaa;
+}
+
+/* Botones de acción (Me gusta y Ya escuchado) */
+.album-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  border-radius: 20px;
+  background-color: #222;
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  color: #ddd;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  background-color: #333;
+  transform: translateY(-2px);
+}
+
+.action-button.active {
+  background-color: rgba(138, 43, 226, 0.2);
+  border-color: blueviolet;
+  color: #fff;
+}
+
+.action-button svg {
+  font-size: 1.2rem;
+}
+
+.action-button.active svg {
+  color: blueviolet;
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.4), transparent);
+  margin: 25px 0;
+}
+
+/* Mensaje de carga */
+.album-detail-page p:first-child {
+  text-align: center;
+  padding: 20px;
+  color: #aaa;
+  font-size: 1.1rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 992px) {
+  .album-detail-page {
+    padding: 20px 15px;
+  }
+  
+  .album-cover {
+    width: 220px;
+    height: 220px;
+  }
+  
+  .album-meta h2 {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .album-info {
+    flex-direction: column;
+  }
+  
+  .album-cover {
+    width: 100%;
+    height: auto;
+    max-width: 300px;
+    margin: 0 auto;
+    border-radius: 8px;
+    margin-top: 15px;
+  }
+  
+  .album-meta {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .album-meta h2 {
+    font-size: 1.5rem;
+  }
+  
+  .album-meta p {
+    font-size: 1rem;
+  }
+  
+  .album-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .album-detail-page {
+    padding: 15px 10px;
+  }
+  
+  .album-info {
+    border-radius: 8px;
+  }
+  
+  .album-cover {
+    max-width: 240px;
+  }
+  
+  .album-meta {
+    padding: 15px 12px;
+  }
+  
+  .album-meta h2 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+  }
+  
+  .album-meta p {
+    font-size: 0.95rem;
+    margin: 6px 0;
+  }
+  
+  .album-actions {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .album-detail-page {
+    padding: 10px 8px;
+  }
+  
+  .album-cover {
+    max-width: 200px;
+  }
+  
+  .album-meta h2 {
+    font-size: 1.3rem;
+  }
+  
+  .album-meta p {
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,210 @@
+/* GameDetail.css - Versión Optimizada */
+.game-detail-page {
+    padding: 25px 15px;
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: #000;
+    color: #fff;
+  }
+  
+  /* Sección de información del videojuego */
+  .game-info {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 30px;
+    background-color: #111;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(138, 43, 226, 0.2);
+  }
+  
+  .game-cover {
+    width: 240px;
+    height: 320px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+  
+  .game-meta {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .game-meta h2 {
+    font-size: 1.8rem;
+    color: blueviolet;
+    margin-bottom: 15px;
+    margin-top: 0;
+  }
+  
+  .game-meta p {
+    margin: 8px 0;
+    font-size: 1.1rem;
+    color: #ddd;
+  }
+  
+  .game-meta p strong {
+    color: #aaa;
+  }
+  
+  /* Botones de acción (Me gusta y Ya jugado) */
+  .game-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+  }
+  
+  .action-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    border-radius: 20px;
+    background-color: #222;
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    color: #ddd;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .action-button:hover {
+    background-color: #333;
+    transform: translateY(-2px);
+  }
+  
+  .action-button.active {
+    background-color: rgba(138, 43, 226, 0.2);
+    border-color: blueviolet;
+    color: #fff;
+  }
+  
+  .action-button svg {
+    font-size: 1.2rem;
+  }
+  
+  .action-button.active svg {
+    color: blueviolet;
+  }
+  
+  hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.4), transparent);
+    margin: 25px 0;
+  }
+  
+  /* Mensaje de carga */
+  .game-detail-page p:first-child {
+    text-align: center;
+    padding: 20px;
+    color: #aaa;
+    font-size: 1.1rem;
+  }
+  
+  /* Responsive Styles */
+  @media (max-width: 992px) {
+    .game-detail-page {
+      padding: 20px 15px;
+    }
+    
+    .game-cover {
+      width: 220px;
+      height: 300px;
+    }
+    
+    .game-meta h2 {
+      font-size: 1.7rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .game-info {
+      flex-direction: column;
+    }
+    
+    .game-cover {
+      width: 100%;
+      height: auto;
+      max-width: 300px;
+      margin: 0 auto;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    
+    .game-meta {
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .game-meta h2 {
+      font-size: 1.5rem;
+    }
+    
+    .game-meta p {
+      font-size: 1rem;
+    }
+    
+    .game-actions {
+      justify-content: center;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .game-detail-page {
+      padding: 15px 10px;
+    }
+    
+    .game-info {
+      border-radius: 8px;
+    }
+    
+    .game-cover {
+      max-width: 240px;
+    }
+    
+    .game-meta {
+      padding: 15px 12px;
+    }
+    
+    .game-meta h2 {
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+    }
+    
+    .game-meta p {
+      font-size: 0.95rem;
+      margin: 6px 0;
+    }
+    
+    .game-actions {
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .action-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  
+  @media (max-width: 380px) {
+    .game-detail-page {
+      padding: 10px 8px;
+    }
+    
+    .game-cover {
+      max-width: 200px;
+    }
+    
+    .game-meta h2 {
+      font-size: 1.3rem;
+    }
+    
+    .game-meta p {
+      font-size: 0.9rem;
+    }
+  }
