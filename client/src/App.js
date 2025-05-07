@@ -21,6 +21,7 @@ import OlvideContraseñaPage from "./components/OlvideContraseña/OlvideContrase
 import UserManagement from "./components/Admin/UserManagement";
 import ContentManagement from "./components/Admin/ContentManager";
 import PerfilUsuario from "./components/Usuario/PerfilUsuario";
+import Listas from "./components/Usuario/MisListas/Listas"; // Importa el componente de listas
 
 const App = () => {
   return (
@@ -44,6 +45,7 @@ const App = () => {
           <Route path="/gestionar-contenido" element={<ContentManagement />} />
           <Route path="/olvide-contrasena" element={<OlvideContraseñaPage />} />
           <Route path="/perfil" element={<PerfilUsuario />} />
+          <Route path="/listas" element={<Listas />} /> {/* Dirige a la seccion de las listas del usuario*/}
         </Routes>
         <Footer />
       </Router>
