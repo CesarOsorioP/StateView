@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './userManagement.css';
-import api from '../../api/api'
+import api from '../../api/api';
 
 const UserManagement = () => {
   const { user } = useAuth();
@@ -91,16 +91,20 @@ const UserManagement = () => {
     }
   };
 
-  // Eliminar usuario
-  const handleDelete = async (userId) => {
-    if (window.confirm('¿Estás seguro que deseas eliminar este usuario?')) {
+  // Función para desactivar usuario (actualizando su estado a "Desactivado")
+  const handleDeactivate = async (userId) => {
+    if (window.confirm('¿Estás seguro que deseas desactivar este usuario?')) {
       setLoading(true);
       try {
-        await api.delete(`/api/persona/${userId}`);
-        setUsers((prev) => prev.filter((u) => u._id !== userId));
-        setSuccess('Usuario eliminado con éxito');
+        // Se hace la petición PUT al endpoint de actualización de estado
+        const res = await api.put(`/api/persona/${userId}/estado`);
+        // Actualizamos el usuario en la lista con el nuevo estado
+        setUsers((prevUsers) =>
+          prevUsers.map((u) => (u._id === userId ? res.data.persona : u))
+        );
+        setSuccess('Usuario desactivado con éxito');
       } catch (error) {
-        setError('Error al eliminar el usuario. Por favor, intenta de nuevo.');
+        setError('Error al desactivar el usuario. Por favor, intenta de nuevo.');
       } finally {
         setLoading(false);
       }
@@ -181,6 +185,7 @@ const UserManagement = () => {
               <th>Nombre</th>
               <th>Email</th>
               <th>Rol</th>
+              <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -190,6 +195,7 @@ const UserManagement = () => {
                 <td>{u.nombre}</td>
                 <td>{u.email}</td>
                 <td>{u.rol}</td>
+                <td>{u.estado}</td>
                 <td>
                   <button 
                     className="action-button" 
@@ -198,10 +204,10 @@ const UserManagement = () => {
                     Editar
                   </button>
                   <button 
-                    className="action-button delete" 
-                    onClick={() => handleDelete(u._id)}
+                    className="action-button deactivate" 
+                    onClick={() => handleDeactivate(u._id)}
                   >
-                    Eliminar
+                    Desactivar
                   </button>
                 </td>
               </tr>

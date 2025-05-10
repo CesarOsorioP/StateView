@@ -17,7 +17,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const transporter = nodemailer.createTransport({
   host: EMAIL_HOST,
   port: EMAIL_PORT,
-  secure: EMAIL_PORT === 465,
+  secure: EMAIL_PORT === 465, // true para puerto 465
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS
@@ -27,12 +27,21 @@ const transporter = nodemailer.createTransport({
 // Función para registrar un usuario
 async function signUp(req, res) {
   try {
-    // Se extraen además los nuevos campos (si es que llegan, o se asignarán valores por defecto)
-    const { nombre, email, contraseña, imagenPerfil, meGusta, listas, historial } = req.body;
-    const usuarioExistente = await Persona.findOne({ email });
-    if (usuarioExistente) {
+    // Extraemos los campos enviados en el body, incluyendo imagenPerfil e imagenBanner
+    const { nombre, email, contraseña, imagenPerfil, imagenBanner, meGusta, listas, historial } = req.body;
+
+    // Verificar si el email ya está registrado
+    const usuarioExistenteCorreo = await Persona.findOne({ email });
+    if (usuarioExistenteCorreo) {
       return res.status(400).json({ error: 'El email ya está registrado.' });
     }
+
+    // Verificar si el nombre de usuario ya está registrado
+    const usuarioExistenteNombre = await Persona.findOne({ nombre });
+    if (usuarioExistenteNombre) {
+      return res.status(400).json({ error: 'Este nombre de usuario ya está registrado.' });
+    }
+
     const saltRounds = 10;
     const contraseñaHasheada = await bcrypt.hash(contraseña, saltRounds);
     const nuevaPersona = new Persona({
@@ -40,8 +49,9 @@ async function signUp(req, res) {
       email,
       contraseña: contraseñaHasheada,
       imagenPerfil,
+      imagenBanner,
       rol: 'Usuario',
-      // Se asignan los arrays, inicializando como vacíos si no se proporcionan datos
+      // Inicializamos los arrays si no se pasan valores
       meGusta: meGusta || [],
       listas: listas || [],
       historial: historial || []
@@ -54,10 +64,20 @@ async function signUp(req, res) {
 }
 
 // Función para iniciar sesión
+// Función de login actualizada para aceptar correo o nombre de usuario
 async function login(req, res) {
   try {
+    // El campo 'email' en el body contendrá ya sea el correo o el nombre de usuario
     const { email, contraseña } = req.body;
-    const persona = await Persona.findOne({ email });
+    let persona;
+
+    // Si el input contiene una arroba, buscamos por email; de lo contrario, por nombre (username)
+    if (email.includes('@')) {
+      persona = await Persona.findOne({ email });
+    } else {
+      persona = await Persona.findOne({ nombre: email });
+    }
+
     if (!persona) {
       return res.status(400).json({ error: 'Credenciales inválidas.' });
     }
@@ -76,7 +96,7 @@ async function login(req, res) {
     // Genera el token
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     
-    console.log("Token generado:", token); // Log para verificar el token
+    console.log("Token generado:", token);
 
     res.status(200).json({
       token,
@@ -97,9 +117,8 @@ async function getCurrentUser(req, res) {
       return res.status(401).json({ error: 'No se proporcionó token' });
     }
     const token = authHeader.split(' ')[1]; // Se asume "Bearer <token>"
-    const decoded = jwt.verify(token, JWT_SECRET);
     // Busca al usuario excluyendo la contraseña
-    const user = await Persona.findById(decoded.id).select('-contraseña');
+    const user = await Persona.findById(jwt.verify(token, JWT_SECRET).id).select('-contraseña');
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }

@@ -7,7 +7,7 @@ const {
   obtenerPersonas,
   obtenerPersona,
   editarPersona,
-  eliminarPersona
+  actualizarEstadoPersona
 } = require('../controllers/personaController');
 
 // Ruta para crear una nueva persona (Sign Up o registro)
@@ -22,7 +22,7 @@ router.get('/:id', obtenerPersona);
 // Ruta para editar la información de una persona (actualización)
 router.put('/:id', editarPersona);
 
-// Ruta para eliminar a una persona
-router.delete('/:id', eliminarPersona);
+// Ruta para actualizar el estado de una persona (cambiar de Activo a Desactivado)
+router.put('/:id/estado', actualizarEstadoPersona);
 
 module.exports = router;

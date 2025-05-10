@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import "./Login.css";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");  // Usamos 'identifier' en lugar de 'email'
   const [contraseña, setContraseña] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -18,10 +18,9 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const result = await login(email, contraseña);
+      const result = await login(identifier, contraseña);
       
       if (result.success) {
-        // Redireccionar al usuario a la página principal
         navigate("/");
       } else {
         setError(result.error);
@@ -41,13 +40,13 @@ const Login = () => {
 
         <form onSubmit={handleLogin}>
           <div className="login-group">
-            <label className="login-label">Email</label>
+            <label className="login-label">Correo o Nombre de Usuario</label>
             <input
               className="login-input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Ingresa tu email"
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="Ingresa tu correo o nombre de usuario"
               required
             />
           </div>

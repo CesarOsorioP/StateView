@@ -73,7 +73,8 @@ const personaSchema = new mongoose.Schema({
     enum: ['Usuario', 'Critico', 'Moderador', 'Administrador'],
     default: 'Usuario'
   },
-  imagenPerfil: { type: String },
+  imagenPerfil: { type: String },     // Se conserva para la foto de perfil
+  imagenBanner: { type: String },       // Nuevo atributo para la imagen banner
   estado: { 
     type: String, 
     enum: ['Activo', 'Restringido', 'Advertido', 'Desactivado'],
@@ -85,9 +86,9 @@ const personaSchema = new mongoose.Schema({
   restricciones: [restriccionSchema],
   seguidores: [seguidorSchema],
   siguiendo: [siguiendoSchema],
-  meGusta: [meGustaSchema],      // Array de contenidos que le gustan al usuario
-  listas: [listaSchema],         // Array con las listas personalizadas del usuario
-  historial: [historialSchema]   // Historial de contenidos vistos o escuchados
+  meGusta: [meGustaSchema],
+  listas: [listaSchema],
+  historial: [historialSchema]
 }, { collection: 'Persona' });
 
 module.exports = mongoose.model('Persona', personaSchema);

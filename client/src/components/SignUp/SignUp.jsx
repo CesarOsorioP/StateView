@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./Signup.css";
-import api from '../../api/api'
+import api from "../../api/api";
 
 const Signup = () => {
   const [nombre, setNombre] = useState("");
@@ -9,13 +9,35 @@ const Signup = () => {
   const [confirmarContraseña, setConfirmarContraseña] = useState("");
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [error, setError] = useState("");
+  const [nombreError, setNombreError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Función para verificar si el nombre de usuario está disponible.
+  const checkNombreDisponibilidad = async () => {
+    if (!nombre) return;
+    try {
+      const response = await api.get(`/api/auth/checkusername?nombre=${nombre}`);
+      if (response.data.available === false) {
+        setNombreError(response.data.message || "Este nombre de usuario ya está registrado.");
+      } else {
+        setNombreError("");
+      }
+    } catch (err) {
+      console.error("Error al verificar la disponibilidad del nombre:", err);
+    }
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    // Si ya hay error de nombre (por ejemplo, no disponible), se bloquea el envío.
+    if (nombreError) {
+      setError("Por favor, corrige los errores en el formulario.");
+      return;
+    }
 
     if (contraseña !== confirmarContraseña) {
       setError("Las contraseñas no coinciden");
@@ -45,7 +67,8 @@ const Signup = () => {
       setConfirmarContraseña("");
       setAceptaTerminos(false);
     } catch (error) {
-      const mensajeError = error.response?.data?.error || "Error desconocido al registrarse.";
+      const mensajeError =
+        error.response?.data?.error || "Error desconocido al registrarse.";
       setError(mensajeError);
       setIsLoading(false);
     }
@@ -65,9 +88,13 @@ const Signup = () => {
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
+              onBlur={checkNombreDisponibilidad}
               placeholder="Ingresa tu nombre completo"
               required
             />
+            {nombreError && (
+              <div className="signup-error-message">{nombreError}</div>
+            )}
           </div>
 
           <div className="signup-group">
@@ -117,14 +144,20 @@ const Signup = () => {
               onChange={(e) => setAceptaTerminos(e.target.checked)}
             />
             <label htmlFor="signup-terminos">
-              Acepto los <a href="/terminos">Términos y Condiciones</a> y la <a href="/privacidad">Política de Privacidad</a>
+              Acepto los{" "}
+              <a href="/terminos">Términos y Condiciones</a> y la{" "}
+              <a href="/privacidad">Política de Privacidad</a>
             </label>
           </div>
 
           {error && <div className="signup-error-message">{error}</div>}
           {success && <div className="signup-success-message">{success}</div>}
 
-          <button className="signup-submit-button" type="submit" disabled={isLoading}>
+          <button
+            className="signup-submit-button"
+            type="submit"
+            disabled={isLoading}
+          >
             {isLoading ? "Registrando..." : "Registrarse"}
           </button>
         </form>
@@ -145,7 +178,9 @@ const Signup = () => {
 
         <div className="signup-footer">
           <span>¿Ya tienes una cuenta? </span>
-          <a href="/login" className="signup-auth-link">Inicia sesión aquí</a>
+          <a href="/login" className="signup-auth-link">
+            Inicia sesión aquí
+          </a>
         </div>
       </div>
     </div>

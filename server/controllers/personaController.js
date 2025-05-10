@@ -92,23 +92,32 @@ async function editarPersona(req, res) {
 /**
  * Elimina una persona de la base de datos.
  */
-async function eliminarPersona(req, res) {
+async function actualizarEstadoPersona(req, res) {
   try {
     const { id } = req.params;
-    const personaEliminada = await Persona.findByIdAndDelete(id);
-    if (!personaEliminada) {
-      return res.status(404).json({ error: 'Persona no encontrada' });
+    // Aquí decidimos cambiar el estado a "Desactivado"
+    const personaActualizada = await Persona.findByIdAndUpdate(
+      id,
+      { estado: "Desactivado" },
+      { new: true } // Devuelve el documento actualizado
+    );
+
+    if (!personaActualizada) {
+      return res.status(404).json({ error: "Persona no encontrada" });
     }
-    res.status(200).json({ message: 'Persona eliminada correctamente' });
+    
+    res.status(200).json({
+      message: "Estado actualizado correctamente",
+      persona: personaActualizada,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }
-
 module.exports = {
   crearPersona,
   obtenerPersonas,
   obtenerPersona, // Función corregida (debe ser singular)
   editarPersona,
-  eliminarPersona
+  actualizarEstadoPersona,
 };
