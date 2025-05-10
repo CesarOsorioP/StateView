@@ -1,7 +1,6 @@
 // src/components/Series.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import "./Series.css";
 import api from '../../api/api'
 

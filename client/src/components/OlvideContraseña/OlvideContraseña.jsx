@@ -1,14 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import "./OlvideContraseña.css"; // Asegúrate que el nombre del archivo coincida exactamente
+import "./OlvideContraseña.css";
+import api from '../../api/api'
 
 const OlvideContraseñaPage = () => {
-    const [email, setEmail] = React.useState("");
+    const [email, setEmail] = useState("");
+    const [status, setStatus] = useState({
+        message: "",
+        type: ""  // "success" o "error"
+    });
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Lógica para enviar el email
-        alert(`Se ha enviado el enlace a: ${email}`);
+        setLoading(true);
+        
+        try {
+            const response = await api.post(
+                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/olvide-contrasena`, 
+                { email }
+            );
+            
+            setStatus({
+                message: response.data.message,
+                type: "success"
+            });
+            
+            // Limpia el campo de email después de enviar con éxito
+            setEmail("");
+        } catch (error) {
+            console.error('Error:', error);
+            setStatus({
+                message: error.response?.data?.error || "Ocurrió un error al procesar la solicitud",
+                type: "error"
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -16,6 +44,12 @@ const OlvideContraseñaPage = () => {
             <main className="olvide-contrasena-main">
                 <h1>Recuperar contraseña</h1>
                 <p className="subtitulo">Ingrese su correo electrónico para restablecer su contraseña.</p>
+                
+                {status.message && (
+                    <div className={`alert ${status.type === "success" ? "alert-success" : "alert-error"}`}>
+                        {status.message}
+                    </div>
+                )}
                 
                 <form onSubmit={handleSubmit} className="olvide-form">
                     <div className="input-group">
@@ -27,9 +61,16 @@ const OlvideContraseñaPage = () => {
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="eagle@scarpe.com"
                             required
+                            disabled={loading}
                         />
                     </div>
-                    <button type="submit" className="enviar-btn">Enviar enlace</button>
+                    <button 
+                        type="submit" 
+                        className="enviar-btn" 
+                        disabled={loading}
+                    >
+                        {loading ? "Enviando..." : "Enviar enlace"}
+                    </button>
                 </form>
 
                 <p className="login-link">

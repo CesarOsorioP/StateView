@@ -16,6 +16,7 @@ import SeriesDetail from "./pages/SeriesDetail";
 import PeliculasPage from "./pages/PeliculasPage";
 import PeliculaDetail from "./pages/PeliculaDetail";
 import OlvideContraseñaPage from "./components/OlvideContraseña/OlvideContraseña";
+import RecuperarContraseña from "./components/OlvideContraseña/RecuperarContraseña";
 
 // Importa el componente de gestión de usuarios (acceso para admin y moderadores)
 import UserManagement from "./components/Admin/UserManagement";
@@ -46,6 +47,7 @@ const App = () => {
           <Route path="/olvide-contrasena" element={<OlvideContraseñaPage />} />
           <Route path="/perfil" element={<PerfilUsuario />} />
           <Route path="/listas" element={<Listas />} /> {/* Dirige a la seccion de las listas del usuario*/}
+          <Route path="recuperar-contrasena/:token" element={<RecuperarContraseña />} />
         </Routes>
         <Footer />
       </Router>

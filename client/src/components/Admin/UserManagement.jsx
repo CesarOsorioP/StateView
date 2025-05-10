@@ -1,6 +1,5 @@
 // src/components/Admin/UserManagement.jsx
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import './userManagement.css';
 import api from '../../api/api'
