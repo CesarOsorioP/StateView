@@ -19,9 +19,7 @@ const RecuperarContraseña = () => {
     useEffect(() => {
         const validateToken = async () => {
             try {
-                await api.get(
-                    `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/reset-password/${token}`
-                );
+                await api.get(`/api/auth/recuperar-contrasena/${token}`);
                 setValidToken(true);
             } catch (error) {
                 setError("El enlace es inválido o ha expirado");
@@ -60,9 +58,10 @@ const RecuperarContraseña = () => {
         
         try {
             await api.post(
-                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/recuperar-contrasena/${token}`,
-                { contraseña: formData.contraseña }
-            );
+                       `/api/auth/recuperar-contrasena/${token}`,
+                       { contraseña: formData.contraseña }
+                   );
+                
             
             setSuccess("Contraseña actualizada correctamente. Redirigiendo...");
             
