@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "./Albumes.css";
+import api from '../../api/api'
+
 
 const Albumes = () => {
   const [albums, setAlbums] = useState([]);
@@ -16,7 +18,7 @@ const Albumes = () => {
     const fetchAlbums = async () => {
       try {
         // Llama al endpoint correcto: /api/albums (en plural, según tu server.js)
-        const response = await axios.get("http://localhost:5000/api/albums");
+        const response = await api.get("/api/albums");
         setAlbums(response.data);
         setLoading(false);
       } catch (error) {

@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { FaHeart, FaRegHeart, FaTv } from 'react-icons/fa';
 import ReviewSection from '../components/Series/ReviewSection';
 import "./pageStyles/SeriesDetail.css";
+import api from '../api/api';
 
 const SeriesDetail = () => {
   const { seriesId } = useParams();
@@ -20,14 +21,14 @@ const SeriesDetail = () => {
   useEffect(() => {
     const fetchSeriesDetail = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/series/${seriesId}`);
+        const response = await api.get(`/api/series/${seriesId}`);
         setSeries(response.data);
         
         // Verificar si el usuario tiene marcado "me gusta" o "ya vista"
         if (user) {
           try {
-            const userPrefsResponse = await axios.get(
-              `http://localhost:5000/api/seriesPreferences/${seriesId}`,
+            const userPrefsResponse = await api.get(
+              `/api/seriesPreferences/${seriesId}`,
               { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
             );
             if (userPrefsResponse.data) {
@@ -65,8 +66,8 @@ const SeriesDetail = () => {
         setWatched(updatedValue);
       }
 
-      await axios.post(
-        `http://localhost:5000/api/seriesPreferences/${seriesId}`,
+      await api.post(
+        `/api/seriesPreferences/${seriesId}`,
         { [type]: updatedValue },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );

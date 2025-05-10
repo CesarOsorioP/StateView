@@ -1,0 +1,121 @@
+/* Estilos principales - Colores como login */
+.olvide-contrasena-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: 'Arial', sans-serif;
+    background-color: #121212; /* Igual que login-page */
+}
+
+.olvide-contrasena-main {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #1e1e1e; /* Igual que login-form-container */
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); /* Sombra más intensa como login */
+}
+
+h1 {
+    color: white;
+    text-align: center;
+    margin-bottom: 1rem;
+    background: linear-gradient(to right, #ff7f50, #6a5acd); /* Gradiente como login-title */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitulo {
+    color: #e0e0e0; /* Color claro como login-label */
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* Formulario */
+.olvide-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.input-group label {
+    color: #e0e0e0; /* Igual que login-label */
+    font-weight: 500;
+}
+
+.input-group input {
+    padding: 12px;
+    border: 2px solid #333; /* Borde más grueso como login-input */
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #252525; /* Fondo input como login */
+    color: white; /* Texto blanco */
+}
+
+.input-group input:focus {
+    border-color: #6a5acd; /* Morado como login */
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(106, 90, 205, 0.3); /* Sombra morada */
+}
+
+.enviar-btn {
+    background: linear-gradient(to right, #6a5acd, #9370db); /* Gradiente como login-button */
+    color: white;
+    padding: 14px; /* Mayor padding como login */
+    border: none;
+    border-radius: 25px; /* Bordes más redondeados */
+    font-size: 16px;
+    font-weight: 600; /* Texto más grueso */
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.enviar-btn:hover {
+    background: linear-gradient(to right, #5a4cbb, #8560db); /* Gradiente hover como login */
+    transform: translateY(-2px); /* Efecto levitar */
+    box-shadow: 0 7px 14px rgba(106, 90, 205, 0.4); /* Sombra morada */
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #aaa; /* Color similar a login-footer */
+}
+
+.login-link a {
+    color: #9370db; /* Morado claro como auth-link */
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-link a:hover {
+    color: #b19cd9; /* Morado más claro al hover */
+    text-decoration: underline;
+}
+
+/* Footer */
+.olvide-footer {
+    background-color: #121212; /* Igual que el fondo principal */
+    color: #777; /* Color similar a login-footer */
+    padding: 1.5rem;
+    margin-top: auto;
+    border-top: 1px solid #333; /* Borde superior sutil */
+}
+
+.quick-links a {
+    color: #9370db; /* Morado claro como enlaces */
+}
+
+.quick-links a:hover {
+    color: #b19cd9; /* Morado más claro */
+}
+
+.copyright {
+    color: #666; /* Texto más discreto */
+}

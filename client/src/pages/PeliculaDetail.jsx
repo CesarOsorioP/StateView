@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fa';
 import ReviewSection from '../components/Peliculas/ReviewSection';
 import "./pageStyles/PeliculaDetail.css";
+import api from '../api/api';
 
 const PeliculaDetail = () => {
   const { movieId } = useParams();
@@ -22,14 +23,14 @@ const PeliculaDetail = () => {
   useEffect(() => {
     const fetchMovieDetail = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/peliculas/${movieId}`);
+        const response = await api.get(`/api/peliculas/${movieId}`);
         setMovie(response.data);
         
         // Verificar si el usuario tiene marcado como "me gusta" o "ya vista"
         if (user) {
           try {
-            const userPrefsResponse = await axios.get(
-              `http://localhost:5000/api/moviePreferences/${movieId}`,
+            const userPrefsResponse = await api.get(
+              `/api/moviePreferences/${movieId}`,
               { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
             );
             if (userPrefsResponse.data) {
@@ -66,8 +67,8 @@ const PeliculaDetail = () => {
         setWatched(updatedValue);
       }
 
-      await axios.post(
-        `http://localhost:5000/api/moviePreferences/${movieId}`,
+      await api.post(
+        `/api/moviePreferences/${movieId}`,
         { [type]: updatedValue },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );

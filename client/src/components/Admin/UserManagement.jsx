@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import './userManagement.css';
+import api from '../../api/api'
 
 const UserManagement = () => {
   const { user } = useAuth();
@@ -24,7 +25,7 @@ const UserManagement = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/persona/');
+        const res = await api.get('/api/persona/');
         setUsers(res.data.data);
         setError('');
       } catch (error) {
@@ -53,14 +54,14 @@ const UserManagement = () => {
     try {
       if (selectedUser) {
         // Actualizar usuario
-        const res = await axios.put(`http://localhost:5000/api/persona/${selectedUser}`, formData);
+        const res = await api.put(`/api/persona/${selectedUser}`, formData);
         setUsers((prevUsers) =>
           prevUsers.map((u) => (u._id === selectedUser ? res.data.data : u))
         );
         setSuccess('Usuario actualizado con éxito');
       } else {
         // Crear nuevo usuario
-        const res = await axios.post('http://localhost:5000/api/persona', formData);
+        const res = await api.post('/api/persona', formData);
         setUsers((prev) => [...prev, res.data.data]);
         setSuccess('Usuario creado con éxito');
         closeModal(); // Cerrar el modal después de crear
@@ -96,7 +97,7 @@ const UserManagement = () => {
     if (window.confirm('¿Estás seguro que deseas eliminar este usuario?')) {
       setLoading(true);
       try {
-        await axios.delete(`http://localhost:5000/api/persona/${userId}`);
+        await api.delete(`/api/persona/${userId}`);
         setUsers((prev) => prev.filter((u) => u._id !== userId));
         setSuccess('Usuario eliminado con éxito');
       } catch (error) {

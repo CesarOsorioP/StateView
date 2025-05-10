@@ -15,11 +15,13 @@ import SeriesPage from "./pages/SeriesPage";
 import SeriesDetail from "./pages/SeriesDetail";
 import PeliculasPage from "./pages/PeliculasPage";
 import PeliculaDetail from "./pages/PeliculaDetail";
+import OlvideContraseñaPage from "./components/OlvideContraseña/OlvideContraseña";
 
 // Importa el componente de gestión de usuarios (acceso para admin y moderadores)
 import UserManagement from "./components/Admin/UserManagement";
 import ContentManagement from "./components/Admin/ContentManager";
 import PerfilUsuario from "./components/Usuario/PerfilUsuario";
+import Listas from "./components/Usuario/MisListas/Listas"; // Importa el componente de listas
 
 const App = () => {
   return (
@@ -41,7 +43,9 @@ const App = () => {
           {/* Ruta para la gestión de usuarios (acceso restringido a Administradores y Moderadores) */}
           <Route path="/gestionar-usuario" element={<UserManagement />} />
           <Route path="/gestionar-contenido" element={<ContentManagement />} />
+          <Route path="/olvide-contrasena" element={<OlvideContraseñaPage />} />
           <Route path="/perfil" element={<PerfilUsuario />} />
+          <Route path="/listas" element={<Listas />} /> {/* Dirige a la seccion de las listas del usuario*/}
         </Routes>
         <Footer />
       </Router>
