@@ -16,11 +16,10 @@ const OlvideContraseñaPage = () => {
         setLoading(true);
         
         try {
-            const response = await api.post(
-                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/olvide-contrasena`, 
-                { email }
-            );
-            
+            const response = await api.post('/api/auth/olvide-contrasena', { email });
+            console.log('Correo enviado:', response.data.message);
+
+
             setStatus({
                 message: response.data.message,
                 type: "success"

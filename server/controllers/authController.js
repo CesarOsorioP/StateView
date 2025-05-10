@@ -127,7 +127,7 @@ async function requestPasswordReset(req, res) {
     await usuario.save();
     
     // Crear URL para restablecer contraseña
-    const resetUrl = `${FRONTEND_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${FRONTEND_URL}/recuperar-contrasena/${resetToken}`;
     
     // Enviar email
     const mailOptions = {
@@ -157,7 +157,7 @@ async function requestPasswordReset(req, res) {
       message: 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.' 
     });
   } catch (error) {
-    console.error('Error al solicitar restablecimiento:', error);
+    console.error('Error al solicitar restablecimiento:', error.message, error.stack);
     res.status(500).json({ error: 'Error al procesar la solicitud' });
   }
 }
