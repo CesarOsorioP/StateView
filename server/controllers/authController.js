@@ -17,7 +17,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const transporter = nodemailer.createTransport({
   host: EMAIL_HOST,
   port: EMAIL_PORT,
-  secure: EMAIL_PORT === 465, // true para puerto 465, false para otros puertos
+  secure: EMAIL_PORT === 465,
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS
@@ -27,7 +27,8 @@ const transporter = nodemailer.createTransport({
 // Función para registrar un usuario
 async function signUp(req, res) {
   try {
-    const { nombre, email, contraseña, imagenPerfil } = req.body;
+    // Se extraen además los nuevos campos (si es que llegan, o se asignarán valores por defecto)
+    const { nombre, email, contraseña, imagenPerfil, meGusta, listas, historial } = req.body;
     const usuarioExistente = await Persona.findOne({ email });
     if (usuarioExistente) {
       return res.status(400).json({ error: 'El email ya está registrado.' });
@@ -39,7 +40,11 @@ async function signUp(req, res) {
       email,
       contraseña: contraseñaHasheada,
       imagenPerfil,
-      rol: 'Usuario'
+      rol: 'Usuario',
+      // Se asignan los arrays, inicializando como vacíos si no se proporcionan datos
+      meGusta: meGusta || [],
+      listas: listas || [],
+      historial: historial || []
     });
     await nuevaPersona.save();
     res.status(201).json({ message: 'Usuario registrado correctamente.' });

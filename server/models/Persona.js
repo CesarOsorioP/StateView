@@ -1,4 +1,3 @@
-// models/Persona.js
 const mongoose = require('mongoose');
 
 // Subesquema para insignias
@@ -34,6 +33,35 @@ const siguiendoSchema = new mongoose.Schema({
   nombre_persona_seguida: { type: String, required: true }
 }, { _id: false });
 
+// Subesquema para "Me gusta"
+const meGustaSchema = new mongoose.Schema({
+  contenido_id: { type: String, required: true },
+  tipo: { type: String, required: true }, // Ej.: 'Pelicula', 'Album', etc.
+  fecha: { type: Date, default: Date.now }
+}, { _id: false });
+
+// Subesquema para las listas creadas por el usuario
+const listaSchema = new mongoose.Schema({
+  lista_id: { type: String, required: true },
+  nombre: { type: String, required: true },
+  descripcion: { type: String },
+  // Ítems que componen la lista
+  items: [{
+    contenido_id: { type: String, required: true },
+    tipo: { type: String, required: true },
+    fecha: { type: Date, default: Date.now }
+  }],
+  fechaCreacion: { type: Date, default: Date.now }
+}, { _id: false });
+
+// Subesquema para Historial (para marcar contenidos ya vistos o escuchados)
+const historialSchema = new mongoose.Schema({
+  contenido_id: { type: String, required: true },
+  // Se puede usar un enum para limitar los tipos o bien, ampliarlo si se requiere
+  tipo: { type: String, enum: ['Pelicula', 'Album'], required: true },
+  fecha: { type: Date, default: Date.now }
+}, { _id: false });
+
 // Esquema principal para Persona
 const personaSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
@@ -51,16 +79,15 @@ const personaSchema = new mongoose.Schema({
     enum: ['Activo', 'Restringido', 'Advertido', 'Desactivado'],
     default: 'Activo'
   },
-  resetPasswordToken: {
-    type: String
-  },
-  resetPasswordExpires: {
-    type: Date
-  },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
   insignias: [insigniaSchema],
   restricciones: [restriccionSchema],
   seguidores: [seguidorSchema],
-  siguiendo: [siguiendoSchema]
+  siguiendo: [siguiendoSchema],
+  meGusta: [meGustaSchema],      // Array de contenidos que le gustan al usuario
+  listas: [listaSchema],         // Array con las listas personalizadas del usuario
+  historial: [historialSchema]   // Historial de contenidos vistos o escuchados
 }, { collection: 'Persona' });
 
 module.exports = mongoose.model('Persona', personaSchema);
