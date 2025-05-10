@@ -1,6 +1,5 @@
 // src/context/AuthContext.js
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
 import api from '../api/api'
 
 const AuthContext = createContext();
@@ -63,7 +62,6 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
-    navigate('/'); // Redirigir a la página de inicio
   };
   
   return (

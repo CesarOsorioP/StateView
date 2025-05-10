@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import "../../styles/Landing.css";
+import api from "../../api/api"; // Importamos la API
 
 // Imágenes de portada para usuarios no autenticados
 const heroImages = [
@@ -11,32 +12,7 @@ const heroImages = [
   require("../../images/bladerunner.jpg"),
 ];
 
-// Datos de ejemplo para contenido cuando el usuario está autenticado
-const popularMovies = [
-  {
-    id: 1,
-    title: "Dune: Part Two",
-    year: 2024,
-    rating: 4.5,
-    poster: require("../../images/dune.avif"),
-  },
-  {
-    id: 2,
-    title: "Interstellar",
-    year: 2014,
-    rating: 4.8,
-    poster: require("../../images/interstellar.png"),
-  },
-  {
-    id: 3,
-    title: "Blade Runner 2049",
-    year: 2017,
-    rating: 4.3,
-    poster: require("../../images/bladerunner.jpg"),
-  },
-  // Agrega más películas según necesites
-];
-
+// Datos de ejemplo para reseñas cuando el usuario está autenticado
 const recentReviews = [
   {
     id: 1,
@@ -68,6 +44,8 @@ const recentReviews = [
 const Landing = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const { user } = useAuth();
+  const [popularMovies, setPopularMovies] = useState([]); // Estado para las películas de la API
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -75,6 +53,79 @@ const Landing = () => {
         setCurrentImage((prevImage) => (prevImage + 1) % heroImages.length);
       }, 5000);
       return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // Modificado para cargar las 5 películas mejor calificadas desde la API
+  useEffect(() => {
+    if (user) {
+      const fetchPeliculas = async () => {
+        try {
+          const response = await api.get("/api/peliculas");
+          
+          if (response.data && response.data.length > 0) {
+            // Ordenamos las películas por calificación de mayor a menor
+            const peliculasOrdenadas = response.data.sort((a, b) => 
+              (b.calificacion || 0) - (a.calificacion || 0)
+            );
+            
+            // Tomamos las 5 primeras (o menos si no hay suficientes)
+            const mejoresPeliculas = peliculasOrdenadas.slice(0, 7).map(pelicula => ({
+              id: pelicula.pelicula_id,
+              title: pelicula.titulo,
+              year: pelicula.fecha_estreno ? new Date(pelicula.fecha_estreno).getFullYear() : "N/A",
+              rating: pelicula.calificacion || 0,
+              poster: pelicula.imagen || require("../../images/dune.avif"), // Usamos la imagen de la API o un fallback
+            }));
+            
+            setPopularMovies(mejoresPeliculas);
+          }
+          setLoading(false);
+        } catch (error) {
+          console.error("Error al cargar películas:", error);
+          // Si falla, mantenemos películas por defecto
+          setPopularMovies([
+            {
+              id: 1,
+              title: "Dune: Part Two",
+              year: 2024,
+              rating: 4.8,
+              poster: require("../../images/dune.avif"),
+            },
+            {
+              id: 2,
+              title: "Interstellar",
+              year: 2014,
+              rating: 4.7,
+              poster: require("../../images/interstellar.png"),
+            },
+            {
+              id: 3,
+              title: "Blade Runner 2049",
+              year: 2017,
+              rating: 4.6,
+              poster: require("../../images/bladerunner.jpg"),
+            },
+            {
+              id: 4,
+              title: "The Shawshank Redemption",
+              year: 1994,
+              rating: 4.9,
+              poster: require("../../images/dune.avif"), // Usar imagen de fallback
+            },
+            {
+              id: 5,
+              title: "Inception",
+              year: 2010,
+              rating: 4.5,
+              poster: require("../../images/interstellar.png"), // Usar imagen de fallback
+            }
+          ]);
+          setLoading(false);
+        }
+      };
+
+      fetchPeliculas();
     }
   }, [user]);
 
@@ -109,33 +160,37 @@ const Landing = () => {
 
       <section className="content-section">
         <div className="section-header">
-          <h3>Popular ahora</h3>
+          <h3>Películas mejor puntuadas</h3>
           <Link to="/popular" className="view-all">
             Ver todo
           </Link>
         </div>
         <div className="movie-grid">
-          {popularMovies.map((movie) => (
-            <div key={movie.id} className="movie-card">
-              <div className="poster-container">
-                <img src={movie.poster} alt={movie.title} className="poster" />
-                <div className="movie-rating">{movie.rating}</div>
+          {loading ? (
+            <div className="loading">Cargando películas...</div>
+          ) : (
+            popularMovies.map((movie) => (
+              <div key={movie.id} className="movie-card">
+                <div className="poster-container">
+                  <img src={movie.poster} alt={movie.title} className="poster" />
+                  <div className="movie-rating">{movie.rating.toFixed(1)}</div>
+                </div>
+                <h4>{movie.title}</h4>
+                <p className="movie-year">{movie.year}</p>
+                <div className="card-actions">
+                  <button className="action-button">
+                    <i className="far fa-heart"></i>
+                  </button>
+                  <button className="action-button">
+                    <i className="far fa-bookmark"></i>
+                  </button>
+                  <button className="action-button">
+                    <i className="far fa-star"></i>
+                  </button>
+                </div>
               </div>
-              <h4>{movie.title}</h4>
-              <p className="movie-year">{movie.year}</p>
-              <div className="card-actions">
-                <button className="action-button">
-                  <i className="far fa-heart"></i>
-                </button>
-                <button className="action-button">
-                  <i className="far fa-bookmark"></i>
-                </button>
-                <button className="action-button">
-                  <i className="far fa-star"></i> Calificar
-                </button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 

@@ -9,6 +9,17 @@ const Listas = () => {
   const [nombreEditado, setNombreEditado] = useState('');
   const [error, setError] = useState('');
   const [listaAEditar, setListaAEditar] = useState(null);
+  const [categoriaActiva, setCategoriaActiva] = useState('todas');
+
+  // Definir las categorías disponibles
+  const categorias = [
+    { id: 'todas', nombre: 'Mis Listas', icono: '📋', color: '#5E9DFF' },
+    { id: 'ver', nombre: 'Ver', icono: '👁️', color: '#00FF00' },
+    { id: 'me-gusta', nombre: 'Me gusta', icono: '❤️', color: '#FF5555' },
+    { id: 'vistas', nombre: 'Vistas', icono: '✓', color: '#4387FF' },
+    { id: 'no-me-gustaron', nombre: 'No me gustaron', icono: '👎', color: '#FF8C00' },
+    { id: 'por-ver', nombre: 'Por ver', icono: '🕒', color: '#9D4EDD' }
+  ];
 
   const handleCrearLista = () => {
     if (!nombreLista.trim()) {
@@ -20,7 +31,8 @@ const Listas = () => {
       id: Date.now(),
       nombre: nombreLista,
       fechaCreacion: new Date().toLocaleDateString(),
-      items: []
+      items: [],
+      categoria: categoriaActiva === 'todas' ? 'ver' : categoriaActiva // Asignar categoría por defecto
     };
     
     setListas([...listas, nuevaLista]);
@@ -50,6 +62,10 @@ const Listas = () => {
     }
   };
 
+  const handleCambiarCategoria = (categoria) => {
+    setCategoriaActiva(categoria);
+  };
+
   const handleSeleccionarLista = (lista) => {
     console.log("Lista seleccionada:", lista);
   };
@@ -58,6 +74,20 @@ const Listas = () => {
     setListaAEditar(lista);
     setNombreEditado(lista.nombre);
     setShowEditModal(true);
+  };
+
+  // Filtrar listas según la categoría seleccionada
+  const listasFiltradas = categoriaActiva === 'todas' 
+    ? listas 
+    : listas.filter(lista => lista.categoria === categoriaActiva);
+
+  // Cambiar categoría de una lista
+  const cambiarCategoriaLista = (listaId, nuevaCategoria) => {
+    setListas(listas.map(lista => 
+      lista.id === listaId 
+        ? { ...lista, categoria: nuevaCategoria } 
+        : lista
+    ));
   };
 
   return (
@@ -74,9 +104,24 @@ const Listas = () => {
 
       <div className="gradient-divider"></div>
 
-      {listas.length === 0 ? (
+      {/* Navegación de categorías */}
+      <div className="categorias-nav">
+        {categorias.map(categoria => (
+          <div 
+            key={categoria.id} 
+            className={`categoria-item ${categoriaActiva === categoria.id ? 'activo' : ''}`}
+            onClick={() => handleCambiarCategoria(categoria.id)}
+            style={categoriaActiva === categoria.id ? {borderColor: categoria.color} : {}}
+          >
+            <span className="categoria-icon" style={{color: categoria.color}}>{categoria.icono}</span>
+            <span className="categoria-text">{categoria.nombre}</span>
+          </div>
+        ))}
+      </div>
+
+      {listasFiltradas.length === 0 ? (
         <div className="empty-state">
-          <h2>Aún no tienes ninguna lista</h2>
+          <h2>{categoriaActiva === 'todas' ? 'Aún no tienes ninguna lista' : `No tienes listas en la categoría "${categorias.find(c => c.id === categoriaActiva)?.nombre}"`}</h2>
           <p>¿Deseas crear una?</p>
           <button 
             className="create-button" 
@@ -87,32 +132,51 @@ const Listas = () => {
         </div>
       ) : (
         <div className="listas-container">
-          {listas.map((lista) => (
+          {listasFiltradas.map((lista) => (
             <div key={lista.id} className="lista-card">
               <div className="lista-info" onClick={() => handleSeleccionarLista(lista)}>
                 <h3>{lista.nombre}</h3>
                 <p>Creada el: {lista.fechaCreacion}</p>
                 <p>{lista.items.length} elementos</p>
+                <div className="lista-categoria-badge" style={{backgroundColor: categorias.find(c => c.id === lista.categoria)?.color}}>
+                  {categorias.find(c => c.id === lista.categoria)?.nombre}
+                </div>
               </div>
               <div className="lista-actions">
-                <button 
-                  className="action-button edit"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    abrirModalEdicion(lista);
-                  }}
-                >
-                  Editar
-                </button>
-                <button 
-                  className="action-button delete"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEliminarLista(lista.id);
-                  }}
-                >
-                  Eliminar
-                </button>
+                <div className="lista-categoria-selector">
+                  <span>Mover a: </span>
+                  <select 
+                    value={lista.categoria}
+                    onChange={(e) => cambiarCategoriaLista(lista.id, e.target.value)}
+                    className="categoria-select"
+                  >
+                    {categorias.slice(1).map(categoria => (
+                      <option key={categoria.id} value={categoria.id}>
+                        {categoria.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="action-buttons-container">
+                  <button 
+                    className="action-button edit"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      abrirModalEdicion(lista);
+                    }}
+                  >
+                    Editar
+                  </button>
+                  <button 
+                    className="action-button delete"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEliminarLista(lista.id);
+                    }}
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -148,6 +212,22 @@ const Listas = () => {
                   className="form-input"
                 />
                 {error && <p className="error-message">{error}</p>}
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="categoriaLista">Categoría:</label>
+                <select
+                  id="categoriaLista"
+                  value={categoriaActiva === 'todas' ? 'ver' : categoriaActiva}
+                  onChange={(e) => setCategoriaActiva(e.target.value)}
+                  className="form-input"
+                >
+                  {categorias.slice(1).map(categoria => (
+                    <option key={categoria.id} value={categoria.id}>
+                      {categoria.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             
@@ -201,6 +281,22 @@ const Listas = () => {
                   className="form-input"
                 />
                 {error && <p className="error-message">{error}</p>}
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="categoriaEditada">Categoría:</label>
+                <select
+                  id="categoriaEditada"
+                  value={listaAEditar?.categoria || 'ver'}
+                  onChange={(e) => setListaAEditar({...listaAEditar, categoria: e.target.value})}
+                  className="form-input"
+                >
+                  {categorias.slice(1).map(categoria => (
+                    <option key={categoria.id} value={categoria.id}>
+                      {categoria.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             
