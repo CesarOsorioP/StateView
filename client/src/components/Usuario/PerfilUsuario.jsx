@@ -1,8 +1,8 @@
 // src/components/Profile/PerfilUsuario.jsx
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import './PerfilUsuario.css';
+import api from '../../api/api';
 
 const PerfilUsuario = () => {
   const { user, updateUserContext } = useAuth();
@@ -10,6 +10,7 @@ const PerfilUsuario = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [userData, setUserData] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -22,6 +23,9 @@ const PerfilUsuario = () => {
   // Cargar datos del usuario actual
   useEffect(() => {
     if (user) {
+      // Guardar una copia del usuario en el estado local
+      setUserData(user);
+      
       setFormData({
         nombre: user.nombre || '',
         email: user.email || '',
@@ -34,7 +38,8 @@ const PerfilUsuario = () => {
         id: user._id || user.id,
         nombre: user.nombre,
         email: user.email,
-        rol: user.rol
+        rol: user.rol,
+        imagenPerfil: user.imagenPerfil
       });
     } else {
       console.log('Usuario no disponible en el contexto de autenticación');
@@ -83,17 +88,35 @@ const PerfilUsuario = () => {
       console.log('Actualizando usuario con ID:', userId);
       
       // Actualizar usuario
-      const res = await axios.put(`http://localhost:5000/api/persona/${userId}`, updateData);
+      const res = await api.put(`/api/persona/${userId}`, updateData);
+      
+      // Verificar la respuesta del servidor
+      if (!res.data || !res.data.data) {
+        console.error('Respuesta del servidor inválida:', res);
+        throw new Error('Respuesta inválida del servidor');
+      }
+      
+      console.log('Respuesta del servidor:', res.data);
+      
+      // Actualizar el estado local con los nuevos datos
+      const updatedUser = res.data.data;
+      
+      // Actualizar el estado local primero
+      setUserData(updatedUser);
       
       // Actualizar el contexto de autenticación con los nuevos datos del usuario
       if (updateUserContext) {
-        updateUserContext(res.data.data);
+        // Asegurarse de que mantenemos todos los datos originales y solo actualizamos los nuevos
+        updateUserContext({
+          ...user,
+          ...updatedUser
+        });
       }
       
       setSuccess('Perfil actualizado con éxito');
       setIsEditing(false);
     } catch (error) {
-      const errorMsg = error.message || 'Error desconocido';
+      const errorMsg = error.response?.data?.message || error.message || 'Error desconocido';
       setError(`Error actualizando el perfil: ${errorMsg}`);
       console.error('Error al actualizar perfil:', error);
     } finally {
@@ -109,12 +132,12 @@ const PerfilUsuario = () => {
   // Cancelar edición
   const cancelEdit = () => {
     // Restaurar datos originales del usuario
-    if (user) {
+    if (userData) {
       setFormData({
-        nombre: user.nombre || '',
-        email: user.email || '',
+        nombre: userData.nombre || '',
+        email: userData.email || '',
         contraseña: '',
-        imagenPerfil: user.imagenPerfil || ''
+        imagenPerfil: userData.imagenPerfil || ''
       });
     }
     setIsEditing(false);
@@ -123,7 +146,7 @@ const PerfilUsuario = () => {
   };
 
   // Si todavía no tenemos el usuario cargado, podemos mostrar un mensaje "Cargando..."
-  if (!user) {
+  if (!userData) {
     return (
       <div className="profile-page">
         <div className="loading-block">
@@ -135,8 +158,13 @@ const PerfilUsuario = () => {
 
   // Función para obtener el ID del usuario (puede ser _id o id según el backend)
   const getUserId = () => {
-    if (!user) return '';
-    return user._id || user.id || '';
+    if (!userData) return '';
+    return userData._id || userData.id || '';
+  };
+
+  // Función para verificar si una URL es válida
+  const isValidImageUrl = (url) => {
+    return url && url.trim() !== '';
   };
 
   return (
@@ -160,10 +188,14 @@ const PerfilUsuario = () => {
       
       <div className="perfil-container">
         <div className="perfil-imagen">
-          {user && user.imagenPerfil ? (
+          {isValidImageUrl(userData.imagenPerfil) ? (
             <img 
-              src={user.imagenPerfil} 
+              src={userData.imagenPerfil} 
               alt="Imagen de perfil" 
+              onError={(e) => {
+                console.log('Error cargando imagen:', e);
+                e.target.src = "https://via.placeholder.com/180x180.png?text=Profile";
+              }}
             />
           ) : (
             <img 
@@ -252,17 +284,17 @@ const PerfilUsuario = () => {
           <div className="perfil-detalles">
             <div className="detalle-item">
               <h3>Nombre</h3>
-              <p>{user && user.nombre}</p>
+              <p>{userData.nombre || 'No especificado'}</p>
             </div>
             
             <div className="detalle-item">
               <h3>Email</h3>
-              <p>{user && user.email}</p>
+              <p>{userData.email || 'No especificado'}</p>
             </div>
             
             <div className="detalle-item">
               <h3>Rol</h3>
-              <p>{user && user.rol}</p>
+              <p>{userData.rol || 'No especificado'}</p>
             </div>
             
             <div className="detalle-item">

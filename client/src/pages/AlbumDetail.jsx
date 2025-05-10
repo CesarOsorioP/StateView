@@ -24,7 +24,8 @@ const AlbumDetail = () => {
       try {
         const response = await api.get(`/api/albums/${albumId}`);
         setAlbum(response.data);
-        
+        console.log("Datos del álbum recibidos:", response.data);
+
         // Verificar si el usuario tiene marcado como "me gusta" o "ya escuchado"
         if (user) {
           try {
@@ -46,6 +47,7 @@ const AlbumDetail = () => {
         setLoadingAlbum(false);
       }
     };
+
     fetchAlbumDetail();
   }, [albumId, user]);
 
@@ -88,7 +90,7 @@ const AlbumDetail = () => {
           <img src={album.portada} alt={album.nombre} className="album-cover" />
           <div className="album-meta">
             <h2>{album.nombre}</h2>
-            <p><strong>Artista: </strong>{album.artista?.nombre}</p>
+            <p><strong>Artista: </strong>{album.artista?.nombre || 'Desconocido'}</p>
             <p>
               <strong>Fecha de estreno: </strong>
               {new Date(album.fecha_estreno).toLocaleDateString("es-ES", {

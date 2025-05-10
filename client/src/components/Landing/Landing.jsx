@@ -154,14 +154,14 @@ const Landing = () => {
   const AuthenticatedView = () => (
     <div className="authenticated-landing">
       <div className="welcome-banner">
-        <h2>Bienvenido de vuelta, {user.email.split("@")[0]}</h2>
+        <h2>Bienvenido, {user.nombre.split("@")[0]}</h2>
         <p>Continúa explorando y compartiendo tus opiniones</p>
       </div>
 
       <section className="content-section">
         <div className="section-header">
           <h3>Películas mejor puntuadas</h3>
-          <Link to="/popular" className="view-all">
+          <Link to="/peliculas" className="view-all">
             Ver todo
           </Link>
         </div>

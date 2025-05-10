@@ -88,8 +88,7 @@ const SeriesDetail = () => {
             <img src={series.poster} alt={series.titulo} className="series-cover" />
             <div className="series-meta">
               <h2>{series.titulo}</h2>
-              <p><strong>Creador: </strong>{series.creador}</p>
-              <p><strong>Plataformas: </strong>{series.plataformas}</p>
+              <p><strong>Creador: </strong>{series.creadores}</p>
               <p><strong>Género: </strong>{series.genero}</p>
               
               {/* Mostrar la cantidad de temporadas */}
