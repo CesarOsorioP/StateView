@@ -3,13 +3,20 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import "../../styles/Navbar.css";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate(-1); // Navega al estado anterior
+  };
 
   const handleLogout = () => {
     logout();
+    navigate('/')
   };
 
   const toggleUserMenu = () => {
