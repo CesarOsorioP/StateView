@@ -1,7 +1,7 @@
 // routes/authRoutes.js
 const express = require('express');
 const router = express.Router();
-const { signUp, login, getCurrentUser } = require('../controllers/authController');
+const { signUp, login, getCurrentUser, requestPasswordReset, validateResetToken, resetPassword } = require('../controllers/authController');
 
 router.post('/signup', signUp);
 router.post('/login', login);
@@ -9,8 +9,8 @@ router.post('/login', login);
 router.get('/me', getCurrentUser);
 
 // Nuevas rutas para restablecimiento de contraseña
-router.post('/olvide-contrasena', authController.requestPasswordReset);
-router.get('/recuperar-contrasena/:token', authController.validateResetToken);
-router.post('/recuperar-contrasena/:token', authController.resetPassword);
+router.post('/olvide-contrasena', requestPasswordReset);
+router.get('/recuperar-contrasena/:token', validateResetToken);
+router.post('/recuperar-contrasena/:token', resetPassword);
 
 module.exports = router;
