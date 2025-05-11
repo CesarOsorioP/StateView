@@ -53,13 +53,17 @@ export const AuthProvider = ({ children }) => {
       
       // Almacenamos el token
       localStorage.setItem("token", response.data.token);
-      // Asignamos la propiedad 'rol' para mayor consistencia
-      setUser({
+      
+      // Creamos el objeto userData con los datos del usuario
+      const userData = {
         id: response.data.id,
         email: identifier,
         rol: response.data.tipoUsuario, // Mapea a 'rol'
         nombre: response.data.nombre
-      });
+      };
+      
+      // Actualizamos el estado del usuario
+      setUser(userData);
       
       // Mostrar en la consola el token y el tipo de usuario
       console.log("Token recibido:", response.data.token);
@@ -79,7 +83,6 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userData');
-    window.profileImageCacheBuster = null;
     setUser(null);
   };
   
@@ -91,11 +94,25 @@ export const AuthProvider = ({ children }) => {
     }));
   };
   
+  const value = {
+    user,
+    loading,
+    login,
+    logout,
+    updateUserContext
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updateUserContext }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+  }
+  return context;
+};
