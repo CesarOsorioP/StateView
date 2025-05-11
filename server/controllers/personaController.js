@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const Persona = require('../models/Persona');
 
@@ -73,7 +74,7 @@ async function editarPersona(req, res) {
     const { id } = req.params;
     const actualizacion = { ...req.body };
 
-    // Si se actualiza la contraseña, vuelve a hashearla
+    // Si se actualiza la contraseña, vuelve a hashearla.
     if (req.body.contraseña) {
       const saltRounds = 10;
       actualizacion.contraseña = await bcrypt.hash(req.body.contraseña, saltRounds);
@@ -90,16 +91,24 @@ async function editarPersona(req, res) {
 }
 
 /**
- * Elimina una persona de la base de datos.
+ * Actualiza el estado de una persona a cualquiera de los valores permitidos.
+ * Se espera recibir en el body:
+ *    { estado: "Activo" | "Restringido" | "Advertido" | "Desactivado" }
  */
 async function actualizarEstadoPersona(req, res) {
   try {
     const { id } = req.params;
-    // Aquí decidimos cambiar el estado a "Desactivado"
+    const { estado } = req.body;
+    const estadosPermitidos = ['Activo', 'Restringido', 'Advertido', 'Desactivado'];
+    
+    if (!estado || !estadosPermitidos.includes(estado)) {
+      return res.status(400).json({ error: `Estado no válido. Debe ser uno de: ${estadosPermitidos.join(', ')}` });
+    }
+
     const personaActualizada = await Persona.findByIdAndUpdate(
       id,
-      { estado: "Desactivado" },
-      { new: true } // Devuelve el documento actualizado
+      { estado },
+      { new: true } // Retorna el documento actualizado
     );
 
     if (!personaActualizada) {
@@ -114,10 +123,11 @@ async function actualizarEstadoPersona(req, res) {
     res.status(500).json({ error: error.message });
   }
 }
+
 module.exports = {
   crearPersona,
   obtenerPersonas,
-  obtenerPersona, // Función corregida (debe ser singular)
+  obtenerPersona,
   editarPersona,
   actualizarEstadoPersona,
 };

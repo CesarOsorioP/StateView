@@ -22,7 +22,7 @@ router.get('/:id', obtenerPersona);
 // Ruta para editar la información de una persona (actualización)
 router.put('/:id', editarPersona);
 
-// Ruta para actualizar el estado de una persona (cambiar de Activo a Desactivado)
+// Ruta para actualizar el estado de una persona a cualquiera de los valores definidos
 router.put('/:id/estado', actualizarEstadoPersona);
 
 module.exports = router;
