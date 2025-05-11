@@ -11,8 +11,10 @@ const PerfilUsuario = () => {
   const [success, setSuccess] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState(null);
-  // cacheBuster se actualizará tras cada guardado para forzar la recarga de la imagen
-  const [cacheBuster, setCacheBuster] = useState(Date.now());
+  
+  // Usamos una constante global para el cacheBuster en lugar de un estado
+  const globalCacheBuster = window.profileImageCacheBuster || Date.now();
+  
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
@@ -89,15 +91,23 @@ const PerfilUsuario = () => {
       const updatedUser = res.data.data;
       setUserData(updatedUser);
 
-      // Actualizar el contexto de autenticación para que la imagen se muestre actualizada en toda la app
+      // Actualizar el contexto de autenticación global
       if (updateUserContext) {
         updateUserContext({
-          ...user,
           ...updatedUser
         });
+        
+        // Actualizar el cacheBuster global
+        window.profileImageCacheBuster = Date.now();
+        
+        // Actualizar también en localStorage para persistencia entre recargas
+        const userData = {
+          ...user,
+          ...updatedUser
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
       }
-      // Actualizar cacheBuster para forzar la recarga de las imágenes
-      setCacheBuster(Date.now());
+      
       setSuccess("Perfil actualizado con éxito");
       setIsEditing(false);
     } catch (err) {
@@ -140,13 +150,19 @@ const PerfilUsuario = () => {
     );
   }
 
+  // Función para obtener la URL de la imagen con cacheBuster
+  const getImageUrl = (url) => {
+    if (!isValidImageUrl(url)) return null;
+    return `${url}?v=${window.profileImageCacheBuster || globalCacheBuster}`;
+  };
+
   return (
     <div className="perfil-usuario-page">
       {/* Banner */}
       <div className="perfil-banner">
         {isValidImageUrl(userData.imagenBanner) ? (
           <img
-            src={`${userData.imagenBanner}?v=${cacheBuster}`}
+            src={getImageUrl(userData.imagenBanner)}
             alt="Banner del perfil"
             onError={(e) => {
               console.error("Error cargando banner:", e);
@@ -179,7 +195,7 @@ const PerfilUsuario = () => {
         <div className="perfil-imagen">
           {isValidImageUrl(userData.imagenPerfil) ? (
             <img
-              src={`${userData.imagenPerfil}?v=${cacheBuster}`}
+              src={getImageUrl(userData.imagenPerfil)}
               alt="Imagen de perfil"
               onError={(e) => {
                 console.error("Error cargando imagen de perfil:", e);

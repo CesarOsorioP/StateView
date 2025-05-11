@@ -1,4 +1,4 @@
-/* AlbumDetail.css - Versión Optimizada */
+/* AlbumDetail.css - Versión corregida */
 .album-detail-page {
   padding: 25px 15px;
   max-width: 1000px;
@@ -38,6 +38,7 @@
   color: blueviolet;
   margin-bottom: 15px;
   margin-top: 0;
+  word-break: break-word;
 }
 
 .album-meta p {
@@ -50,7 +51,7 @@
   color: #aaa;
 }
 
-/* Botones de acción (Me gusta y Ya escuchado) */
+/* Botones de acción (Me gusta y Ya escuchado) - CORREGIDO */
 .album-actions {
   display: flex;
   gap: 15px;
@@ -68,6 +69,9 @@
   color: #ddd;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-width: 200px; /* Asegura un ancho mínimo para los botones */
+  white-space: nowrap; /* Evitar saltos de línea */
+  justify-content: center; /* Centrar contenido */
 }
 
 .action-button:hover {
@@ -83,6 +87,14 @@
 
 .action-button svg {
   font-size: 1.2rem;
+  flex-shrink: 0; /* Evita que el ícono se encoja */
+}
+
+.action-button span {
+  display: inline-block;
+  overflow: visible; /* Asegura que el texto sea visible */
+  text-overflow: clip; /* Desactiva la elipsis en caso de overflow */
+  white-space: nowrap; /* Mantiene el texto en una línea */
 }
 
 .action-button.active svg {
@@ -150,6 +162,10 @@ hr {
   .album-actions {
     justify-content: center;
   }
+  
+  .action-button {
+    min-width: 140px; /* Ligeramente más ancho en tablet */
+  }
 }
 
 @media (max-width: 576px) {
@@ -187,6 +203,8 @@ hr {
   
   .action-button {
     width: 100%;
+    max-width: 200px; /* Control máximo de ancho */
+    min-width: 160px; /* Ancho mínimo para mostrar todo el texto */
     justify-content: center;
   }
 }
@@ -206,5 +224,10 @@ hr {
   
   .album-meta p {
     font-size: 0.9rem;
+  }
+  
+  .action-button {
+    font-size: 0.9rem;
+    min-width: 140px; /* Ajustado para pantallas muy pequeñas */
   }
 }

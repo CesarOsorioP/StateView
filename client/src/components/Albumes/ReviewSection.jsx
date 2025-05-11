@@ -4,6 +4,7 @@ import {
   FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
+import ReviewFilters from './ReviewFilters';
 import ReportModal from '../Reportes/ReportModal';
 import "./reviewSection.css";
 import api from '../../api/api'
@@ -11,6 +12,7 @@ import api from '../../api/api'
 const ReviewSection = ({ albumId, album }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
+  const [filteredReviews, setFilteredReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
   // Estados para crear reseña
@@ -26,6 +28,10 @@ const ReviewSection = ({ albumId, album }) => {
   
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
+
+  // Estados para filtros
+  const [sortOption, setSortOption] = useState('newest');
+  const [ratingFilter, setRatingFilter] = useState('all');
 
  // Estados para modal de reporte
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -50,6 +56,31 @@ const ReviewSection = ({ albumId, album }) => {
   useEffect(() => {
     fetchReviews();
   }, [fetchReviews]);
+
+  // Aplicar filtros a las reseñas
+  useEffect(() => {
+    if (reviews.length > 0) {
+      let tempReviews = [...reviews];
+      
+      // Aplicar filtro por valoración
+      if (ratingFilter === 'highRated') {
+        tempReviews = tempReviews.filter(review => review.rating >= 3.5);
+      } else if (ratingFilter === 'lowRated') {
+        tempReviews = tempReviews.filter(review => review.rating < 3.5);
+      }
+      
+      // Aplicar ordenamiento por fecha
+      tempReviews.sort((a, b) => {
+        const dateA = new Date(a.fechaReview);
+        const dateB = new Date(b.fechaReview);
+        return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
+      });
+      
+      setFilteredReviews(tempReviews);
+    } else {
+      setFilteredReviews([]);
+    }
+  }, [reviews, sortOption, ratingFilter]);
 
   // Determinar si el usuario ya tiene una reseña para este álbum
   const currentUserId = user?.id || user?._id;
@@ -392,12 +423,22 @@ const ReviewSection = ({ albumId, album }) => {
         </div>
       )}
 
+      {/* Componente de filtros */}
+      {filteredReviews.length > 0 && (
+        <ReviewFilters 
+          sortOption={sortOption}
+          setSortOption={setSortOption}
+          ratingFilter={ratingFilter}
+          setRatingFilter={setRatingFilter}
+        />
+      )}
+
       {/* Mostrar todas las reseñas (excluyendo la del usuario actual para evitar duplicados) */}
       {loadingReviews ? (
         <p>Cargando reseñas...</p>
-      ) : reviews.length > 0 ? (
+      ) : filteredReviews.length > 0 ? (
         <div className="reviews-list">
-          {reviews
+          {filteredReviews
             .filter(review => !(user && ((typeof review.userId === 'object' && review.userId._id === currentUserId) || 
                                        (typeof review.userId === 'string' && review.userId === currentUserId))))
             .map((review) => (
@@ -458,6 +499,10 @@ const ReviewSection = ({ albumId, album }) => {
             ))}
         </div>
       ) : (
+        <p className="no-reviews">No hay reseñas que coincidan con los filtros aplicados.</p>
+      )}
+
+      {reviews.length === 0 && !loadingReviews && (
         <p className="no-reviews">No hay reseñas aún. ¡Sé el primero en reseñar este álbum!</p>
       )}
 

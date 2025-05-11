@@ -1,13 +1,18 @@
-// src/components/Videojuegos.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import api from '../../api/api'
+import api from '../../api/api';
 
 const Videojuegos = () => {
   const [videojuegos, setVideojuegos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [plataformas, setPlataformas] = useState([]);
   const [filters, setFilters] = useState({
     year: "all",
+    yearRange: {
+      from: "",
+      to: ""
+    },
+    plataforma: "all",
     sort: "asc" // "asc" = de más antiguos a más recientes, "desc" = lo inverso
   });
 
@@ -15,7 +20,30 @@ const Videojuegos = () => {
     const fetchVideojuegos = async () => {
       try {
         const response = await api.get("/api/videojuegos");
-        setVideojuegos(response.data);
+        const videojuegosData = response.data;
+        setVideojuegos(videojuegosData);
+        
+        // Extraer plataformas únicas
+        const plataformasUnicas = new Set();
+        
+        videojuegosData.forEach(videojuego => {
+          if (videojuego.plataformas) {
+            // Asumiendo que plataformas puede ser un string con múltiples plataformas separadas por comas
+            const plataformasList = videojuego.plataformas.split(',').map(p => p.trim());
+            plataformasList.forEach(plataforma => {
+              if (plataforma) {
+                plataformasUnicas.add(plataforma);
+              }
+            });
+          }
+        });
+        
+        const plataformasArray = Array.from(plataformasUnicas).map(nombre => ({
+          id: nombre,
+          nombre: nombre
+        }));
+        
+        setPlataformas(plataformasArray);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching videojuegos:", error);
@@ -26,8 +54,7 @@ const Videojuegos = () => {
     fetchVideojuegos();
   }, []);
 
-  // Extrae los años únicos a partir de los videojuegos obtenidos
-  // Se asume que 'fecha_lanzamiento' es un string (por ejemplo "2020" o "2020-09-17")
+  // Extrae los años únicos para el selector de año individual
   const years = ["all", ...new Set(videojuegos.map(videojuego => {
     let year = videojuego.fecha_lanzamiento;
     if (year && year.length > 4) {
@@ -36,15 +63,47 @@ const Videojuegos = () => {
     return year;
   }).filter(Boolean))];
 
-  // Aplica el filtro de año
+  // Encuentra el año mínimo y máximo para el selector de rango
+  const allYears = videojuegos
+    .map(videojuego => videojuego.fecha_lanzamiento ? parseInt(videojuego.fecha_lanzamiento.substring(0, 4)) : null)
+    .filter(Boolean);
+  
+  const minYear = allYears.length > 0 ? Math.min(...allYears) : 1900;
+  const maxYear = allYears.length > 0 ? Math.max(...allYears) : new Date().getFullYear();
+
+  // Aplica todos los filtros
   const filteredVideojuegos = videojuegos.filter(videojuego => {
-    if (filters.year !== "all") {
-      let gameYear = videojuego.fecha_lanzamiento;
-      if (gameYear && gameYear.length > 4) {
-        gameYear = gameYear.substring(0, 4);
-      }
-      return gameYear === filters.year;
+    // Extraer año del videojuego
+    let gameYear = videojuego.fecha_lanzamiento;
+    if (gameYear && gameYear.length > 4) {
+      gameYear = gameYear.substring(0, 4);
     }
+    const yearNum = gameYear ? parseInt(gameYear) : 0;
+    
+    // Filtro por año específico
+    if (filters.year !== "all" && gameYear !== filters.year) {
+      return false;
+    }
+    
+    // Filtro por rango de años
+    if (filters.year === "all" && 
+        ((filters.yearRange.from && yearNum < parseInt(filters.yearRange.from)) || 
+         (filters.yearRange.to && yearNum > parseInt(filters.yearRange.to)))) {
+      return false;
+    }
+    
+    // Filtro por plataforma
+    if (filters.plataforma !== "all") {
+      if (!videojuego.plataformas) {
+        return false;
+      }
+      
+      const plataformasList = videojuego.plataformas.split(',').map(p => p.trim());
+      if (!plataformasList.includes(filters.plataforma)) {
+        return false;
+      }
+    }
+    
     return true;
   });
 
@@ -57,10 +116,29 @@ const Videojuegos = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === "from" || name === "to") {
+      setFilters(prev => ({
+        ...prev,
+        yearRange: {
+          ...prev.yearRange,
+          [name]: value
+        }
+      }));
+    } else {
+      if (name === "year" && value !== "all") {
+        setFilters(prev => ({
+          ...prev,
+          [name]: value,
+          yearRange: { from: "", to: "" }
+        }));
+      } else {
+        setFilters(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
+    }
   };
 
   return (
@@ -71,33 +149,99 @@ const Videojuegos = () => {
       </div>
 
       <div className="filters-container">
-        <div className="filter-group">
-          <label>Año</label>
-          <select 
-            name="year" 
-            value={filters.year} 
-            onChange={handleFilterChange}
-            className="filter-select"
-          >
-            {years.map(year => (
-              <option key={year} value={year}>
-                {year === "all" ? "Todos los años" : year}
-              </option>
-            ))}
-          </select>
-        </div>
+        <div className="filter-section">
+          <h3>Filtros</h3>
+          
+          <div className="filter-group">
+            <label>Año</label>
+            <select 
+              name="year" 
+              value={filters.year} 
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              {years.map(year => (
+                <option key={year || 'unknown'} value={year || ''}>
+                  {year === "all" ? "Todos los años" : (year || 'Año desconocido')}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {filters.year === "all" && (
+            <div className="filter-group-range">
+              <div className="range-inputs">
+                <input
+                  type="number"
+                  name="from"
+                  placeholder="Desde"
+                  min={minYear}
+                  max={maxYear}
+                  value={filters.yearRange.from}
+                  onChange={handleFilterChange}
+                  className="filter-input"
+                />
+                <span>-</span>
+                <input
+                  type="number"
+                  name="to"
+                  placeholder="Hasta"
+                  min={minYear}
+                  max={maxYear}
+                  value={filters.yearRange.to}
+                  onChange={handleFilterChange}
+                  className="filter-input"
+                />
+              </div>
+            </div>
+          )}
 
-        <div className="filter-group">
-          <label>Ordenar por</label>
-          <select 
-            name="sort" 
-            value={filters.sort} 
-            onChange={handleFilterChange}
-            className="filter-select"
+          <div className="filter-group">
+            <label>Plataforma</label>
+            <select 
+              name="plataforma" 
+              value={filters.plataforma} 
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              <option value="all">Todas las plataformas</option>
+              {plataformas
+                .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                .map(plataforma => (
+                  <option 
+                    key={plataforma.id} 
+                    value={plataforma.id}
+                  >
+                    {plataforma.nombre}
+                  </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Ordenar por</label>
+            <select 
+              name="sort" 
+              value={filters.sort} 
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              <option value="asc">Más antiguos</option>
+              <option value="desc">Más recientes</option>
+            </select>
+          </div>
+          
+          <button 
+            className="reset-filters-btn"
+            onClick={() => setFilters({
+              year: "all",
+              yearRange: { from: "", to: "" },
+              plataforma: "all",
+              sort: "asc"
+            })}
           >
-            <option value="asc">Más antiguos</option>
-            <option value="desc">Más recientes</option>
-          </select>
+            Limpiar filtros
+          </button>
         </div>
       </div>
 
@@ -114,7 +258,7 @@ const Videojuegos = () => {
 
           <div className="content-grid">
             {sortedVideojuegos.map(videojuego => (
-              <div key={videojuego.videojuego_id} className="content-card">
+              <div key={videojuego.videojuego_id || videojuego.juego_id} className="content-card">
                 <Link to={`/videojuegos/${videojuego.juego_id}`} className="content-link">
                   <div className="poster-container">
                     <img src={videojuego.imagen} alt={videojuego.titulo} className="poster" />
@@ -125,16 +269,6 @@ const Videojuegos = () => {
                     <p className="content-artist">{videojuego.desarrolladora}</p>
                   </div>
                 </Link>
-                <div className="content-actions">
-                  {/* Enlace para ir a la página de reseñas para este videojuego */}
-                  <Link 
-                    to={`/videojuegos/${videojuego.videojuego_id}/reviews`} 
-                    className="action-button" 
-                    title="Reseñar videojuego"
-                  >
-                    <i className="far fa-star"></i>
-                  </Link>
-                </div>
               </div>
             ))}
           </div>

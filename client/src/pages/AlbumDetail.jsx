@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
-  FaHeart, FaRegHeart, FaHeadphones
+  FaHeart, FaRegHeart, FaHeadphones, FaCheck
 } from 'react-icons/fa';
 import ReviewSection from '../components/Albumes/ReviewSection';
 import "./pageStyles/AlbumDetail.css";
@@ -106,6 +106,7 @@ const AlbumDetail = () => {
                 <button 
                   className={`action-button ${liked ? 'active' : ''}`}
                   onClick={() => handlePreferenceToggle('liked')}
+                  aria-label={liked ? "Quitar me gusta" : "Me gusta"}
                   title={liked ? "Quitar me gusta" : "Me gusta"}
                 >
                   {liked ? <FaHeart /> : <FaRegHeart />}
@@ -115,9 +116,10 @@ const AlbumDetail = () => {
                 <button 
                   className={`action-button ${listened ? 'active' : ''}`}
                   onClick={() => handlePreferenceToggle('listened')}
+                  aria-label={listened ? "Marcar como no escuchado" : "Marcar como escuchado"}
                   title={listened ? "Marcar como no escuchado" : "Marcar como escuchado"}
                 >
-                  <FaHeadphones />
+                  {listened ? <FaCheck /> : <FaHeadphones />}
                   <span>{listened ? "Escuchado" : "Marcar como escuchado"}</span>
                 </button>
               </div>
