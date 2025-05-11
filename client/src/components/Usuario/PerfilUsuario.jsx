@@ -1,151 +1,135 @@
 // src/components/Profile/PerfilUsuario.jsx
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import './PerfilUsuario.css';
-import api from '../../api/api';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
+import "./PerfilUsuario.css";
+import api from "../../api/api";
 
 const PerfilUsuario = () => {
   const { user, updateUserContext } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState(null);
+  // cacheBuster se actualizará tras cada guardado para forzar la recarga de la imagen
+  const [cacheBuster, setCacheBuster] = useState(Date.now());
   const [formData, setFormData] = useState({
-    nombre: '',
-    email: '',
-    contraseña: '',
-    imagenPerfil: ''
+    nombre: "",
+    email: "",
+    contraseña: "",
+    imagenPerfil: "",
+    imagenBanner: ""
   });
-  
-  console.log("Estado actual del usuario:", user); // Para depuración
 
-  // Cargar datos del usuario actual
+  // Cargar datos del usuario actual del contexto
   useEffect(() => {
     if (user) {
-      // Guardar una copia del usuario en el estado local
       setUserData(user);
-      
       setFormData({
-        nombre: user.nombre || '',
-        email: user.email || '',
-        contraseña: '',
-        imagenPerfil: user.imagenPerfil || ''
+        nombre: user.nombre || "",
+        email: user.email || "",
+        contraseña: "",
+        imagenPerfil: user.imagenPerfil || "",
+        imagenBanner: user.imagenBanner || ""
       });
-      
-      // Log para depuración
-      console.log('Usuario cargado en el formulario:', {
-        id: user._id || user.id,
-        nombre: user.nombre,
-        email: user.email,
-        rol: user.rol,
-        imagenPerfil: user.imagenPerfil
-      });
-    } else {
-      console.log('Usuario no disponible en el contexto de autenticación');
     }
   }, [user]);
 
-  // Manejar cambios en el formulario
+  // Manejar cambios en los inputs del formulario
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Función para guardar los cambios
+  // Función para obtener el ID del usuario
+  const getUserId = () => {
+    if (!userData) return "";
+    return userData._id || userData.id || "";
+  };
+
+  // Función que determina si una URL tiene contenido
+  const isValidImageUrl = (url) => {
+    return url && url.trim() !== "";
+  };
+
+  // Guardar cambios en el perfil
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
-      // Verificar si el usuario está autenticado y tiene un ID válido
       if (!user) {
-        throw new Error('No se ha iniciado sesión');
+        throw new Error("No se ha iniciado sesión");
       }
-      
-      // Verificar si existe el ID del usuario (puede estar como _id o id dependiendo del backend)
-      const userId = user._id || user.id;
-      
+      const userId = getUserId();
       if (!userId) {
-        console.error('ID de usuario no encontrado en:', user);
-        throw new Error('No se pudo encontrar el ID del usuario');
+        throw new Error("No se pudo encontrar el ID del usuario");
       }
 
-      // Preparar los datos para actualizar
       const updateData = {
         nombre: formData.nombre,
         email: formData.email,
-        imagenPerfil: formData.imagenPerfil
+        imagenPerfil: formData.imagenPerfil,
+        imagenBanner: formData.imagenBanner
       };
 
-      // Solo incluir contraseña si se ha proporcionado una nueva
+      // Incluir contraseña solo si se ingresó una nueva
       if (formData.contraseña) {
         updateData.contraseña = formData.contraseña;
       }
 
-      console.log('Actualizando usuario con ID:', userId);
-      
-      // Actualizar usuario
       const res = await api.put(`/api/persona/${userId}`, updateData);
-      
-      // Verificar la respuesta del servidor
+
       if (!res.data || !res.data.data) {
-        console.error('Respuesta del servidor inválida:', res);
-        throw new Error('Respuesta inválida del servidor');
+        throw new Error("Respuesta inválida del servidor");
       }
-      
-      console.log('Respuesta del servidor:', res.data);
-      
-      // Actualizar el estado local con los nuevos datos
+
       const updatedUser = res.data.data;
-      
-      // Actualizar el estado local primero
       setUserData(updatedUser);
-      
-      // Actualizar el contexto de autenticación con los nuevos datos del usuario
+
+      // Actualizar el contexto de autenticación para que la imagen se muestre actualizada en toda la app
       if (updateUserContext) {
-        // Asegurarse de que mantenemos todos los datos originales y solo actualizamos los nuevos
         updateUserContext({
           ...user,
           ...updatedUser
         });
       }
-      
-      setSuccess('Perfil actualizado con éxito');
+      // Actualizar cacheBuster para forzar la recarga de las imágenes
+      setCacheBuster(Date.now());
+      setSuccess("Perfil actualizado con éxito");
       setIsEditing(false);
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || error.message || 'Error desconocido';
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || err.message || "Error desconocido";
       setError(`Error actualizando el perfil: ${errorMsg}`);
-      console.error('Error al actualizar perfil:', error);
+      console.error("Error al actualizar perfil:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Cambiar a modo edición
+  // Habilitar modo edición
   const enableEditMode = () => {
     setIsEditing(true);
   };
 
-  // Cancelar edición
+  // Cancelar edición y restaurar datos originales
   const cancelEdit = () => {
-    // Restaurar datos originales del usuario
     if (userData) {
       setFormData({
-        nombre: userData.nombre || '',
-        email: userData.email || '',
-        contraseña: '',
-        imagenPerfil: userData.imagenPerfil || ''
+        nombre: userData.nombre || "",
+        email: userData.email || "",
+        contraseña: "",
+        imagenPerfil: userData.imagenPerfil || "",
+        imagenBanner: userData.imagenBanner || ""
       });
     }
     setIsEditing(false);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
   };
 
-  // Si todavía no tenemos el usuario cargado, podemos mostrar un mensaje "Cargando..."
   if (!userData) {
     return (
       <div className="profile-page">
@@ -156,58 +140,62 @@ const PerfilUsuario = () => {
     );
   }
 
-  // Función para obtener el ID del usuario (puede ser _id o id según el backend)
-  const getUserId = () => {
-    if (!userData) return '';
-    return userData._id || userData.id || '';
-  };
-
-  // Función para verificar si una URL es válida
-  const isValidImageUrl = (url) => {
-    return url && url.trim() !== '';
-  };
-
   return (
     <div className="perfil-usuario-page">
+      {/* Banner */}
+      <div className="perfil-banner">
+        {isValidImageUrl(userData.imagenBanner) ? (
+          <img
+            src={`${userData.imagenBanner}?v=${cacheBuster}`}
+            alt="Banner del perfil"
+            onError={(e) => {
+              console.error("Error cargando banner:", e);
+              e.target.src =
+                "https://via.placeholder.com/800x200.png?text=Banner+por+defecto";
+            }}
+          />
+        ) : (
+          <img
+            src="https://via.placeholder.com/800x200.png?text=Banner+por+defecto"
+            alt="Banner por defecto"
+          />
+        )}
+      </div>
+
       <div className="page-header">
         <h1>Mi Perfil</h1>
         {!isEditing && (
-          <button 
-            className="create-button"
-            onClick={enableEditMode}
-          >
+          <button className="create-button" onClick={enableEditMode}>
             Editar Perfil
           </button>
         )}
       </div>
-      
+
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
-      
       <hr className="gradient-divider" />
-      
+
       <div className="perfil-container">
         <div className="perfil-imagen">
           {isValidImageUrl(userData.imagenPerfil) ? (
-            <img 
-              src={userData.imagenPerfil} 
-              alt="Imagen de perfil" 
+            <img
+              src={`${userData.imagenPerfil}?v=${cacheBuster}`}
+              alt="Imagen de perfil"
               onError={(e) => {
-                console.log('Error cargando imagen:', e);
-                e.target.src = "https://via.placeholder.com/180x180.png?text=Profile";
+                console.error("Error cargando imagen de perfil:", e);
+                e.target.src =
+                  "https://via.placeholder.com/180x180.png?text=Profile";
               }}
             />
           ) : (
-            <img 
-              src="https://via.placeholder.com/180x180.png?text=Profile" 
-              alt="Imagen de perfil por defecto" 
+            <img
+              src="https://via.placeholder.com/180x180.png?text=Profile"
+              alt="Imagen de perfil por defecto"
             />
           )}
-          <div className="perfil-id">
-            ID: {getUserId()}
-          </div>
+          <div className="perfil-id">ID: {getUserId()}</div>
         </div>
-        
+
         {isEditing ? (
           <form onSubmit={handleSubmit} className="user-form">
             <div className="form-group">
@@ -222,7 +210,7 @@ const PerfilUsuario = () => {
                 className="form-input"
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="email">Email:</label>
               <input
@@ -235,7 +223,7 @@ const PerfilUsuario = () => {
                 className="form-input"
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="contraseña">Contraseña:</label>
               <input
@@ -248,7 +236,7 @@ const PerfilUsuario = () => {
                 className="form-input"
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="imagenPerfil">Imagen de Perfil:</label>
               <input
@@ -257,22 +245,35 @@ const PerfilUsuario = () => {
                 name="imagenPerfil"
                 value={formData.imagenPerfil}
                 onChange={handleInputChange}
-                placeholder="URL de la imagen..."
+                placeholder="URL de la imagen de perfil"
                 className="form-input"
               />
             </div>
-            
+
+            <div className="form-group">
+              <label htmlFor="imagenBanner">Imagen del Banner:</label>
+              <input
+                id="imagenBanner"
+                type="text"
+                name="imagenBanner"
+                value={formData.imagenBanner}
+                onChange={handleInputChange}
+                placeholder="URL de la imagen del banner"
+                className="form-input"
+              />
+            </div>
+
             <div className="form-buttons">
-              <button 
-                type="submit" 
-                className="form-button primary" 
+              <button
+                type="submit"
+                className="form-button primary"
                 disabled={loading}
               >
-                {loading ? 'Guardando...' : 'Guardar Cambios'}
+                {loading ? "Guardando..." : "Guardar Cambios"}
               </button>
-              <button 
-                type="button" 
-                onClick={cancelEdit} 
+              <button
+                type="button"
+                onClick={cancelEdit}
                 className="form-button secondary"
                 disabled={loading}
               >
@@ -284,19 +285,19 @@ const PerfilUsuario = () => {
           <div className="perfil-detalles">
             <div className="detalle-item">
               <h3>Nombre</h3>
-              <p>{userData.nombre || 'No especificado'}</p>
+              <p>{userData.nombre || "No especificado"}</p>
             </div>
-            
+
             <div className="detalle-item">
               <h3>Email</h3>
-              <p>{userData.email || 'No especificado'}</p>
+              <p>{userData.email || "No especificado"}</p>
             </div>
-            
+
             <div className="detalle-item">
               <h3>Rol</h3>
-              <p>{userData.rol || 'No especificado'}</p>
+              <p>{userData.rol || "No especificado"}</p>
             </div>
-            
+
             <div className="detalle-item">
               <h3>ID de Usuario</h3>
               <p>{getUserId()}</p>
