@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
+  FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
-import ReportModal from '../Reportes/ReportModal'; // Importamos el nuevo componente
 import api from '../../api/api'
 
 // Constante para los tipos de modelos
@@ -12,7 +11,7 @@ const MODEL_TYPES = {
   PELICULA: 'Pelicula'
 };
 
-const MovieReviewSection = ({ movieId, movie }) => {
+const ReviewSection = ({ movieId, movie }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
@@ -31,11 +30,6 @@ const MovieReviewSection = ({ movieId, movie }) => {
   
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
-
-  // Estados para modal de reporte
-  const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [reportedUserId, setReportedUserId] = useState(null);
-  const [reportReviewId, setReportReviewId] = useState(null);  
 
   // Obtener el ID del usuario actual de forma consistente
   const currentUserId = user?._id || user?.id;
@@ -372,24 +366,6 @@ const MovieReviewSection = ({ movieId, movie }) => {
     }
   };
 
-    // Función para abrir el modal de reporte de usuario
-  const openReportModal = (userId, reviewId = null) => {
-    if (!user) {
-      alert("Debes iniciar sesión para reportar a un usuario.");
-      return;
-    }
-    
-    // No permitir auto-reportes
-    if (userId === currentUserId) {
-      alert("No puedes reportarte a ti mismo.");
-      return;
-    }
-    
-    setReportedUserId(userId);
-    setReportReviewId(reviewId);
-    setReportModalOpen(true);
-  };
-
   // Función para obtener el nombre de usuario desde el objeto de reseña
   const getUserName = (review) => {
     if (typeof review.userId === 'object') {
@@ -548,19 +524,6 @@ const MovieReviewSection = ({ movieId, movie }) => {
                     <span>{review.likedReview?.length || 0}</span>
                   </button>
                 </div>
-
-                {user && (
-                    <button
-                      className="report-button"
-                      onClick={() => openReportModal(
-                        typeof review.userId === 'object' ? review.userId._id : review.userId,
-                        review._id
-                      )}
-                      title="Reportar usuario"
-                    >
-                      <FaFlag /> Reportar
-                    </button>
-                  )}                
                 
                 {/* Sección de comentarios */}
                 <div className="review-comments-section">
@@ -591,14 +554,8 @@ const MovieReviewSection = ({ movieId, movie }) => {
           <p>Inicia sesión para dejar tu reseña y puntuar esta película.</p>
         </div>
       )}
-  <ReportModal 
-          isOpen={reportModalOpen}
-          onClose={() => setReportModalOpen(false)}
-          reportedUserId={reportedUserId}
-          reviewId={reportReviewId}
-        />
     </div>
   );
 };
 
-export default MovieReviewSection;
+export default ReviewSection;
