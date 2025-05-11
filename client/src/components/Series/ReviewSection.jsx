@@ -4,7 +4,8 @@ import {
   FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
-import ReportModal from '../Reportes/ReportModal'; // Importamos el nuevo componente
+import ReviewFilters from './ReviewFilters';
+import ReportModal from '../Reportes/ReportModal';
 import api from '../../api/api'
 
 // Constante para los tipos de modelos
@@ -15,6 +16,7 @@ const MODEL_TYPES = {
 const SeriesReviewSection = ({ seriesId, series }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
+  const [filteredReviews, setFilteredReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -32,10 +34,14 @@ const SeriesReviewSection = ({ seriesId, series }) => {
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
 
-   // Estados para modal de reporte
-    const [reportModalOpen, setReportModalOpen] = useState(false);
-    const [reportedUserId, setReportedUserId] = useState(null);
-    const [reportReviewId, setReportReviewId] = useState(null);
+  // Estados para filtros
+  const [sortOption, setSortOption] = useState('newest');
+  const [ratingFilter, setRatingFilter] = useState('all');
+
+  // Estados para modal de reporte
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportedUserId, setReportedUserId] = useState(null);
+  const [reportReviewId, setReportReviewId] = useState(null);
 
   // Obtener el ID del usuario actual de forma consistente
   const currentUserId = user?._id || user?.id;
@@ -77,6 +83,34 @@ const SeriesReviewSection = ({ seriesId, series }) => {
       console.log("No series identifier available yet");
     }
   }, [fetchReviews, series]);
+
+  // Aplicar filtros a las reseñas
+  useEffect(() => {
+    if (reviews.length > 0) {
+      let tempReviews = [...reviews];
+      
+      // Aplicar ordenamiento según los criterios seleccionados
+      tempReviews.sort((a, b) => {
+        // Si el filtro es por valoración
+        if (ratingFilter === 'highRated') {
+          // Ordenar de mayor a menor valoración
+          return b.rating - a.rating;
+        } else if (ratingFilter === 'lowRated') {
+          // Ordenar de menor a mayor valoración
+          return a.rating - b.rating;
+        } else {
+          // Si el filtro es 'all', ordenar por fecha
+          const dateA = new Date(a.fechaReview);
+          const dateB = new Date(b.fechaReview);
+          return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
+        }
+      });
+      
+      setFilteredReviews(tempReviews);
+    } else {
+      setFilteredReviews([]);
+    }
+  }, [reviews, sortOption, ratingFilter]);
 
   // Determinar si el usuario ya tiene una reseña para esta serie
   const userReview = user && reviews.find(review => {
@@ -395,7 +429,7 @@ const SeriesReviewSection = ({ seriesId, series }) => {
     return "Usuario";
   };
 
-    // Función para abrir el modal de reporte de usuario
+  // Función para abrir el modal de reporte de usuario
   const openReportModal = (userId, reviewId = null) => {
     if (!user) {
       alert("Debes iniciar sesión para reportar a un usuario.");
@@ -423,6 +457,16 @@ const SeriesReviewSection = ({ seriesId, series }) => {
         <div className="error-message">
           {errorMessage}
         </div>
+      )}
+
+      {/* Componente de filtros */}
+      {filteredReviews.length > 1 && (
+        <ReviewFilters
+          sortOption={sortOption}
+          setSortOption={setSortOption}
+          ratingFilter={ratingFilter}
+          setRatingFilter={setRatingFilter}
+        />
       )}
 
       {/* Si el usuario está autenticado y no tiene reseña publicada, se muestra el formulario de creación */}
@@ -527,9 +571,9 @@ const SeriesReviewSection = ({ seriesId, series }) => {
       {/* Mostrar todas las reseñas (excluyendo la del usuario actual para evitar duplicados) */}
       {loadingReviews ? (
         <p>Cargando reseñas...</p>
-      ) : reviews.length > 0 ? (
+      ) : filteredReviews.length > 0 ? (
         <div className="reviews-list">
-          {reviews
+          {filteredReviews
             .filter(review => {
               // Evitar mostrar la reseña del usuario actual dos veces
               if (!user || !currentUserId) return true;
@@ -565,17 +609,17 @@ const SeriesReviewSection = ({ seriesId, series }) => {
                   </button>
                 </div>
               {user && (
-                    <button
-                      className="report-button"
-                      onClick={() => openReportModal(
-                        typeof review.userId === 'object' ? review.userId._id : review.userId,
-                        review._id
-                      )}
-                      title="Reportar usuario"
-                    >
-                      <FaFlag /> Reportar
-                    </button>
-                  )}
+                  <button
+                    className="report-button"
+                    onClick={() => openReportModal(
+                      typeof review.userId === 'object' ? review.userId._id : review.userId,
+                      review._id
+                    )}
+                    title="Reportar usuario"
+                  >
+                    <FaFlag /> Reportar
+                  </button>
+                )}
                 
                 
                 {/* Sección de comentarios */}
@@ -608,11 +652,11 @@ const SeriesReviewSection = ({ seriesId, series }) => {
         </div>
       )}
       <ReportModal 
-              isOpen={reportModalOpen}
-              onClose={() => setReportModalOpen(false)}
-              reportedUserId={reportedUserId}
-              reviewId={reportReviewId}
-            />
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        reportedUserId={reportedUserId}
+        reviewId={reportReviewId}
+      />
     </div>
   );
 };

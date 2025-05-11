@@ -4,6 +4,7 @@ import {
   FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
+import ReviewFilters from './ReviewFilters'; // Importar el componente de filtros
 import ReportModal from '../Reportes/ReportModal';
 
 import api from '../../api/api';
@@ -11,6 +12,7 @@ import api from '../../api/api';
 const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
+  const [filteredReviews, setFilteredReviews] = useState([]); // Añadir estado para reseñas filtradas
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -27,6 +29,10 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
   
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
+
+  // Estados para filtros
+  const [sortOption, setSortOption] = useState('newest'); // Añadir estado para opciones de ordenamiento
+  const [ratingFilter, setRatingFilter] = useState('all'); // Añadir estado para filtro de valoración
 
   // Estados para modal de reporte
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -65,6 +71,34 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
       fetchReviews();
     }
   }, [fetchReviews, movie, movieId]);
+
+  // Aplicar ordenamiento a las reseñas (nuevo useEffect)
+  useEffect(() => {
+    if (reviews.length > 0) {
+      let tempReviews = [...reviews];
+      
+      // Aplicar ordenamiento según los criterios seleccionados
+      tempReviews.sort((a, b) => {
+        // Si el filtro es por valoración
+        if (ratingFilter === 'highRated') {
+          // Ordenar de mayor a menor valoración
+          return b.rating - a.rating;
+        } else if (ratingFilter === 'lowRated') {
+          // Ordenar de menor a mayor valoración
+          return a.rating - b.rating;
+        } else {
+          // Si el filtro es 'all', ordenar por fecha
+          const dateA = new Date(a.fechaReview);
+          const dateB = new Date(b.fechaReview);
+          return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
+        }
+      });
+      
+      setFilteredReviews(tempReviews);
+    } else {
+      setFilteredReviews([]);
+    }
+  }, [reviews, sortOption, ratingFilter]);
 
   // Determinar si el usuario ya tiene una reseña para esta película
   const userReview = user && reviews.find(review => {
@@ -536,12 +570,22 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
         </div>
       )}
 
+      {/* Componente de filtros */}
+      {filteredReviews.length > 0 && (
+        <ReviewFilters 
+          sortOption={sortOption}
+          setSortOption={setSortOption}
+          ratingFilter={ratingFilter}
+          setRatingFilter={setRatingFilter}
+        />
+      )}
+
       {/* Mostrar todas las reseñas (excluyendo la del usuario actual para evitar duplicados) */}
       {loadingReviews ? (
         <p>Cargando reseñas...</p>
-      ) : reviews.length > 0 ? (
+      ) : filteredReviews.length > 0 ? (
         <div className="reviews-list">
-          {reviews
+          {filteredReviews
             .filter(review => {
               // Evitar mostrar la reseña del usuario actual dos veces
               if (!user || !currentUserId) return true;

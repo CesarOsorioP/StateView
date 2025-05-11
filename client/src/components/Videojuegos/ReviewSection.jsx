@@ -4,13 +4,15 @@ import {
   FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
-import ReportModal from '../Reportes/ReportModal'; // Importamos el nuevo componente
+import ReviewFilters from './ReviewFilters';
+import ReportModal from '../Reportes/ReportModal';
 import "./ReviewSection.css";
 import api from '../../api/api'
 
 const ReviewSection = ({ gameId, game }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
+  const [filteredReviews, setFilteredReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
   // Estados para crear reseña
@@ -26,6 +28,10 @@ const ReviewSection = ({ gameId, game }) => {
   
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
+  
+  // Estados para filtros
+  const [sortOption, setSortOption] = useState('newest');
+  const [ratingFilter, setRatingFilter] = useState('all');
   
   // Estados para modal de reporte
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -50,6 +56,34 @@ const ReviewSection = ({ gameId, game }) => {
   useEffect(() => {
     fetchReviews();
   }, [fetchReviews]);
+
+  // Aplicar filtros a las reseñas
+  useEffect(() => {
+    if (reviews.length > 0) {
+      let tempReviews = [...reviews];
+      
+      // Aplicar ordenamiento según los criterios seleccionados
+      tempReviews.sort((a, b) => {
+        // Si el filtro es por valoración
+        if (ratingFilter === 'highRated') {
+          // Ordenar de mayor a menor valoración
+          return b.rating - a.rating;
+        } else if (ratingFilter === 'lowRated') {
+          // Ordenar de menor a mayor valoración
+          return a.rating - b.rating;
+        } else {
+          // Si el filtro es 'all', ordenar por fecha
+          const dateA = new Date(a.fechaReview);
+          const dateB = new Date(b.fechaReview);
+          return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
+        }
+      });
+      
+      setFilteredReviews(tempReviews);
+    } else {
+      setFilteredReviews([]);
+    }
+  }, [reviews, sortOption, ratingFilter]);
 
   // Determinar si el usuario ya tiene una reseña para este videojuego
   const currentUserId = user?.id || user?._id;
@@ -226,7 +260,7 @@ const ReviewSection = ({ gameId, game }) => {
       itemId: game._id,
       review_txt: newReview,
       rating: rating,
-      onModel: "Videojuego"  // Cambiado de "Album" a "Videojuego"
+      onModel: "Videojuego"
     };
 
     try {
@@ -310,6 +344,14 @@ const ReviewSection = ({ gameId, game }) => {
   return (
     <div className="game-reviews">
       <h3>Reseñas</h3>
+
+      {/* Filtros de reseñas */}
+      <ReviewFilters 
+        sortOption={sortOption}
+        setSortOption={setSortOption}
+        ratingFilter={ratingFilter}
+        setRatingFilter={setRatingFilter}
+      />
 
       {/* Si el usuario está autenticado y no tiene reseña publicada, se muestra el formulario de creación */}
       {user && !userReview && !isEditing && (
@@ -397,9 +439,9 @@ const ReviewSection = ({ gameId, game }) => {
       {/* Mostrar todas las reseñas (excluyendo la del usuario actual para evitar duplicados) */}
       {loadingReviews ? (
         <p>Cargando reseñas...</p>
-      ) : reviews.length > 0 ? (
+      ) : filteredReviews.length > 0 ? (
         <div className="reviews-list">
-          {reviews
+          {filteredReviews
             .filter(review => !(user && ((typeof review.userId === 'object' && review.userId._id === currentUserId) || 
                                        (typeof review.userId === 'string' && review.userId === currentUserId))))
             .map((review) => (
