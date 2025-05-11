@@ -659,11 +659,11 @@ const UserManagement = () => {
                           </span>
                         </td>
                         <td>
-                          <div className="action-buttons">
+                          <div className="action-buttons2">
                             {canEditUser(u) && (
                               <>
                                 <button 
-                                  className="action-button edit" 
+                                  className="action-button2 edit" 
                                   onClick={() => handleEdit(u._id)}
                                   title="Editar usuario"
                                 >
@@ -671,7 +671,7 @@ const UserManagement = () => {
                                 </button>
                                 
                                 <div className="dropdown">
-                                  <button className="action-button change-state">
+                                  <button className="action-button2 change-state">
                                     <span className="action-icon">⚙️</span>
                                   </button>
                                   <div className="dropdown-content">

@@ -1,3 +1,4 @@
+// src/context/AuthContext.js
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../api/api'
 
@@ -12,7 +13,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await api.get('http://localhost:5000/api/auth/me', {  // OJO!! Se cambia esta linea y se jode pero todo
+          const response = await api.get('/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` }
           });
           
@@ -31,7 +32,7 @@ export const AuthProvider = ({ children }) => {
           // También guardamos en localStorage para mayor persistencia
           localStorage.setItem('userData', JSON.stringify(userData));
         } catch (error) {
-          console.error("Error checking authentication:", error);
+          console.error("Error al verificar sesión:", error);
           localStorage.removeItem('token');
           localStorage.removeItem('userData');
           setUser(null);
@@ -43,27 +44,37 @@ export const AuthProvider = ({ children }) => {
     checkLoggedIn();
   }, []);
 
-  const login = async (identifier, contraseña) => {
+  const login = async (email, contraseña) => {
     try {
-      // Usamos identifier en lugar de email para coincidir con el componente Login
-      const response = await api.post("/api/auth/login", { 
-        email: identifier, // Mantener "email" como nombre del campo para el backend
-        contraseña 
-      });
+      const response = await api.post("/api/auth/login", { email, contraseña });
       
       // Almacenamos el token
       localStorage.setItem("token", response.data.token);
       
-      // Creamos el objeto userData con los datos del usuario
+      // Obtenemos datos completos del usuario tras login exitoso
+      const userDetailsResponse = await api.get('/api/auth/me', {
+        headers: { Authorization: `Bearer ${response.data.token}` }
+      });
+      
+      // Preparamos los datos del usuario con toda la información
       const userData = {
-        id: response.data.id,
-        email: identifier,
-        rol: response.data.tipoUsuario, // Mapea a 'rol'
-        nombre: response.data.nombre
+        ...userDetailsResponse.data,
+        id: response.data.id || userDetailsResponse.data._id,
+        email,
+        rol: response.data.tipoUsuario || userDetailsResponse.data.tipoUsuario,
+        nombre: response.data.nombre || userDetailsResponse.data.nombre,
+        imagenPerfil: userDetailsResponse.data.imagenPerfil || response.data.imagenPerfil,
+        imagenBanner: userDetailsResponse.data.imagenBanner || response.data.imagenBanner
       };
+      
+      // Actualizamos el cacheBuster para forzar la recarga de imágenes
+      window.profileImageCacheBuster = Date.now();
       
       // Actualizamos el estado del usuario
       setUser(userData);
+      
+      // Guardamos en localStorage para persistencia
+      localStorage.setItem('userData', JSON.stringify(userData));
       
       // Mostrar en la consola el token y el tipo de usuario
       console.log("Token recibido:", response.data.token);
@@ -72,7 +83,7 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true, data: response.data };
     } catch (error) {
-      console.error("Login error:", error.response?.data || error.message);
+      console.error("Error en login:", error);
       return { 
         success: false, 
         error: error.response?.data?.error || "Error al iniciar sesión" 
@@ -83,6 +94,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userData');
+    window.profileImageCacheBuster = null;
     setUser(null);
   };
   
@@ -94,25 +106,11 @@ export const AuthProvider = ({ children }) => {
     }));
   };
   
-  const value = {
-    user,
-    loading,
-    login,
-    logout,
-    updateUserContext
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUserContext }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);
