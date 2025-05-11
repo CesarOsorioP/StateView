@@ -1,4 +1,3 @@
-// src/components/Login.js
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -18,6 +17,13 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      // Validar que los campos no estén vacíos
+      if (!identifier.trim() || !contraseña.trim()) {
+        setError("Por favor, completa todos los campos");
+        setIsLoading(false);
+        return;
+      }
+
       const result = await login(identifier, contraseña);
       
       if (result.success) {
@@ -26,7 +32,8 @@ const Login = () => {
         setError(result.error);
       }
     } catch (error) {
-      setError("Error al iniciar sesión");
+      console.error("Error en el formulario de login:", error);
+      setError("Error al iniciar sesión. Intenta nuevamente.");
     } finally {
       setIsLoading(false);
     }

@@ -1,8 +1,8 @@
-// src/components/Admin/ContentManager.jsx
+
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import './ContentManagement.css';
-import api from '../../api/api'
 
 const ContentManager = () => {
   const { user } = useAuth();
@@ -23,6 +23,9 @@ const ContentManager = () => {
     albums: 'albums'
   };
 
+  // API base URL
+  const API_BASE_URL = 'http://localhost:5000/api';
+
   // Cargar contenido inicial al montar el componente o cuando cambia el tipo
   useEffect(() => {
     fetchContent();
@@ -32,7 +35,7 @@ const ContentManager = () => {
   const fetchContent = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/${contentEndpoints[contentType]}`);
+      const res = await axios.get(`${API_BASE_URL}/${contentEndpoints[contentType]}`);
       
       // Verificar si la respuesta tiene datos directamente o dentro de una propiedad 'data'
       const contentData = res.data.data || res.data;
@@ -105,16 +108,16 @@ const ContentManager = () => {
         if (!artist || !album) {
           throw new Error('Formato incorrecto. Usa "Artista - Álbum"');
         }
-        endpoint = `/${contentEndpoints[contentType]}/refresh?artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}`;
+        endpoint = `${API_BASE_URL}/${contentEndpoints[contentType]}/refresh?artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}`;
       } else {
         // Para películas, series y videojuegos
-        endpoint = `/${contentEndpoints[contentType]}/refresh?title=${encodeURIComponent(searchQuery)}`;
+        endpoint = `${API_BASE_URL}/${contentEndpoints[contentType]}/refresh?title=${encodeURIComponent(searchQuery)}`;
       }
       
       console.log('Intentando agregar contenido con la URL:', endpoint);
       
       // Realizar la solicitud GET para agregar/refrescar contenido (como en el controlador original)
-      const response = await api.get(endpoint);
+      const response = await axios.get(endpoint);
       
       if (response.data) {
         await fetchContent(); // Recargar la lista después de agregar
@@ -154,11 +157,11 @@ const ContentManager = () => {
         // Obtener el ID específico según el tipo de contenido
         const specificId = itemToDelete[idFieldMap[contentType]] || contentId;
         
-        const deleteUrl = `}/${contentEndpoints[contentType]}/${specificId}`;
+        const deleteUrl = `${API_BASE_URL}/${contentEndpoints[contentType]}/${specificId}`;
         
         console.log(`Intentando eliminar ${contentType.slice(0, -1)} con URL:`, deleteUrl);
         
-        await api.delete(deleteUrl);
+        await axios.delete(deleteUrl);
         
         // Actualizar el estado eliminando el elemento
         setContent((prev) => prev.filter((item) => item._id !== contentId));
@@ -194,7 +197,7 @@ const ContentManager = () => {
   }
 
   // Verificar que el usuario tenga permisos (Administrador o Moderador)
-  if (user.rol !== 'Administrador' && user.rol !== 'Moderador') {
+  if (user.rol !== 'Superadministrador' && user.rol !== 'Administrador'  && user.rol !== 'Moderador') {
     return (
       <div className="content-management-page">
         <div className="access-denied">

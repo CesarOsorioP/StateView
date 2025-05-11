@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  FaThumbsUp, FaRegThumbsUp, FaEdit, FaTrash, FaCheck, FaTimes
+  FaThumbsUp, FaRegThumbsUp, FaEdit, FaTrash, FaCheck, FaTimes, FaFlag
 } from 'react-icons/fa';
 import './commentSection.css';
-import api from '../../api/api'
+import api from '../../api/api';
+import ReportModal from '../Reportes/ReportModal'; // Import the ReportModal component
 
 const CommentSection = ({ reviewId, toggleComments }) => {
   const { user } = useAuth();
@@ -17,6 +18,10 @@ const CommentSection = ({ reviewId, toggleComments }) => {
   // Estados para edición
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState('');
+  
+  // Estados para el modal de reporte
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportedUserId, setReportedUserId] = useState(null);
   
   // Cargar comentarios - useCallback para evitar recrear la función en cada render
   const loadComments = useCallback(async () => {
@@ -218,6 +223,17 @@ const CommentSection = ({ reviewId, toggleComments }) => {
     }
   };
 
+  // Función para abrir el modal de reporte
+  const handleReportUser = (userId) => {
+    if (!user) {
+      alert("Debes iniciar sesión para reportar.");
+      return;
+    }
+    
+    setReportedUserId(userId);
+    setIsReportModalOpen(true);
+  };
+
   // Verificar si el usuario es el autor del comentario
   const isCommentOwner = (comment) => {
     if (!user) return false;
@@ -232,6 +248,14 @@ const CommentSection = ({ reviewId, toggleComments }) => {
   const hasUserCommented = () => {
     if (!user) return false;
     return comments.some(comment => isCommentOwner(comment));
+  };
+
+  // Obtener el ID de usuario de un comentario (ya sea objeto o string)
+  const getCommentUserIdValue = (comment) => {
+    if (typeof comment.userId === 'object') {
+      return comment.userId._id;
+    }
+    return comment.userId;
   };
 
   return (
@@ -309,6 +333,17 @@ const CommentSection = ({ reviewId, toggleComments }) => {
                   <span>{comment.liked_comment?.length || 0}</span>
                 </button>
 
+                {/* Botón de reporte (solo visible si no es el propietario) */}
+                {user && !isCommentOwner(comment) && (
+                  <button
+                    className="report-button"
+                    onClick={() => handleReportUser(getCommentUserIdValue(comment))}
+                    title="Reportar usuario"
+                  >
+                    <FaFlag />
+                  </button>
+                )}
+
                 {/* Botones de editar y eliminar (solo para el autor) */}
                 {isCommentOwner(comment) && editingCommentId !== comment._id && (
                   <div className="owner-actions">
@@ -335,6 +370,14 @@ const CommentSection = ({ reviewId, toggleComments }) => {
       ) : (
         <p className="no-comments">No hay comentarios aún.</p>
       )}
+
+      {/* Modal de reporte */}
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        reportedUserId={reportedUserId}
+        reviewId={reviewId}
+      />
     </div>
   );
 };

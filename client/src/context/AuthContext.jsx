@@ -1,4 +1,3 @@
-// src/context/AuthContext.js
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../api/api'
 
@@ -22,6 +21,7 @@ export const AuthProvider = ({ children }) => {
             rol: response.data.tipoUsuario || response.data.rol
           });
         } catch (error) {
+          console.error("Error checking authentication:", error);
           localStorage.removeItem('token');
           setUser(null);
         }
@@ -32,16 +32,20 @@ export const AuthProvider = ({ children }) => {
     checkLoggedIn();
   }, []);
 
-  const login = async (email, contraseña) => {
+  const login = async (identifier, contraseña) => {
     try {
-      const response = await api.post("/api/auth/login", { email, contraseña });
+      // Usamos identifier en lugar de email para coincidir con el componente Login
+      const response = await api.post("/api/auth/login", { 
+        email: identifier, // Mantener "email" como nombre del campo para el backend
+        contraseña 
+      });
       
       // Almacenamos el token y actualizamos el estado del usuario
       localStorage.setItem("token", response.data.token);
       // Asignamos la propiedad 'rol' para mayor consistencia
       setUser({
         id: response.data.id,
-        email,
+        email: identifier,
         rol: response.data.tipoUsuario, // Mapea a 'rol'
         nombre: response.data.nombre
       });
@@ -52,6 +56,7 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true, data: response.data };
     } catch (error) {
+      console.error("Login error:", error.response?.data || error.message);
       return { 
         success: false, 
         error: error.response?.data?.error || "Error al iniciar sesión" 

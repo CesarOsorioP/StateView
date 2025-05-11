@@ -31,7 +31,30 @@ const UserManagement = () => {
   
   // Opciones para filtrado
   const estadosPermitidos = ['Activo', 'Restringido', 'Advertido', 'Desactivado'];
-  const rolesPermitidos = ['Usuario', 'Moderador', 'Administrador'];
+  
+  // Definimos los roles permitidos según el rol del usuario autenticado
+  const getAllowedRoles = () => {
+    // Verificar si el usuario existe antes de acceder a su rol
+    if (!user) return ['Usuario'];
+    
+    switch(user.rol) {
+      case 'Superadministrador':
+        return ['Usuario', 'Moderador', 'Administrador', 'Superadministrador'];
+      case 'Administrador':
+        return ['Usuario', 'Moderador', 'Critico'];
+      case 'Moderador':
+        return ['Usuario'];
+      default:
+        return ['Usuario'];
+    }
+  };
+  
+  // Los roles que el usuario actual puede gestionar (ver, editar, etc.)
+  const rolesPermitidos = getAllowedRoles();
+  
+  // Los roles para los filtros (incluye todos los roles para poder ver todos los usuarios)
+  const rolesParaFiltros = ['Usuario', 'Moderador', 'Critico', 'Administrador', 'Superadministrador'];
+  
   const [filterRole, setFilterRole] = useState('Todos');
   const [filterState, setFilterState] = useState('Todos');
 
@@ -44,10 +67,14 @@ const UserManagement = () => {
     const fetchUsers = async () => {
       try {
         const res = await api.get('/api/persona/');
-        setUsers(res.data.data);
-        setFilteredUsers(res.data.data);
+        // Asegurarse de que res.data.data existe y es un array
+        const userData = Array.isArray(res.data.data) ? res.data.data : 
+                         Array.isArray(res.data) ? res.data : [];
+        setUsers(userData);
+        setFilteredUsers(userData);
         setError('');
       } catch (error) {
+        console.error('Error al cargar usuarios:', error);
         setError('Error al cargar los usuarios. Por favor, intenta de nuevo.');
         showToastMessage('Error al cargar los usuarios', 'error');
       } finally {
@@ -58,15 +85,60 @@ const UserManagement = () => {
     fetchUsers();
   }, []);
 
+  // Verificar si el usuario actual puede editar a otro usuario específico
+  const canEditUser = (targetUser) => {
+    if (!user || !targetUser) return false;
+    
+    // Superadministrador puede editar a cualquiera
+    if (user.rol === 'Superadministrador') return true;
+    
+    // Administrador puede editar a todos menos a otros administradores y superadministradores
+    if (user.rol === 'Administrador') {
+      return !['Administrador', 'Superadministrador'].includes(targetUser.rol);
+    }
+    
+    // Moderador solo puede editar usuarios regulares
+    if (user.rol === 'Moderador') {
+      return targetUser.rol === 'Usuario';
+    }
+    
+    return false;
+  };
+
+  // Verificar si el usuario actual puede crear un usuario con un rol específico
+  const canCreateUserWithRole = (role) => {
+    if (!user) return false;
+    
+    // Superadministrador puede crear cualquier rol
+    if (user.rol === 'Superadministrador') return true;
+    
+    // Administrador puede crear todos menos administradores y superadministradores
+    if (user.rol === 'Administrador') {
+      return !['Administrador', 'Superadministrador'].includes(role);
+    }
+    
+    // Moderador solo puede crear usuarios regulares
+    if (user.rol === 'Moderador') {
+      return role === 'Usuario';
+    }
+    
+    return false;
+  };
+
   // Aplicar filtros y búsqueda cuando cambien los criterios
   useEffect(() => {
+    if (!Array.isArray(users)) {
+      setFilteredUsers([]);
+      return;
+    }
+    
     let result = [...users];
     
     // Aplicar filtro por búsqueda
     if (searchTerm) {
       result = result.filter(user => 
-        user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        (user.nombre && user.nombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
@@ -83,10 +155,14 @@ const UserManagement = () => {
     // Aplicar ordenamiento
     if (sortConfig.key) {
       result.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        // Verificar que los valores existen antes de comparar
+        const valA = a[sortConfig.key] || '';
+        const valB = b[sortConfig.key] || '';
+        
+        if (valA < valB) {
           return sortConfig.direction === 'ascending' ? -1 : 1;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if (valA > valB) {
           return sortConfig.direction === 'ascending' ? 1 : -1;
         }
         return 0;
@@ -185,6 +261,13 @@ const UserManagement = () => {
   // Manejar cambios en el formulario
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Validar si se puede cambiar el rol
+    if (name === 'rol' && !canCreateUserWithRole(value)) {
+      showToastMessage(`No tienes permisos para asignar el rol ${value}`, 'error');
+      return;
+    }
+    
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -195,25 +278,54 @@ const UserManagement = () => {
     setError('');
     setSuccess('');
 
+    // Verificar permisos para el rol seleccionado
+    if (!canCreateUserWithRole(formData.rol)) {
+      setError(`No tienes permisos para gestionar usuarios con el rol ${formData.rol}`);
+      showToastMessage(`No tienes permisos para gestionar usuarios con el rol ${formData.rol}`, 'error');
+      setLoading(false);
+      return;
+    }
+
+    // Crear una copia del formData eliminando contraseña si está vacía en edición
+    const dataToSubmit = { ...formData };
+    if (selectedUser && !dataToSubmit.contraseña) {
+      delete dataToSubmit.contraseña;
+    }
+
     try {
       if (selectedUser) {
+        // Verificar si el usuario tiene permisos para editar al usuario seleccionado
+        const userToEdit = users.find((u) => u._id === selectedUser);
+        if (!canEditUser(userToEdit)) {
+          throw new Error(`No tienes permisos para editar a ${userToEdit.nombre || 'este usuario'}`);
+        }
+        
         // Actualizar usuario
-        const res = await api.put(`/api/persona/${selectedUser}`, formData);
+        const res = await api.put(`/api/persona/${selectedUser}`, dataToSubmit);
+        // Manejar diferentes estructuras de respuesta
+        const updatedUser = res.data.data || res.data;
+        
         setUsers((prevUsers) =>
-          prevUsers.map((u) => (u._id === selectedUser ? res.data.data : u))
+          prevUsers.map((u) => (u._id === selectedUser ? updatedUser : u))
         );
+        setSuccess('Usuario actualizado con éxito');
         showToastMessage('Usuario actualizado con éxito', 'success');
       } else {
         // Crear nuevo usuario
-        const res = await api.post('/api/persona', formData);
-        setUsers((prev) => [...prev, res.data.data]);
+        const res = await api.post('/api/persona', dataToSubmit);
+        // Manejar diferentes estructuras de respuesta
+        const newUser = res.data.data || res.data;
+        
+        setUsers((prev) => [...prev, newUser]);
+        setSuccess('Usuario creado con éxito');
         showToastMessage('Usuario creado con éxito', 'success');
       }
       closeModal();
     } catch (error) {
-      const errorMsg = selectedUser 
+      console.error('Error en operación de usuario:', error);
+      const errorMsg = error.message || (selectedUser 
         ? 'Error actualizando el usuario. Por favor, intenta de nuevo.' 
-        : 'Error creando el usuario. Por favor, intenta de nuevo.';
+        : 'Error creando el usuario. Por favor, intenta de nuevo.');
       setError(errorMsg);
       showToastMessage(errorMsg, 'error');
     } finally {
@@ -225,12 +337,18 @@ const UserManagement = () => {
   const handleEdit = (userId) => {
     const userToEdit = users.find((u) => u._id === userId);
     if (userToEdit) {
+      // Verificar permisos
+      if (!canEditUser(userToEdit)) {
+        showToastMessage(`No tienes permisos para editar a ${userToEdit.nombre || 'este usuario'}`, 'error');
+        return;
+      }
+      
       setSelectedUser(userId);
       setFormData({
-        nombre: userToEdit.nombre,
-        email: userToEdit.email,
+        nombre: userToEdit.nombre || '',
+        email: userToEdit.email || '',
         contraseña: '', // No mostrar contraseña actual
-        rol: userToEdit.rol,
+        rol: userToEdit.rol || 'Usuario',
         imagenPerfil: userToEdit.imagenPerfil || '',
         estado: userToEdit.estado || 'Activo'
       });
@@ -241,17 +359,34 @@ const UserManagement = () => {
   // Función para cambiar el estado de un usuario
   const handleChangeEstado = (userId, nuevoEstado) => {
     const userToChange = users.find((u) => u._id === userId);
+    if (!userToChange) return;
+    
+    // Verificar permisos
+    if (!canEditUser(userToChange)) {
+      showToastMessage(`No tienes permisos para cambiar el estado de ${userToChange.nombre || 'este usuario'}`, 'error');
+      return;
+    }
     
     setSelectedUser(userId);
     setConfirmAction(() => async () => {
       setLoading(true);
       try {
-        const res = await api.put(`/api/persona/${userId}/estado`, { estado: nuevoEstado });
+        // Intentar con dos posibles rutas de API
+        let res;
+        try {
+          res = await api.put(`/api/persona/${userId}/estado`, { estado: nuevoEstado });
+        } catch (error1) {
+          // Si falla la primera ruta, intentar con la segunda
+          res = await api.put(`/api/persona/${userId}`, { estado: nuevoEstado });
+        }
+        
         setUsers((prevUsers) =>
           prevUsers.map((u) => (u._id === userId ? {...u, estado: nuevoEstado} : u))
         );
-        showToastMessage(`Estado de ${userToChange.nombre} actualizado a ${nuevoEstado}`, 'success');
+        setSuccess(`Estado del usuario actualizado a ${nuevoEstado}`);
+        showToastMessage(`Estado de ${userToChange.nombre || 'usuario'} actualizado a ${nuevoEstado}`, 'success');
       } catch (error) {
+        console.error('Error al cambiar estado:', error);
         setError('Error al actualizar el estado. Por favor, intenta de nuevo.');
         showToastMessage('Error al actualizar el estado', 'error');
       } finally {
@@ -299,7 +434,7 @@ const UserManagement = () => {
       nombre: '',
       email: '',
       contraseña: '',
-      rol: 'Usuario',
+      rol: 'Usuario', // Por defecto, el rol más limitado
       imagenPerfil: '',
       estado: 'Activo'
     });
@@ -325,7 +460,7 @@ const UserManagement = () => {
   };
 
   // Si todavía no tenemos el usuario cargado, podemos mostrar un mensaje "Cargando..."
-  if (!user) {
+  if (loading && !user) {
     return (
       <div className="user-management-page">
         <div className="loading-container">
@@ -338,8 +473,9 @@ const UserManagement = () => {
     );
   }
 
-  // Verificar que el usuario tenga permisos (Administrador o Moderador)
-  if (user.rol !== 'Administrador' && user.rol !== 'Moderador') {
+  // Verificar que el usuario tenga permisos (Superadministrador, Administrador o Moderador)
+  // Solo verificamos cuando sabemos que user está cargado
+  if (user && user.rol !== 'Superadministrador' && user.rol !== 'Moderador' && user.rol !== 'Administrador') {
     return (
       <div className="user-management-page">
         <div className="access-denied">
@@ -361,6 +497,15 @@ const UserManagement = () => {
         <div className="header-title">
           <h1>Gestión de Usuarios</h1>
           <p className="header-subtitle">Administra los usuarios de la plataforma</p>
+          {user && user.rol !== 'Superadministrador' && (
+            <div className="permission-notice">
+              {user.rol === 'Administrador' ? (
+                <p>Como Administrador, puedes gestionar usuarios, críticos y moderadores.</p>
+              ) : (
+                <p>Como Moderador, solo puedes gestionar usuarios regulares.</p>
+              )}
+            </div>
+          )}
         </div>
         <button 
           className="create-button" 
@@ -393,7 +538,7 @@ const UserManagement = () => {
               className="filter-select"
             >
               <option value="Todos">Todos</option>
-              {rolesPermitidos.map(rol => (
+              {rolesParaFiltros.map(rol => (
                 <option key={rol} value={rol}>{rol}</option>
               ))}
             </select>
@@ -445,7 +590,7 @@ const UserManagement = () => {
           <>
             <div className="table-stats">
               <span>
-                Mostrando {Math.min(indexOfFirstUser + 1, filteredUsers.length)} - {Math.min(indexOfLastUser, filteredUsers.length)} de {filteredUsers.length} usuarios
+                Mostrando {filteredUsers.length > 0 ? Math.min(indexOfFirstUser + 1, filteredUsers.length) : 0} - {Math.min(indexOfLastUser, filteredUsers.length)} de {filteredUsers.length} usuarios
               </span>
             </div>
             
@@ -491,57 +636,66 @@ const UserManagement = () => {
                     </tr>
                   ) : (
                     currentUsers.map((u) => (
-                      <tr key={u._id} className={`user-row estado-${u.estado.toLowerCase()}`}>
+                      <tr key={u._id} className={`user-row estado-${(u.estado || '').toLowerCase()}`}>
                         <td className="user-name-cell">
                           <div className="user-avatar">
                             {u.imagenPerfil ? (
-                              <img src={u.imagenPerfil} alt={u.nombre} />
+                              <img src={u.imagenPerfil} alt={u.nombre || 'Usuario'} />
                             ) : (
-                              <div className="default-avatar">{u.nombre.charAt(0).toUpperCase()}</div>
+                              <div className="default-avatar">{(u.nombre || 'U').charAt(0).toUpperCase()}</div>
                             )}
                           </div>
-                          <span>{u.nombre}</span>
+                          <span>{u.nombre || 'Sin nombre'}</span>
                         </td>
-                        <td>{u.email}</td>
+                        <td>{u.email || 'Sin email'}</td>
                         <td>
-                          <span className={`role-badge role-${u.rol.toLowerCase()}`}>
-                            {u.rol}
+                          <span className={`role-badge role-${(u.rol || 'usuario').toLowerCase()}`}>
+                            {u.rol || 'Usuario'}
                           </span>
                         </td>
                         <td>
-                          <span className={`status-badge status-${u.estado.toLowerCase()}`}>
-                            {u.estado}
+                          <span className={`status-badge status-${(u.estado || 'activo').toLowerCase()}`}>
+                            {u.estado || 'Activo'}
                           </span>
                         </td>
                         <td>
                           <div className="action-buttons">
-                            <button 
-                              className="action-button edit" 
-                              onClick={() => handleEdit(u._id)}
-                              title="Editar usuario"
-                            >
-                              <span className="action-icon">✏️</span>
-                            </button>
-                            
-                            <div className="dropdown">
-                              <button className="action-button change-state">
-                                <span className="action-icon">⚙️</span>
-                              </button>
-                              <div className="dropdown-content">
-                                <div className="dropdown-header">Cambiar estado</div>
-                                {estadosPermitidos.map(estado => (
-                                  u.estado !== estado && (
-                                    <button 
-                                      key={estado}
-                                      className={`dropdown-item status-${estado.toLowerCase()}`}
-                                      onClick={() => handleChangeEstado(u._id, estado)}
-                                    >
-                                      {estado}
-                                    </button>
-                                  )
-                                ))}
-                              </div>
-                            </div>
+                            {canEditUser(u) && (
+                              <>
+                                <button 
+                                  className="action-button edit" 
+                                  onClick={() => handleEdit(u._id)}
+                                  title="Editar usuario"
+                                >
+                                  <span className="action-icon">✏️</span>
+                                </button>
+                                
+                                <div className="dropdown">
+                                  <button className="action-button change-state">
+                                    <span className="action-icon">⚙️</span>
+                                  </button>
+                                  <div className="dropdown-content">
+                                    <div className="dropdown-header">Cambiar estado</div>
+                                    {estadosPermitidos.map(estado => (
+                                      u.estado !== estado && (
+                                        <button 
+                                          key={estado}
+                                          className={`dropdown-item status-${estado.toLowerCase()}`}
+                                          onClick={() => handleChangeEstado(u._id, estado)}
+                                        >
+                                          {estado}
+                                        </button>
+                                      )
+                                    ))}
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                            {!canEditUser(u) && (
+                              <span className="action-restricted" title="No tienes permisos para editar este usuario">
+                                🔒
+                              </span>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -670,10 +824,17 @@ const UserManagement = () => {
                     onChange={handleInputChange}
                     className="form-select"
                   >
-                    <option value="Usuario">Usuario</option>
-                    <option value="Moderador">Moderador</option>
-                    <option value="Administrador">Administrador</option>
+                    {rolesPermitidos.map(rol => (
+                      <option key={rol} value={rol}>{rol}</option>
+                    ))}
                   </select>
+<small className="input-help">
+                    {user.rol === 'Superadministrador' 
+                      ? 'Puedes asignar cualquier rol' 
+                      : user.rol === 'Administrador'
+                        ? 'Puedes asignar roles de Usuario, Moderador o Crítico'
+                        : 'Solo puedes asignar el rol de Usuario'}
+                  </small>
                 </div>
                 
                 <div className="form-group">
@@ -693,97 +854,78 @@ const UserManagement = () => {
               </div>
               
               <div className="form-group">
-                <label htmlFor="imagenPerfil">Imagen de Perfil:</label>
+                <label htmlFor="imagenPerfil">URL de Imagen de Perfil:</label>
                 <input
                   id="imagenPerfil"
-                  type="text"
+                  type="url"
                   name="imagenPerfil"
                   value={formData.imagenPerfil}
                   onChange={handleInputChange}
-                  placeholder="URL de la imagen de perfil (opcional)"
                   className="form-input"
+                  placeholder="https://ejemplo.com/imagen.jpg (opcional)"
                 />
-                <small className="input-help">
-                  Proporciona una URL válida para la imagen de perfil
-                </small>
+                <small className="input-help">Dejar en blanco para usar avatar por defecto</small>
               </div>
               
-              <div className="form-buttons">
-                <button type="submit" className="form-button primary" disabled={loading}>
-                  {loading ? (
-                    <><span className="button-spinner"></span>Procesando...</>
-                  ) : selectedUser ? (
-                    'Actualizar Usuario'
-                  ) : (
-                    'Crear Usuario'
-                  )}
-                </button>
+              <div className="form-actions">
                 <button 
                   type="button" 
-                  onClick={closeModal} 
-                  className="form-button secondary"
-                  disabled={loading}
+                  className="cancel-button" 
+                  onClick={closeModal}
                 >
                   Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="submit-button"
+                  disabled={loading}
+                >
+                  {loading ? 'Guardando...' : selectedUser ? 'Actualizar Usuario' : 'Crear Usuario'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
+      
       {/* Modal de confirmación */}
       {isConfirmModalOpen && (
         <div className="modal-overlay">
           <div className="confirm-modal">
-            <div className="confirm-header">
-              <h3>Confirmar acción</h3>
-            </div>
-            <div className="confirm-content">
-              <p>¿Estás seguro de que deseas cambiar el estado de este usuario?</p>
-              <p>Esta acción puede afectar los permisos del usuario en la plataforma.</p>
-            </div>
-            <div className="confirm-buttons">
+            <h3>Confirmar acción</h3>
+            <p>¿Estás seguro que deseas cambiar el estado de este usuario?</p>
+            <div className="confirm-actions">
               <button 
-                className="confirm-button cancel" 
+                className="cancel-button" 
                 onClick={closeConfirmModal}
-                disabled={loading}
               >
                 Cancelar
               </button>
               <button 
-                className="confirm-button confirm" 
+                className="confirm-button"
                 onClick={confirmAction}
                 disabled={loading}
               >
-                {loading ? (
-                  <><span className="button-spinner"></span>Procesando...</>
-                ) : (
-                  'Confirmar'
-                )}
+                {loading ? 'Procesando...' : 'Confirmar'}
               </button>
             </div>
           </div>
         </div>
       )}
-
+      
       {/* Toast de notificación */}
       {showToast && (
-        <div className={`toast-notification ${toastType}`}>
-          <div className="toast-icon">
-            {toastType === 'success' ? '✓' : '✕'}
+        <div className={`toast-container ${toastType}`}>
+          <div className="toast-content">
+            <span className="toast-icon">
+              {toastType === 'success' ? '✓' : '✕'}
+            </span>
+            <span className="toast-message">{toastMessage}</span>
           </div>
-          <div className="toast-message">{toastMessage}</div>
-          <button 
-            className="toast-close" 
-            onClick={() => setShowToast(false)}
-          >
-            &times;
-          </button>
         </div>
       )}
     </div>
   );
 };
 
-export default UserManagement;
+export default UserManagement;                  

@@ -2,7 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaHeart, FaRegHeart, FaTv } from 'react-icons/fa';
+import { 
+  FaHeart, FaRegHeart, FaEye, FaRegEye,
+  FaBookmark, FaRegBookmark
+} from 'react-icons/fa';
 import ReviewSection from '../components/Series/ReviewSection';
 import "./pageStyles/SeriesDetail.css";
 import api from '../api/api';
@@ -131,7 +134,7 @@ const SeriesDetail = () => {
                     onClick={() => handlePreferenceToggle('watched')}
                     title={watched ? "Marcar como no vista" : "Marcar como vista"}
                   >
-                    <FaTv />
+                    {watched ? <FaEye /> : <FaRegEye />}
                     <span>{watched ? "Vista" : "Marcar como vista"}</span>
                   </button>
                 </div>

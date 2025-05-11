@@ -1,4 +1,4 @@
-/* Navbar.css - Diseño mejorado */
+/* Navbar.css - Diseño mejorado y optimizado */
 
 /* Navbar Principal */
 .navbar {
@@ -28,7 +28,6 @@
   transition: all 0.3s ease;
   text-shadow: 0 0 15px rgba(106, 90, 205, 0.4);
 }
-
 
 .logo a {
   text-decoration: none;
@@ -67,6 +66,14 @@
   padding: 5px 10px;
   border-radius: 4px;
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.nav-categories a i {
+  font-size: 14px;
+  opacity: 0.9;
 }
 
 .nav-categories a:hover {
@@ -91,6 +98,7 @@
 
 .nav-categories a.active {
   color: #fff;
+  font-weight: 600;
 }
 
 .nav-categories a.active::after {
@@ -166,7 +174,9 @@
   border-radius: 20px;
   transition: all 0.3s ease;
   text-align: center;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   white-space: nowrap;
   box-shadow: 0 0 10px rgba(106, 90, 205, 0.2);
 }
@@ -185,11 +195,47 @@
 /* Menú usuario */
 .user-menu-container {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
+/* Icono de notificaciones */
+.notification-icon {
+  position: relative;
+  cursor: pointer;
+  font-size: 18px;
+  color: #ddd;
+  transition: all 0.3s ease;
+}
+
+.notification-icon:hover {
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #ff7f50, #ff4500);
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Avatar de usuario */
 .user-avatar {
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .avatar-circle {
@@ -201,7 +247,7 @@
   background: linear-gradient(135deg, #6a5acd, #9370db);
   color: white;
   border-radius: 50%;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
   box-shadow: 0 3px 8px rgba(106, 90, 205, 0.4);
   transition: all 0.3s ease;
@@ -212,11 +258,40 @@
   box-shadow: 0 5px 12px rgba(106, 90, 205, 0.6);
 }
 
+/* Indicador de rol */
+.role-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #1a1a1a;
+  border: 2px solid #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.role-indicator i {
+  color: gold; /* Por defecto para administrador */
+}
+
+.role-indicator i.fa-shield-alt {
+  color: #1e90ff; /* Para moderador */
+}
+
+.role-indicator i.fa-feather-alt {
+  color: #ffd700; /* Para crítico */
+}
+
+/* Dropdown del menú de usuario */
 .user-dropdown {
   position: absolute;
   top: 55px;
   right: 0;
-  width: 200px;
+  width: 220px;
   background-color: #1a1a1a;
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
@@ -226,6 +301,30 @@
   animation: fadeIn 0.3s ease;
 }
 
+/* Información del usuario en el dropdown */
+.user-info {
+  padding: 12px 15px;
+  border-bottom: 1px solid rgba(138, 43, 226, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 3px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.user-role {
+  color: #9370db;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -233,7 +332,9 @@
 
 .user-dropdown a,
 .user-dropdown button {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 12px 15px;
   color: #ddd;
   text-decoration: none;
@@ -251,6 +352,14 @@
   background-color: rgba(138, 43, 226, 0.1);
   color: #fff;
   padding-left: 20px;
+}
+
+.user-dropdown a i,
+.user-dropdown button i {
+  width: 16px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.9;
 }
 
 .logout-button {
@@ -312,7 +421,23 @@
   .avatar-circle {
     width: 35px;
     height: 35px;
+    font-size: 15px;
+  }
+  
+  .notification-icon {
     font-size: 16px;
+  }
+  
+  .notification-badge {
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
+  }
+  
+  .role-indicator {
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
   }
 }
 
@@ -336,10 +461,15 @@
   .nav-categories {
     justify-content: space-around;
     width: 100%;
+    flex-wrap: wrap;
   }
   
   .nav-search {
     margin-top: 10px;
+  }
+  
+  .user-menu-container {
+    gap: 10px;
   }
 }
 
@@ -352,6 +482,10 @@
   .nav-categories a {
     font-size: 12px;
     padding: 5px;
+  }
+  
+  .nav-categories a i {
+    font-size: 12px;
   }
   
   .nav-button {
@@ -370,8 +504,10 @@
     right: -10px;
   }
   
-  .user-dropdown::before {
-    right: 20px;
+  .user-dropdown a,
+  .user-dropdown button {
+    padding: 10px 12px;
+    font-size: 13px;
   }
   
   .search-input {

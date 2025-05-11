@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment
+  FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
+import ReportModal from '../Reportes/ReportModal'; // Importamos el nuevo componente
 import "./ReviewSection.css";
 import api from '../../api/api'
 
@@ -25,6 +26,11 @@ const ReviewSection = ({ gameId, game }) => {
   
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
+  
+  // Estados para modal de reporte
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportedUserId, setReportedUserId] = useState(null);
+  const [reportReviewId, setReportReviewId] = useState(null);
 
   // Obtener reseñas para el videojuego usando useCallback
   const fetchReviews = useCallback(async () => {
@@ -282,6 +288,24 @@ const ReviewSection = ({ gameId, game }) => {
     }
   };
 
+  // Función para abrir el modal de reporte de usuario
+  const openReportModal = (userId, reviewId = null) => {
+    if (!user) {
+      alert("Debes iniciar sesión para reportar a un usuario.");
+      return;
+    }
+    
+    // No permitir auto-reportes
+    if (userId === currentUserId) {
+      alert("No puedes reportarte a ti mismo.");
+      return;
+    }
+    
+    setReportedUserId(userId);
+    setReportReviewId(reviewId);
+    setReportModalOpen(true);
+  };
+
   return (
     <div className="game-reviews">
       <h3>Reseñas</h3>
@@ -390,17 +414,34 @@ const ReviewSection = ({ gameId, game }) => {
                   {displayStars(review.rating)}
                 </div>
                 
-                {/* Botón de Like y contador para reseñas */}
-                <div className="review-likes-section">
-                  <button 
-                    className={`like-button ${hasUserLikedReview(review) ? 'liked' : ''}`}
-                    onClick={() => handleReviewLikeToggle(review._id)}
-                    disabled={!user}
-                    title={user ? (hasUserLikedReview(review) ? "Quitar me gusta" : "Me gusta") : "Inicia sesión para dar me gusta"}
-                  >
-                    {hasUserLikedReview(review) ? <FaThumbsUp /> : <FaRegThumbsUp />}
-                    <span>{review.likedReview?.length || 0}</span>
-                  </button>
+                {/* Acciones de reseña: Like y Reportar */}
+                <div className="review-actions-container">
+                  {/* Botón de Like */}
+                  <div className="review-likes-section">
+                    <button 
+                      className={`like-button ${hasUserLikedReview(review) ? 'liked' : ''}`}
+                      onClick={() => handleReviewLikeToggle(review._id)}
+                      disabled={!user}
+                      title={user ? (hasUserLikedReview(review) ? "Quitar me gusta" : "Me gusta") : "Inicia sesión para dar me gusta"}
+                    >
+                      {hasUserLikedReview(review) ? <FaThumbsUp /> : <FaRegThumbsUp />}
+                      <span>{review.likedReview?.length || 0}</span>
+                    </button>
+                  </div>
+                  
+                  {/* Botón de Reportar */}
+                  {user && (
+                    <button
+                      className="report-button"
+                      onClick={() => openReportModal(
+                        typeof review.userId === 'object' ? review.userId._id : review.userId,
+                        review._id
+                      )}
+                      title="Reportar usuario"
+                    >
+                      <FaFlag /> Reportar
+                    </button>
+                  )}
                 </div>
                 
                 {/* Sección de comentarios */}
@@ -432,6 +473,14 @@ const ReviewSection = ({ gameId, game }) => {
           <p>Inicia sesión para dejar tu reseña y puntuar este videojuego.</p>
         </div>
       )}
+
+      {/* Modal de reporte */}
+      <ReportModal 
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        reportedUserId={reportedUserId}
+        reviewId={reportReviewId}
+      />
     </div>
   );
 };

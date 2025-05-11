@@ -15,6 +15,7 @@ const moderadorRoutes = require('./routes/moderadorRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const criticoRoutes = require('./routes/criticoRoutes');
 const itemRoutes = require('./routes/itemRoutes')
+const reportRoutes = require('./routes/reportRoutes')
 
 
 const app = express();
@@ -56,6 +57,7 @@ app.use('/api/moderador', moderadorRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/critico', criticoRoutes);
 app.use('/api/item', itemRoutes);
+app.use('/api/reportes', reportRoutes);
 
 
 app.get('/', (req, res) => {

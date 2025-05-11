@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment
+  FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
+import ReportModal from '../Reportes/ReportModal';
 import "./reviewSection.css";
 import api from '../../api/api'
 
@@ -25,6 +26,11 @@ const ReviewSection = ({ albumId, album }) => {
   
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
+
+ // Estados para modal de reporte
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportedUserId, setReportedUserId] = useState(null);
+  const [reportReviewId, setReportReviewId] = useState(null);  
 
   // Obtener reseñas para el álbum usando useCallback
   const fetchReviews = useCallback(async () => {
@@ -282,6 +288,23 @@ const ReviewSection = ({ albumId, album }) => {
     }
   };
 
+  const openReportModal = (userId, reviewId = null) => {
+    if (!user) {
+      alert("Debes iniciar sesión para reportar a un usuario.");
+      return;
+    }
+    
+    // No permitir auto-reportes
+    if (userId === currentUserId) {
+      alert("No puedes reportarte a ti mismo.");
+      return;
+    }
+    
+    setReportedUserId(userId);
+    setReportReviewId(reviewId);
+    setReportModalOpen(true);
+  };
+
   return (
     <div className="album-reviews">
       <h3>Reseñas</h3>
@@ -403,6 +426,18 @@ const ReviewSection = ({ albumId, album }) => {
                   </button>
                 </div>
                 
+                {user && (
+                    <button
+                      className="report-button"
+                      onClick={() => openReportModal(
+                        typeof review.userId === 'object' ? review.userId._id : review.userId,
+                        review._id
+                      )}
+                      title="Reportar usuario"
+                    >
+                      <FaFlag /> Reportar
+                    </button>
+                  )}                
                 {/* Sección de comentarios */}
                 <div className="review-comments-section">
                   <button 
@@ -432,6 +467,13 @@ const ReviewSection = ({ albumId, album }) => {
           <p>Inicia sesión para dejar tu reseña y puntuar este álbum.</p>
         </div>
       )}
+
+      <ReportModal 
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        reportedUserId={reportedUserId}
+        reviewId={reportReviewId}
+      />
     </div>
   );
 };

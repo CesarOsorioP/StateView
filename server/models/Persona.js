@@ -70,7 +70,7 @@ const personaSchema = new mongoose.Schema({
   contraseña: { type: String, required: true },
   rol: { 
     type: String, 
-    enum: ['Usuario', 'Critico', 'Moderador', 'Administrador'],
+    enum: ['Usuario', 'Critico', 'Moderador', 'Administrador' , 'Superadministrador'],
     default: 'Usuario'
   },
   imagenPerfil: { type: String },     // Se conserva para la foto de perfil

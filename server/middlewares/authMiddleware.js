@@ -34,18 +34,19 @@ const protect = (req, res, next) => {
  */
 const restrictTo = (...roles) => {
   return (req, res, next) => {
-    // Si el usuario es Administrador, otorga acceso inmediato
-    if (req.user.rol === 'Administrador') {
+    // Si el usuario es Administrador o Superadministrador, otorga acceso inmediato
+    if (req.user.rol === 'Administrador' || req.user.rol === 'Superadministrador') {
       return next();
     }
     // En caso contrario, verifica si el rol del usuario se encuentra entre los roles permitidos
     if (!roles.includes(req.user.rol)) {
-      return res
-        .status(403)
-        .json({ error: 'Acceso denegado: No tienes permisos para realizar esta acción' });
+      return res.status(403).json({ error: 'Acceso denegado: No tienes permisos para realizar esta acción' });
     }
     next();
   };
 };
+
+module.exports = restrictTo;
+
 
 module.exports = { protect, restrictTo };
