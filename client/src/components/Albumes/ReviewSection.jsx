@@ -52,35 +52,7 @@ const ReviewSection = ({ albumId, album }) => {
   useEffect(() => {
     setLoadingReviews(true);
     fetchReviews();
-  }, [fetchReviews]);
-
-  // Aplicar filtros a las reseñas
-  useEffect(() => {
-  if (reviews.length > 0) {
-    let tempReviews = [...reviews];
-    
-    // Aplicar ordenamiento según los criterios seleccionados
-    tempReviews.sort((a, b) => {
-      // Si el filtro es por valoración
-      if (ratingFilter === 'highRated') {
-        // Ordenar de mayor a menor valoración
-        return b.rating - a.rating;
-      } else if (ratingFilter === 'lowRated') {
-        // Ordenar de menor a mayor valoración
-        return a.rating - b.rating;
-      } else {
-        // Si el filtro es 'all', ordenar por fecha
-        const dateA = new Date(a.fechaReview);
-        const dateB = new Date(b.fechaReview);
-        return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
-      }
-    });
-    
-    setFilteredReviews(tempReviews);
-  } else {
-    setFilteredReviews([]);
-  }
-}, [reviews, sortOption, ratingFilter]);
+  }, [fetchReviews, albumId, album]);
 
   // Determinar si el usuario ya tiene una reseña para este álbum
   const currentUserId = user?.id || user?._id;
