@@ -1,4 +1,3 @@
-// src/components/Peliculas.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from '../../api/api';
@@ -6,6 +5,7 @@ import api from '../../api/api';
 const Peliculas = () => {
   const [peliculas, setPeliculas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [directores, setDirectores] = useState([]);
   const [filters, setFilters] = useState({
     year: "all",
@@ -25,16 +25,23 @@ const Peliculas = () => {
   useEffect(() => {
     const fetchPeliculas = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const response = await api.get("/api/peliculas");
-        const peliculasData = response.data;
-        console.log("Películas data:", peliculasData);
+        const peliculasData = response.data || [];
+        
+        // Validar que los datos sean un array
+        if (!Array.isArray(peliculasData)) {
+          throw new Error('Formato de datos inválido');
+        }
+
         setPeliculas(peliculasData);
         
         // Extraer directores únicos
         const directoresMap = new Map();
         
         peliculasData.forEach(pelicula => {
-          if (pelicula.director) {
+          if (pelicula && pelicula.director) {
             const directorId = getDirectorId(pelicula.director);
             
             if (!directoresMap.has(directorId)) {
@@ -47,12 +54,11 @@ const Peliculas = () => {
         });
         
         const uniqueDirectores = Array.from(directoresMap.values());
-        console.log("Directores únicos:", uniqueDirectores);
-        
         setDirectores(uniqueDirectores);
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching peliculas:", error);
+        setError('Error al cargar las películas. Por favor, intenta de nuevo más tarde.');
+      } finally {
         setLoading(false);
       }
     };
@@ -304,6 +310,10 @@ const Peliculas = () => {
           <div className="loading-spinner"></div>
           <p>Cargando películas...</p>
         </div>
+      ) : error ? (
+        <div className="error-container">
+          <p className="error-message">{error}</p>
+        </div>
       ) : (
         <>
           <div className="content-count">
@@ -311,20 +321,38 @@ const Peliculas = () => {
           </div>
 
           <div className="content-grid">
-            {sortedPeliculas.map(pelicula => (
-              <div key={pelicula.pelicula_id} className="content-card">
-                <Link to={`/peliculas/${pelicula.pelicula_id}`} className="content-link">
-                  <div className="poster-container">
-                    <img src={pelicula.imagen} alt={pelicula.titulo} className="poster" />
-                  </div>
-                  <div className="content-info">
-                    <h3 className="content-title">{pelicula.titulo}</h3>
-                    <p className="content-year">{extractYear(pelicula.fecha_estreno)} {formatDuracion(pelicula.duracion) && `• ${formatDuracion(pelicula.duracion)}`}</p>
-                    <p className="content-artist">{pelicula.director}</p>
-                  </div>
-                </Link>
-              </div>
-            ))}
+            {sortedPeliculas.map(pelicula => {
+              // Validar que la película tenga los datos necesarios
+              if (!pelicula || !pelicula.pelicula_id) {
+                return null;
+              }
+
+              return (
+                <div key={pelicula.pelicula_id} className="content-card">
+                  <Link to={`/peliculas/${pelicula.pelicula_id}`} className="content-link">
+                    <div className="poster-container">
+                      <img 
+                        src={pelicula.imagen} 
+                        alt={pelicula.titulo || 'Película sin título'} 
+                        className="poster" 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/placeholder-image.jpg'; // Imagen por defecto
+                        }}
+                      />
+                    </div>
+                    <div className="content-info">
+                      <h3 className="content-title">{pelicula.titulo || 'Sin título'}</h3>
+                      <p className="content-year">
+                        {extractYear(pelicula.fecha_estreno)} 
+                        {formatDuracion(pelicula.duracion) && `• ${formatDuracion(pelicula.duracion)}`}
+                      </p>
+                      <p className="content-artist">{pelicula.director || 'Director desconocido'}</p>
+                    </div>
+                  </Link>
+                </div>
+              );
+            })}
           </div>
 
           {sortedPeliculas.length === 0 && (

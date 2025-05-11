@@ -4,15 +4,10 @@ import {
   FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
-import ReportModal from '../Reportes/ReportModal'; // Importamos el nuevo componente
-import api from '../../api/api'
+import ReportModal from '../Reportes/ReportModal';
+import api from '../../api/api';
 
-// Constante para los tipos de modelos
-const MODEL_TYPES = {
-  PELICULA: 'Pelicula'
-};
-
-const MovieReviewSection = ({ movieId, movie }) => {
+const MovieReviewSection = ({ movieId, movie, onMovieUpdate }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
@@ -45,32 +40,34 @@ const MovieReviewSection = ({ movieId, movie }) => {
     try {
       setLoadingReviews(true);
       // Usar el ID correcto según el modelo de película
-      // Si movie._id está disponible lo usamos (es el ObjectId de MongoDB)
-      // Si no, buscamos por pelicula_id que es el campo en el modelo
-      const movieIdentifier = movie?._id || movie?.pelicula_id;
+      const movieIdentifier = movie?._id || movie?.pelicula_id || movieId;
       
-      if (movieIdentifier) {
-        const response = await api.get(`/api/reviews?itemId=${movieIdentifier}`);
-        setReviews(response.data);
+      if (!movieIdentifier) {
+        console.error("No se pudo determinar el identificador de la película");
+        setErrorMessage("No se pudo cargar la información de la película");
+        return;
       }
+
+      const response = await api.get(`/api/reviews?itemId=${movieIdentifier}`);
+      setReviews(response.data || []);
     } catch (error) {
       console.error("Error fetching reviews:", error);
       setErrorMessage('No se pudieron cargar las reseñas. Inténtalo de nuevo más tarde.');
     } finally {
       setLoadingReviews(false);
     }
-  }, [movie]);
+  }, [movie, movieId]);
 
   // Cargar reseñas cuando cambia la película
   useEffect(() => {
-    const movieIdentifier = movie?._id || movie?.pelicula_id;
-    if (movieIdentifier) {
+    if (movie || movieId) {
       fetchReviews();
     }
-  }, [fetchReviews, movie]);
+  }, [fetchReviews, movie, movieId]);
 
   // Determinar si el usuario ya tiene una reseña para esta película
   const userReview = user && reviews.find(review => {
+    if (!review || !review.userId) return false;
     if (typeof review.userId === 'object') {
       return review.userId._id === currentUserId;
     }
@@ -244,58 +241,84 @@ const MovieReviewSection = ({ movieId, movie }) => {
       alert("Debes iniciar sesión para reseñar.");
       return;
     }
-    if (!movie) {
-      alert("La película aún no está cargada.");
-      return;
-    }
-    if (!currentUserId) {
-      alert("Error: no se pudo identificar al usuario.");
+
+    if (!newReview.trim()) {
+      alert("Por favor, escribe una reseña.");
       return;
     }
 
-
-    // Usar el ID correcto según el modelo de película
-    const movieIdentifier = movie?._id || movie?.pelicula_id;
-    
-    const reviewData = {
-      userId: currentUserId,
-      itemId: movieIdentifier,
-      review_txt: newReview,
-      rating: rating,
-      onModel: "Pelicula" // Cambiado a "Pelicula" para coincidir con el nombre del modelo
-    };
+    if (rating === 0) {
+      alert("Por favor, selecciona una calificación.");
+      return;
+    }
 
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error("No se encontró token de autenticación");
       }
-      
-      const response = await api.post("/api/reviews", reviewData, {
-        headers: {
-          Authorization: `Bearer ${token}`
+
+      // Asegurarnos de que tenemos el ID correcto del usuario
+      const userId = user.id || user._id;
+      if (!userId) {
+        throw new Error("No se pudo obtener el ID del usuario");
+      }
+
+      // Asegurarnos de que tenemos el ID correcto de la película
+      const itemId = movie?._id || movieId;
+      if (!itemId) {
+        throw new Error("No se pudo obtener el ID de la película");
+      }
+
+      const reviewData = {
+        userId,
+        itemId,
+        onModel: "Pelicula",
+        review_txt: newReview,
+        rating: rating
+      };
+
+      const response = await api.post('http://localhost:5000/api/reviews', reviewData, {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       });
+
+      // Actualizar la lista de reseñas con la nueva reseña
+      setReviews(prevReviews => [response.data.review, ...prevReviews]);
       
-      // Se añade la reseña creada al inicio de la lista
-      setReviews(prev => {
-        const newReviewItem = response.data.review;
-        // Aseguramos que no haya duplicados
-        return [newReviewItem, ...prev.filter(item => item._id !== newReviewItem._id)];
-      });
+      // Actualizar la información de la película con los nuevos ratings
+      if (response.data.updatedItem) {
+        // Actualizar el estado local
+        if (movie) {
+          movie.totalRating = response.data.updatedItem.totalRating;
+          movie.ratingCount = response.data.updatedItem.ratingCount;
+          movie.averageRating = response.data.updatedItem.averageRating;
+        }
+        // Notificar al componente padre del cambio
+        onMovieUpdate(response.data.updatedItem);
+      }
+      
+      // Limpiar el formulario
       setNewReview('');
       setRating(0);
-    } catch (error) {
-      console.error("Error al enviar la reseña:", error);
+      setHoverRating(0);
       
-      // Mostrar mensaje de error específico del servidor si está disponible
-      if (error.response && error.response.data && error.response.data.error) {
+      // Mostrar mensaje de éxito
+      setErrorMessage('Reseña creada exitosamente');
+      setTimeout(() => setErrorMessage(''), 3000);
+
+    } catch (error) {
+      console.error("Error al crear la reseña:", error);
+      
+      if (error.response?.data?.error) {
         setErrorMessage(error.response.data.error);
+      } else if (error.message) {
+        setErrorMessage(error.message);
       } else {
         setErrorMessage('Error al crear la reseña. Inténtalo de nuevo.');
       }
-      
-      // Limpiar mensaje de error después de 3 segundos
       setTimeout(() => setErrorMessage(''), 3000);
     }
   };
@@ -316,7 +339,7 @@ const MovieReviewSection = ({ movieId, movie }) => {
         throw new Error("No se encontró token de autenticación");
       }
       
-      const response = await api.put(`/api/reviews/${userReview._id}`, {
+      const response = await api.put(`http://localhost:5000/api/reviews/${userReview._id}`, {
         review_txt: editReviewText,
         rating: editRating
       }, {
@@ -372,7 +395,7 @@ const MovieReviewSection = ({ movieId, movie }) => {
     }
   };
 
-    // Función para abrir el modal de reporte de usuario
+  // Función para abrir el modal de reporte de usuario
   const openReportModal = (userId, reviewId = null) => {
     if (!user) {
       alert("Debes iniciar sesión para reportar a un usuario.");
@@ -397,6 +420,10 @@ const MovieReviewSection = ({ movieId, movie }) => {
     }
     return "Usuario";
   };
+
+  if (!movie && !movieId) {
+    return <div className="movie-reviews"><p>No se pudo cargar la información de la película</p></div>;
+  }
 
   return (
     <div className="movie-reviews">
@@ -550,17 +577,17 @@ const MovieReviewSection = ({ movieId, movie }) => {
                 </div>
 
                 {user && (
-                    <button
-                      className="report-button"
-                      onClick={() => openReportModal(
-                        typeof review.userId === 'object' ? review.userId._id : review.userId,
-                        review._id
-                      )}
-                      title="Reportar usuario"
-                    >
-                      <FaFlag /> Reportar
-                    </button>
-                  )}                
+                  <button
+                    className="report-button"
+                    onClick={() => openReportModal(
+                      typeof review.userId === 'object' ? review.userId._id : review.userId,
+                      review._id
+                    )}
+                    title="Reportar usuario"
+                  >
+                    <FaFlag /> Reportar
+                  </button>
+                )}                
                 
                 {/* Sección de comentarios */}
                 <div className="review-comments-section">
@@ -591,12 +618,12 @@ const MovieReviewSection = ({ movieId, movie }) => {
           <p>Inicia sesión para dejar tu reseña y puntuar esta película.</p>
         </div>
       )}
-  <ReportModal 
-          isOpen={reportModalOpen}
-          onClose={() => setReportModalOpen(false)}
-          reportedUserId={reportedUserId}
-          reviewId={reportReviewId}
-        />
+      <ReportModal 
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        reportedUserId={reportedUserId}
+        reviewId={reportReviewId}
+      />
     </div>
   );
 };

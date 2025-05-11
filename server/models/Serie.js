@@ -25,7 +25,18 @@ const serieSchema = new Schema({
   poster: { type: String },          // URL de la imagen
   fechaInicio: { type: String },       // Fecha de inicio de la serie
   fechaFinal: { type: String },        // Fecha final de la serie (si existe)
-  temporadas: { type: [temporadaSchema], default: [] }  // Arreglo de temporadas
+  temporadas: { type: [temporadaSchema], default: [] },  // Arreglo de temporadas
+  totalRating: { type: Number, default: 0 },    // Suma total de ratings
+  ratingCount: { type: Number, default: 0 },    // Número total de ratings
+  averageRating: { type: Number, default: 0 }   // Rating promedio
+});
+
+// Middleware para calcular el rating promedio antes de guardar
+serieSchema.pre('save', function(next) {
+  if (this.ratingCount > 0) {
+    this.averageRating = this.totalRating / this.ratingCount;
+  }
+  next();
 });
 
 module.exports = mongoose.model("Serie", serieSchema);

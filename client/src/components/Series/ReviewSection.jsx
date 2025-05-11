@@ -285,9 +285,10 @@ const SeriesReviewSection = ({ seriesId, series }) => {
         throw new Error("No se encontró token de autenticación");
       }
       
-      const response = await api.post("/api/reviews", reviewData, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const response = await api.post('http://localhost:5000/api/reviews', reviewData, {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -330,7 +331,7 @@ const SeriesReviewSection = ({ seriesId, series }) => {
         throw new Error("No se encontró token de autenticación");
       }
       
-      const response = await api.put(`/api/reviews/${userReview._id}`, {
+      const response = await api.put(`http://localhost:5000/api/reviews/${userReview._id}`, {
         review_txt: editReviewText,
         rating: editRating
       }, {

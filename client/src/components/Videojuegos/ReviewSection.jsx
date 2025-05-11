@@ -230,9 +230,10 @@ const ReviewSection = ({ gameId, game }) => {
     };
 
     try {
-      const response = await api.post("/api/reviews", reviewData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+      const response = await api.post('http://localhost:5000/api/reviews', reviewData, {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       // Se añade la reseña creada al inicio de la lista
@@ -259,7 +260,7 @@ const ReviewSection = ({ gameId, game }) => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.put(`/api/reviews/${userReview._id}`, {
+      const response = await api.put(`http://localhost:5000/api/reviews/${userReview._id}`, {
         review_txt: editReviewText,
         rating: editRating
       }, {
