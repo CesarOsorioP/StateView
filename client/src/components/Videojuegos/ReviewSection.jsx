@@ -7,13 +7,14 @@ import CommentSection from './commentSection';
 import ReviewFilters from './ReviewFilters';
 import ReportModal from '../Reportes/ReportModal';
 import "./ReviewSection.css";
-import api from '../../api/api'
+import api from '../../api/api';
 
 const ReviewSection = ({ gameId, game }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [filteredReviews, setFilteredReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Estados para crear reseña
   const [newReview, setNewReview] = useState('');
@@ -38,19 +39,32 @@ const ReviewSection = ({ gameId, game }) => {
   const [reportedUserId, setReportedUserId] = useState(null);
   const [reportReviewId, setReportReviewId] = useState(null);
 
+  // Obtener el ID del usuario actual de forma consistente
+  const currentUserId = user?._id || user?.id;
+
   // Obtener reseñas para el videojuego usando useCallback
   const fetchReviews = useCallback(async () => {
     try {
-      if (game && game._id) {
-        const response = await api.get(`/api/reviews?itemId=${game._id}`);
-        setReviews(response.data);
+      setLoadingReviews(true);
+      // Usar el ID correcto según el modelo de videojuego
+      const gameIdentifier = game?._id || gameId;
+      
+      if (!gameIdentifier) {
+        console.error("No se pudo determinar el identificador del videojuego");
+        setErrorMessage("No se pudo cargar la información del videojuego");
+        return;
       }
+
+      // Añadir el filtro de tipo de contenido (onModel) a la consulta
+      const response = await api.get(`/api/reviews?itemId=${gameIdentifier}&onModel=Videojuego`);
+      setReviews(response.data || []);
     } catch (error) {
       console.error("Error fetching reviews:", error);
+      setErrorMessage('No se pudieron cargar las reseñas. Inténtalo de nuevo más tarde.');
     } finally {
       setLoadingReviews(false);
     }
-  }, [game]);
+  }, [game, gameId]);
 
   // Cargar reseñas cuando cambia el videojuego
   useEffect(() => {
@@ -86,9 +100,8 @@ const ReviewSection = ({ gameId, game }) => {
   }, [reviews, sortOption, ratingFilter]);
 
   // Determinar si el usuario ya tiene una reseña para este videojuego
-  const currentUserId = user?.id || user?._id;
   const userReview = user && reviews.find(review => {
-    // review.userId puede venir como objeto (por populate) o como string
+    if (!review || !review.userId) return false;
     if (typeof review.userId === 'object') {
       return review.userId._id === currentUserId;
     }
@@ -156,10 +169,13 @@ const ReviewSection = ({ gameId, game }) => {
 
   // Función para verificar si el usuario actual ha dado like a una reseña
   const hasUserLikedReview = (review) => {
-    if (!user || !review.likedReview) return false;
+    if (!user || !review || !review.likedReview || !currentUserId) return false;
+    
     return review.likedReview.some(like => {
+      if (!like) return false;
+      
       if (typeof like.id_liked_review === 'object') {
-        return like.id_liked_review._id === currentUserId;
+        return like.id_liked_review?._id === currentUserId;
       }
       return like.id_liked_review === currentUserId;
     });
@@ -173,6 +189,11 @@ const ReviewSection = ({ gameId, game }) => {
     }
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error("No se encontró token de autenticación");
+      }
+
       // Primero actualizamos la UI optimísticamente
       const updatedReviews = reviews.map(review => {
         if (review._id === reviewId) {
@@ -183,8 +204,10 @@ const ReviewSection = ({ gameId, game }) => {
             return {
               ...review,
               likedReview: review.likedReview.filter(like => {
+                if (!like) return false;
+                
                 if (typeof like.id_liked_review === 'object') {
-                  return like.id_liked_review._id !== currentUserId;
+                  return like.id_liked_review?._id !== currentUserId;
                 }
                 return like.id_liked_review !== currentUserId;
               })
@@ -197,7 +220,7 @@ const ReviewSection = ({ gameId, game }) => {
                 ...(review.likedReview || []),
                 {
                   id_liked_review: currentUserId,
-                  nombre_persona_review: user.nombre || user.email || "Usuario",
+                  nombre_persona_review: user?.nombre || user?.email || "Usuario",
                   id_persona_review: currentUserId
                 }
               ]
@@ -216,18 +239,28 @@ const ReviewSection = ({ gameId, game }) => {
       if (hasLiked) {
         // Si ya tiene like, lo quitamos
         await api.delete(`/api/reviews/${reviewId}/unlike`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${token}` }
         });
       } else {
         // Si no tiene like, lo añadimos
         await api.post(`/api/reviews/${reviewId}/like`, {}, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${token}` }
         });
       }
     } catch (error) {
       console.error("Error al cambiar el estado del like:", error);
       // En caso de error, revertimos el cambio optimista haciendo una recarga de las reseñas
       fetchReviews();
+      
+      // Mostrar mensaje de error
+      if (error.response && error.response.data && error.response.data.error) {
+        setErrorMessage(error.response.data.error);
+      } else {
+        setErrorMessage('Error al procesar la acción. Inténtalo de nuevo.');
+      }
+      
+      // Limpiar mensaje de error después de 3 segundos
+      setTimeout(() => setErrorMessage(''), 3000);
     }
   };
 
@@ -254,6 +287,22 @@ const ReviewSection = ({ gameId, game }) => {
       alert("Error: no se pudo identificar al usuario.");
       return;
     }
+    
+    if (!newReview.trim()) {
+      alert("Por favor, escribe una reseña.");
+      return;
+    }
+
+    if (rating === 0) {
+      alert("Por favor, selecciona una calificación.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error("No se encontró token de autenticación");
+      }
 
     const reviewData = {
       userId: currentUserId,
@@ -263,62 +312,121 @@ const ReviewSection = ({ gameId, game }) => {
       onModel: "Videojuego"
     };
 
-    try {
-      const response = await api.post('http://localhost:5000/api/reviews', reviewData, {
+      const response = await api.post('/api/reviews', reviewData, {
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
+      
       // Se añade la reseña creada al inicio de la lista
       setReviews(prev => {
         const newReviewItem = response.data.review;
         // Aseguramos que no haya duplicados
         return [newReviewItem, ...prev.filter(item => item._id !== newReviewItem._id)];
       });
+      
+      // Limpiar el formulario
       setNewReview('');
       setRating(0);
+      setHoverRating(0);
+      
+      // Mostrar mensaje de éxito
+      setErrorMessage('Reseña creada exitosamente');
+      setTimeout(() => setErrorMessage(''), 3000);
     } catch (error) {
       console.error("Error al enviar la reseña:", error);
+      
+      // Mostrar mensaje de error específico del servidor si está disponible
+      if (error.response && error.response.data && error.response.data.error) {
+        setErrorMessage(error.response.data.error);
+      } else {
+        setErrorMessage('Error al crear la reseña. Inténtalo de nuevo.');
+      }
+      
+      // Limpiar mensaje de error después de 3 segundos
+      setTimeout(() => setErrorMessage(''), 3000);
     }
   };
 
   // Función para iniciar el proceso de edición
   const handleEdit = () => {
+    if (!userReview) return;
+    
     setIsEditing(true);
-    setEditReviewText(userReview.review_txt);
-    setEditRating(userReview.rating);
+    setEditReviewText(userReview.review_txt || '');
+    setEditRating(userReview.rating || 0);
   };
 
   // Función para actualizar la reseña
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!userReview) {
+      setIsEditing(false);
+      return;
+    }
+    
     try {
-      const response = await api.put(`http://localhost:5000/api/reviews/${userReview._id}`, {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error("No se encontró token de autenticación");
+      }
+      
+      const response = await api.put(`/api/reviews/${userReview._id}`, {
         review_txt: editReviewText,
         rating: editRating
       }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
+      
       // Actualizamos la reseña en el estado
       const updatedReview = response.data.review;
       setReviews(prev => prev.map(review => review._id === userReview._id ? updatedReview : review));
       setIsEditing(false);
     } catch (error) {
       console.error("Error al actualizar la reseña:", error);
+      
+      // Mostrar mensaje de error específico del servidor si está disponible
+      if (error.response && error.response.data && error.response.data.error) {
+        setErrorMessage(error.response.data.error);
+      } else {
+        setErrorMessage('Error al actualizar la reseña. Inténtalo de nuevo.');
+      }
+      
+      // Limpiar mensaje de error después de 3 segundos
+      setTimeout(() => setErrorMessage(''), 3000);
     }
   };
 
   // Función para eliminar la reseña
   const handleDelete = async () => {
+    if (!userReview) return;
+    
     if(window.confirm('¿Estás seguro de eliminar tu reseña?')){
       try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error("No se encontró token de autenticación");
+        }
+        
         await api.delete(`/api/reviews/${userReview._id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${token}` }
         });
+        
         setReviews(prev => prev.filter(review => review._id !== userReview._id));
       } catch (error) {
         console.error("Error al eliminar la reseña:", error);
+        
+        // Mostrar mensaje de error específico del servidor si está disponible
+        if (error.response && error.response.data && error.response.data.error) {
+          setErrorMessage(error.response.data.error);
+        } else {
+          setErrorMessage('Error al eliminar la reseña. Inténtalo de nuevo.');
+        }
+        
+        // Limpiar mensaje de error después de 3 segundos
+        setTimeout(() => setErrorMessage(''), 3000);
       }
     }
   };
@@ -341,6 +449,20 @@ const ReviewSection = ({ gameId, game }) => {
     setReportModalOpen(true);
   };
 
+  // Función para obtener el nombre de usuario desde el objeto de reseña
+  const getUserName = (review) => {
+    if (!review || !review.userId) return "Usuario";
+    
+    if (typeof review.userId === 'object') {
+      return review.userId?.nombre || review.userId?.email || review.userId?.username || "Usuario";
+    }
+    return "Usuario";
+  };
+
+  if (!game && !gameId) {
+    return <div className="game-reviews"><p>No se pudo cargar la información del videojuego</p></div>;
+  }
+
   return (
     <div className="game-reviews">
       <h3>Reseñas</h3>
@@ -359,14 +481,20 @@ const ReviewSection = ({ gameId, game }) => {
           <textarea
             value={newReview}
             onChange={(e) => setNewReview(e.target.value)}
-            placeholder="Escribe tu reseña..."
+            placeholder="Escribe tu reseña sobre este videojuego..."
             required
           />
           <div className="rating-container">
             <label>Calificación: </label>
             {renderStars(rating, hoverRating, setRating, setHoverRating)}
           </div>
-          <button type="submit" className="submit-review">Publicar Reseña</button>
+          <button 
+            type="submit" 
+            className="submit-review"
+            disabled={!rating || !newReview.trim()}
+          >
+            Publicar Reseña
+          </button>
         </form>
       )}
 
@@ -385,8 +513,18 @@ const ReviewSection = ({ gameId, game }) => {
                 {renderStars(editRating, editHoverRating, setEditRating, setEditHoverRating)}
               </div>
               <div className="edit-buttons">
-                <button type="submit" className="update-review">Actualizar Reseña</button>
-                <button type="button" className="cancel-edit" onClick={() => setIsEditing(false)}>
+                <button 
+                  type="submit" 
+                  className="update-review"
+                  disabled={!editRating || !editReviewText.trim()}
+                >
+                  Actualizar Reseña
+                </button>
+                <button 
+                  type="button" 
+                  className="cancel-edit" 
+                  onClick={() => setIsEditing(false)}
+                >
                   Cancelar
                 </button>
               </div>
@@ -394,14 +532,14 @@ const ReviewSection = ({ gameId, game }) => {
           ) : (
             <div className="review-card user-review-card">
               <div className="review-header">
-                <strong>{user.email || user.username}</strong>
+                <strong>{user?.nombre || user?.email || user?.username || "Usuario"}</strong>
                 <span className="review-date">
-                  {new Date(userReview.fechaReview).toLocaleDateString("es-ES")}
+                  {new Date(userReview?.fechaReview).toLocaleDateString("es-ES")}
                 </span>
               </div>
-              <p className="review-text">{userReview.review_txt}</p>
+              <p className="review-text">{userReview?.review_txt}</p>
               <div className="review-rating">
-                {displayStars(userReview.rating)}
+                {displayStars(userReview?.rating || 0)}
               </div>
               <div className="review-actions">
                 <button onClick={handleEdit} className="edit-button">Editar Reseña</button>
@@ -411,7 +549,7 @@ const ReviewSection = ({ gameId, game }) => {
               {/* Contador de likes para la reseña del usuario */}
               <div className="review-likes">
                 <span className="likes-count">
-                  {userReview.likedReview?.length || 0} Me gusta
+                  {userReview?.likedReview?.length || 0} Me gusta
                 </span>
               </div>
 
@@ -447,14 +585,14 @@ const ReviewSection = ({ gameId, game }) => {
             .map((review) => (
               <div key={review._id} className="review-card">
                 <div className="review-header">
-                  <strong>{typeof review.userId === 'object' ? review.userId.email || review.userId.username : "Usuario"}</strong>
+                  <strong>{getUserName(review)}</strong>
                   <span className="review-date">
-                    {new Date(review.fechaReview).toLocaleDateString("es-ES")}
+                    {review?.fechaReview ? new Date(review.fechaReview).toLocaleDateString("es-ES") : "Fecha no disponible"}
                   </span>
                 </div>
-                <p className="review-text">{review.review_txt}</p>
+                <p className="review-text">{review?.review_txt || ""}</p>
                 <div className="review-rating">
-                  {displayStars(review.rating)}
+                  {displayStars(review?.rating || 0)}
                 </div>
                 
                 {/* Acciones de reseña: Like y Reportar */}
@@ -468,7 +606,7 @@ const ReviewSection = ({ gameId, game }) => {
                       title={user ? (hasUserLikedReview(review) ? "Quitar me gusta" : "Me gusta") : "Inicia sesión para dar me gusta"}
                     >
                       {hasUserLikedReview(review) ? <FaThumbsUp /> : <FaRegThumbsUp />}
-                      <span>{review.likedReview?.length || 0}</span>
+                      <span>{review?.likedReview?.length || 0}</span>
                     </button>
                   </div>
                   
@@ -477,7 +615,7 @@ const ReviewSection = ({ gameId, game }) => {
                     <button
                       className="report-button"
                       onClick={() => openReportModal(
-                        typeof review.userId === 'object' ? review.userId._id : review.userId,
+                        typeof review.userId === 'object' ? review.userId?._id : review.userId,
                         review._id
                       )}
                       title="Reportar usuario"

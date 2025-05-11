@@ -1,18 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import api from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
+  FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
-import ReviewFilters from './ReviewFilters';
-import ReportModal from '../Reportes/ReportModal';
 import "./reviewSection.css";
-import api from '../../api/api'
 
 const ReviewSection = ({ albumId, album }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
-  const [filteredReviews, setFilteredReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
   // Estados para crear reseña
@@ -29,31 +26,31 @@ const ReviewSection = ({ albumId, album }) => {
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
 
-  // Estados para filtros
-  const [sortOption, setSortOption] = useState('newest');
-  const [ratingFilter, setRatingFilter] = useState('all');
-
- // Estados para modal de reporte
-  const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [reportedUserId, setReportedUserId] = useState(null);
-  const [reportReviewId, setReportReviewId] = useState(null);  
-
   // Obtener reseñas para el álbum usando useCallback
   const fetchReviews = useCallback(async () => {
     try {
-      if (album && album._id) {
-        const response = await api.get(`/api/reviews?itemId=${album._id}`);
+      // Usamos el id del álbum directamente si está disponible, o caemos en el _id del objeto album
+      const currentAlbumId = albumId || (album && album._id);
+      
+      if (currentAlbumId) {
+        // Aseguramos que estamos filtrando por itemId específico del álbum actual
+        const response = await api.get(`/api/reviews?itemId=${currentAlbumId}&onModel=Album`);
         setReviews(response.data);
+      } else {
+        // Si no hay id, limpiamos las reseñas
+        setReviews([]);
       }
     } catch (error) {
       console.error("Error fetching reviews:", error);
+      setReviews([]);
     } finally {
       setLoadingReviews(false);
     }
-  }, [album]);
+  }, [albumId, album]);
 
   // Cargar reseñas cuando cambia el álbum
   useEffect(() => {
+    setLoadingReviews(true);
     fetchReviews();
   }, [fetchReviews]);
 
@@ -89,7 +86,7 @@ const ReviewSection = ({ albumId, album }) => {
   const currentUserId = user?.id || user?._id;
   const userReview = user && reviews.find(review => {
     // review.userId puede venir como objeto (por populate) o como string
-    if (typeof review.userId === 'object') {
+    if (typeof review.userId === 'object' && review.userId) {
       return review.userId._id === currentUserId;
     }
     return review.userId === currentUserId;
@@ -156,12 +153,12 @@ const ReviewSection = ({ albumId, album }) => {
 
   // Función para verificar si el usuario actual ha dado like a una reseña
   const hasUserLikedReview = (review) => {
-    if (!user || !review.likedReview) return false;
+    if (!user || !review || !review.likedReview) return false;
     return review.likedReview.some(like => {
-      if (typeof like.id_liked_review === 'object') {
+      if (like && typeof like.id_liked_review === 'object' && like.id_liked_review) {
         return like.id_liked_review._id === currentUserId;
       }
-      return like.id_liked_review === currentUserId;
+      return like && like.id_liked_review === currentUserId;
     });
   };
 
@@ -182,12 +179,12 @@ const ReviewSection = ({ albumId, album }) => {
             // Quitamos el like
             return {
               ...review,
-              likedReview: review.likedReview.filter(like => {
-                if (typeof like.id_liked_review === 'object') {
+              likedReview: review.likedReview ? review.likedReview.filter(like => {
+                if (like && typeof like.id_liked_review === 'object' && like.id_liked_review) {
                   return like.id_liked_review._id !== currentUserId;
                 }
-                return like.id_liked_review !== currentUserId;
-              })
+                return like && like.id_liked_review !== currentUserId;
+              }) : []
             };
           } else {
             // Añadimos el like
@@ -197,7 +194,7 @@ const ReviewSection = ({ albumId, album }) => {
                 ...(review.likedReview || []),
                 {
                   id_liked_review: currentUserId,
-                  nombre_persona_review: user.nombre || user.email || "Usuario",
+                  nombre_persona_review: user?.nombre || user?.email || "Usuario",
                   id_persona_review: currentUserId
                 }
               ]
@@ -211,7 +208,7 @@ const ReviewSection = ({ albumId, album }) => {
       
       // Llamada a la API
       const reviewToUpdate = reviews.find(r => r._id === reviewId);
-      const hasLiked = hasUserLikedReview(reviewToUpdate);
+      const hasLiked = reviewToUpdate ? hasUserLikedReview(reviewToUpdate) : false;
       
       if (hasLiked) {
         // Si ya tiene like, lo quitamos
@@ -255,19 +252,25 @@ const ReviewSection = ({ albumId, album }) => {
       return;
     }
 
+    // Aseguramos que siempre se use el ID correcto del álbum
+    const itemIdToUse = albumId || album._id;
+    if (!itemIdToUse) {
+      alert("Error: no se pudo identificar el álbum.");
+      return;
+    }
+
     const reviewData = {
       userId: currentUserId,
-      itemId: album._id,
+      itemId: itemIdToUse,
       review_txt: newReview,
       rating: rating,
-      onModel: "Album"
+      onModel: "Album" // Especificamos que es un álbum
     };
 
     try {
-      const response = await api.post('http://localhost:5000/api/reviews', reviewData, {
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      const response = await api.post("/api/reviews", reviewData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
       // Se añade la reseña creada al inicio de la lista
@@ -285,16 +288,19 @@ const ReviewSection = ({ albumId, album }) => {
 
   // Función para iniciar el proceso de edición
   const handleEdit = () => {
+    if (!userReview) return;
     setIsEditing(true);
-    setEditReviewText(userReview.review_txt);
-    setEditRating(userReview.rating);
+    setEditReviewText(userReview.review_txt || '');
+    setEditRating(userReview.rating || 0);
   };
 
   // Función para actualizar la reseña
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+    if (!userReview) return;
+    
     try {
-      const response = await api.put(`http://localhost:5000/api/reviews/${userReview._id}`, {
+      const response = await api.put(`/api/reviews/${userReview._id}`, {
         review_txt: editReviewText,
         rating: editRating
       }, {
@@ -311,6 +317,8 @@ const ReviewSection = ({ albumId, album }) => {
 
   // Función para eliminar la reseña
   const handleDelete = async () => {
+    if (!userReview) return;
+    
     if(window.confirm('¿Estás seguro de eliminar tu reseña?')){
       try {
         await api.delete(`/api/reviews/${userReview._id}`, {
@@ -323,21 +331,10 @@ const ReviewSection = ({ albumId, album }) => {
     }
   };
 
-  const openReportModal = (userId, reviewId = null) => {
-    if (!user) {
-      alert("Debes iniciar sesión para reportar a un usuario.");
-      return;
-    }
-    
-    // No permitir auto-reportes
-    if (userId === currentUserId) {
-      alert("No puedes reportarte a ti mismo.");
-      return;
-    }
-    
-    setReportedUserId(userId);
-    setReportReviewId(reviewId);
-    setReportModalOpen(true);
+  // Función para mostrar nombre de usuario de forma segura
+  const getUserDisplayName = (userObj) => {
+    if (!userObj) return "Usuario";
+    return userObj.email || userObj.username || userObj.nombre || "Usuario";
   };
 
   return (
@@ -385,14 +382,16 @@ const ReviewSection = ({ albumId, album }) => {
           ) : (
             <div className="review-card user-review-card">
               <div className="review-header">
-                <strong>{user.email || user.username}</strong>
+                <strong>{getUserDisplayName(user)}</strong>
                 <span className="review-date">
-                  {new Date(userReview.fechaReview).toLocaleDateString("es-ES")}
+                  {userReview && userReview.fechaReview ? 
+                    new Date(userReview.fechaReview).toLocaleDateString("es-ES") : 
+                    new Date().toLocaleDateString("es-ES")}
                 </span>
               </div>
-              <p className="review-text">{userReview.review_txt}</p>
+              <p className="review-text">{userReview.review_txt || ''}</p>
               <div className="review-rating">
-                {displayStars(userReview.rating)}
+                {displayStars(userReview.rating || 0)}
               </div>
               <div className="review-actions">
                 <button onClick={handleEdit} className="edit-button">Editar Reseña</button>
@@ -427,35 +426,36 @@ const ReviewSection = ({ albumId, album }) => {
         </div>
       )}
 
-      {/* Componente de filtros */}
-      {filteredReviews.length > 0 && (
-        <ReviewFilters 
-          sortOption={sortOption}
-          setSortOption={setSortOption}
-          ratingFilter={ratingFilter}
-          setRatingFilter={setRatingFilter}
-        />
-      )}
-
       {/* Mostrar todas las reseñas (excluyendo la del usuario actual para evitar duplicados) */}
       {loadingReviews ? (
         <p>Cargando reseñas...</p>
-      ) : filteredReviews.length > 0 ? (
+      ) : reviews.length > 0 ? (
         <div className="reviews-list">
-          {filteredReviews
-            .filter(review => !(user && ((typeof review.userId === 'object' && review.userId._id === currentUserId) || 
-                                       (typeof review.userId === 'string' && review.userId === currentUserId))))
+          {reviews
+            .filter(review => {
+              if (!user || !review) return true;
+              if (typeof review.userId === 'object' && review.userId) {
+                return review.userId._id !== currentUserId;
+              }
+              return review.userId !== currentUserId;
+            })
             .map((review) => (
               <div key={review._id} className="review-card">
                 <div className="review-header">
-                  <strong>{typeof review.userId === 'object' ? review.userId.email || review.userId.username : "Usuario"}</strong>
+                  <strong>
+                    {typeof review.userId === 'object' && review.userId
+                      ? getUserDisplayName(review.userId)
+                      : "Usuario"}
+                  </strong>
                   <span className="review-date">
-                    {new Date(review.fechaReview).toLocaleDateString("es-ES")}
+                    {review.fechaReview ? 
+                      new Date(review.fechaReview).toLocaleDateString("es-ES") : 
+                      ""}
                   </span>
                 </div>
-                <p className="review-text">{review.review_txt}</p>
+                <p className="review-text">{review.review_txt || ''}</p>
                 <div className="review-rating">
-                  {displayStars(review.rating)}
+                  {displayStars(review.rating || 0)}
                 </div>
                 
                 {/* Botón de Like y contador para reseñas */}
@@ -471,18 +471,6 @@ const ReviewSection = ({ albumId, album }) => {
                   </button>
                 </div>
                 
-                {user && (
-                    <button
-                      className="report-button"
-                      onClick={() => openReportModal(
-                        typeof review.userId === 'object' ? review.userId._id : review.userId,
-                        review._id
-                      )}
-                      title="Reportar usuario"
-                    >
-                      <FaFlag /> Reportar
-                    </button>
-                  )}                
                 {/* Sección de comentarios */}
                 <div className="review-comments-section">
                   <button 
@@ -503,10 +491,6 @@ const ReviewSection = ({ albumId, album }) => {
             ))}
         </div>
       ) : (
-        <p className="no-reviews">No hay reseñas que coincidan con los filtros aplicados.</p>
-      )}
-
-      {reviews.length === 0 && !loadingReviews && (
         <p className="no-reviews">No hay reseñas aún. ¡Sé el primero en reseñar este álbum!</p>
       )}
 
@@ -516,13 +500,6 @@ const ReviewSection = ({ albumId, album }) => {
           <p>Inicia sesión para dejar tu reseña y puntuar este álbum.</p>
         </div>
       )}
-
-      <ReportModal 
-        isOpen={reportModalOpen}
-        onClose={() => setReportModalOpen(false)}
-        reportedUserId={reportedUserId}
-        reviewId={reportReviewId}
-      />
     </div>
   );
 };

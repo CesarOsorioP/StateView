@@ -43,27 +43,28 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
   const currentUserId = user?._id || user?.id;
 
   // Obtener reseñas para la película usando useCallback
-  const fetchReviews = useCallback(async () => {
-    try {
-      setLoadingReviews(true);
-      // Usar el ID correcto según el modelo de película
-      const movieIdentifier = movie?._id || movie?.pelicula_id || movieId;
-      
-      if (!movieIdentifier) {
-        console.error("No se pudo determinar el identificador de la película");
-        setErrorMessage("No se pudo cargar la información de la película");
-        return;
-      }
-
-      const response = await api.get(`/api/reviews?itemId=${movieIdentifier}`);
-      setReviews(response.data || []);
-    } catch (error) {
-      console.error("Error fetching reviews:", error);
-      setErrorMessage('No se pudieron cargar las reseñas. Inténtalo de nuevo más tarde.');
-    } finally {
-      setLoadingReviews(false);
+const fetchReviews = useCallback(async () => {
+  try {
+    setLoadingReviews(true);
+    // Usar el ID correcto según el modelo de película
+    const movieIdentifier = movie?._id || movie?.pelicula_id || movieId;
+    
+    if (!movieIdentifier) {
+      console.error("No se pudo determinar el identificador de la película");
+      setErrorMessage("No se pudo cargar la información de la película");
+      return;
     }
-  }, [movie, movieId]);
+
+    // Añadir el filtro de tipo de contenido (onModel) a la consulta
+    const response = await api.get(`/api/reviews?itemId=${movieIdentifier}&onModel=Pelicula`);
+    setReviews(response.data || []);
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    setErrorMessage('No se pudieron cargar las reseñas. Inténtalo de nuevo más tarde.');
+  } finally {
+    setLoadingReviews(false);
+  }
+}, [movie, movieId]);
 
   // Cargar reseñas cuando cambia la película
   useEffect(() => {
@@ -170,11 +171,13 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
 
   // Función para verificar si el usuario actual ha dado like a una reseña
   const hasUserLikedReview = (review) => {
-    if (!user || !review.likedReview || !currentUserId) return false;
+    if (!user || !review || !review.likedReview || !currentUserId) return false;
     
     return review.likedReview.some(like => {
+      if (!like) return false;
+      
       if (typeof like.id_liked_review === 'object') {
-        return like.id_liked_review._id === currentUserId;
+        return like.id_liked_review?._id === currentUserId;
       }
       return like.id_liked_review === currentUserId;
     });
@@ -198,8 +201,10 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
             return {
               ...review,
               likedReview: review.likedReview.filter(like => {
+                if (!like) return false;
+                
                 if (typeof like.id_liked_review === 'object') {
-                  return like.id_liked_review._id !== currentUserId;
+                  return like.id_liked_review?._id !== currentUserId;
                 }
                 return like.id_liked_review !== currentUserId;
               })
@@ -212,7 +217,7 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
                 ...(review.likedReview || []),
                 {
                   id_liked_review: currentUserId,
-                  nombre_persona_review: user.nombre || user.email || "Usuario",
+                  nombre_persona_review: user?.nombre || user?.email || "Usuario",
                   id_persona_review: currentUserId
                 }
               ]
@@ -294,7 +299,7 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
       }
 
       // Asegurarnos de que tenemos el ID correcto del usuario
-      const userId = user.id || user._id;
+      const userId = user?.id || user?._id;
       if (!userId) {
         throw new Error("No se pudo obtener el ID del usuario");
       }
@@ -313,7 +318,8 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
         rating: rating
       };
 
-      const response = await api.post('http://localhost:5000/api/reviews', reviewData, {
+      // Cambiar la URL para usar la API configurada en lugar de hardcoded localhost
+      const response = await api.post('/api/reviews', reviewData, {
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -332,7 +338,9 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
           movie.averageRating = response.data.updatedItem.averageRating;
         }
         // Notificar al componente padre del cambio
-        onMovieUpdate(response.data.updatedItem);
+        if (typeof onMovieUpdate === 'function') {
+          onMovieUpdate(response.data.updatedItem);
+        }
       }
       
       // Limpiar el formulario
@@ -360,21 +368,30 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
 
   // Función para iniciar el proceso de edición
   const handleEdit = () => {
+    if (!userReview) return;
+    
     setIsEditing(true);
-    setEditReviewText(userReview.review_txt);
-    setEditRating(userReview.rating);
+    setEditReviewText(userReview.review_txt || '');
+    setEditRating(userReview.rating || 0);
   };
 
   // Función para actualizar la reseña
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!userReview) {
+      setIsEditing(false);
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error("No se encontró token de autenticación");
       }
       
-      const response = await api.put(`http://localhost:5000/api/reviews/${userReview._id}`, {
+      // Cambiar la URL para usar la API configurada en lugar de hardcoded localhost
+      const response = await api.put(`/api/reviews/${userReview._id}`, {
         review_txt: editReviewText,
         rating: editRating
       }, {
@@ -402,6 +419,8 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
 
   // Función para eliminar la reseña
   const handleDelete = async () => {
+    if (!userReview) return;
+    
     if(window.confirm('¿Estás seguro de eliminar tu reseña?')){
       try {
         const token = localStorage.getItem('token');
@@ -450,8 +469,10 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
 
   // Función para obtener el nombre de usuario desde el objeto de reseña
   const getUserName = (review) => {
+    if (!review || !review.userId) return "Usuario";
+    
     if (typeof review.userId === 'object') {
-      return review.userId.nombre || review.userId.email || review.userId.username || "Usuario";
+      return review.userId?.nombre || review.userId?.email || review.userId?.username || "Usuario";
     }
     return "Usuario";
   };
@@ -528,14 +549,14 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
           ) : (
             <div className="review-card user-review-card">
               <div className="review-header">
-                <strong>{user.nombre || user.email || user.username || "Usuario"}</strong>
+                <strong>{user?.nombre || user?.email || user?.username || "Usuario"}</strong>
                 <span className="review-date">
-                  {new Date(userReview.fechaReview).toLocaleDateString("es-ES")}
+                  {new Date(userReview?.fechaReview).toLocaleDateString("es-ES")}
                 </span>
               </div>
-              <p className="review-text">{userReview.review_txt}</p>
+              <p className="review-text">{userReview?.review_txt}</p>
               <div className="review-rating">
-                {displayStars(userReview.rating)}
+                {displayStars(userReview?.rating || 0)}
               </div>
               <div className="review-actions">
                 <button onClick={handleEdit} className="edit-button">Editar Reseña</button>
@@ -545,7 +566,7 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
               {/* Contador de likes para la reseña del usuario */}
               <div className="review-likes">
                 <span className="likes-count">
-                  {userReview.likedReview?.length || 0} Me gusta
+                  {userReview?.likedReview?.length || 0} Me gusta
                 </span>
               </div>
 
@@ -589,9 +610,10 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
             .filter(review => {
               // Evitar mostrar la reseña del usuario actual dos veces
               if (!user || !currentUserId) return true;
+              if (!review || !review.userId) return false;
               
               if (typeof review.userId === 'object') {
-                return review.userId._id !== currentUserId;
+                return review.userId?._id !== currentUserId;
               }
               return review.userId !== currentUserId;
             })
@@ -600,12 +622,12 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
                 <div className="review-header">
                   <strong>{getUserName(review)}</strong>
                   <span className="review-date">
-                    {new Date(review.fechaReview).toLocaleDateString("es-ES")}
+                    {review?.fechaReview ? new Date(review.fechaReview).toLocaleDateString("es-ES") : "Fecha no disponible"}
                   </span>
                 </div>
-                <p className="review-text">{review.review_txt}</p>
+                <p className="review-text">{review?.review_txt || ""}</p>
                 <div className="review-rating">
-                  {displayStars(review.rating)}
+                  {displayStars(review?.rating || 0)}
                 </div>
                 
                 {/* Botón de Like y contador para reseñas */}
@@ -617,7 +639,7 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
                     title={user ? (hasUserLikedReview(review) ? "Quitar me gusta" : "Me gusta") : "Inicia sesión para dar me gusta"}
                   >
                     {hasUserLikedReview(review) ? <FaThumbsUp /> : <FaRegThumbsUp />}
-                    <span>{review.likedReview?.length || 0}</span>
+                    <span>{review?.likedReview?.length || 0}</span>
                   </button>
                 </div>
 
@@ -625,7 +647,7 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
                   <button
                     className="report-button"
                     onClick={() => openReportModal(
-                      typeof review.userId === 'object' ? review.userId._id : review.userId,
+                      typeof review.userId === 'object' ? review.userId?._id : review.userId,
                       review._id
                     )}
                     title="Reportar usuario"
