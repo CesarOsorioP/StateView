@@ -1,4 +1,5 @@
 // controllers/authController.js
+
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -24,7 +25,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Función para registrar un usuario
+// Función para registrar un usuario (signUp)
 async function signUp(req, res) {
   try {
     // Extraemos los campos enviados en el body, incluyendo imagenPerfil e imagenBanner
@@ -57,14 +58,17 @@ async function signUp(req, res) {
       historial: historial || []
     });
     await nuevaPersona.save();
+
+    // (Opcional) Aquí podrías emitir un evento para actualizar el dashboard en tiempo real
+
     res.status(201).json({ message: 'Usuario registrado correctamente.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }
 
-// Función para iniciar sesión
-// Función de login actualizada para aceptar correo o nombre de usuario
+// Función para iniciar sesión (login)
+// Esta función acepta ya sea correo o nombre de usuario en el campo 'email'
 async function login(req, res) {
   try {
     // El campo 'email' en el body contendrá ya sea el correo o el nombre de usuario
@@ -109,14 +113,14 @@ async function login(req, res) {
   }
 }
 
-// Nueva función para obtener los datos del usuario actual
+// Función para obtener los datos del usuario actual (excluyendo la contraseña)
 async function getCurrentUser(req, res) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       return res.status(401).json({ error: 'No se proporcionó token' });
     }
-    const token = authHeader.split(' ')[1]; // Se asume "Bearer <token>"
+    const token = authHeader.split(' ')[1]; // Se asume formato "Bearer <token>"
     // Busca al usuario excluyendo la contraseña
     const user = await Persona.findById(jwt.verify(token, JWT_SECRET).id).select('-contraseña');
     if (!user) {
@@ -163,12 +167,12 @@ async function requestPasswordReset(req, res) {
           <h2 style="color: #3498db; text-align: center;">StateView</h2>
           <h3>Restablecimiento de contraseña</h3>
           <p>Hola ${usuario.nombre},</p>
-          <p>Has solicitado restablecer tu contraseña. Por favor, haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+          <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${resetUrl}" style="background-color: #3498db; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">Restablecer Contraseña</a>
           </div>
           <p>Este enlace expirará en 1 hora.</p>
-          <p>Si no solicitaste este cambio, puedes ignorar este correo y tu contraseña seguirá siendo la misma.</p>
+          <p>Si no solicitaste este cambio, ignora este mensaje y tu contraseña seguirá siendo la misma.</p>
           <hr style="border: 1px solid #eee; margin: 20px 0;">
           <p style="color: #777; font-size: 12px; text-align: center;">© 2025 StateView - Todos los derechos reservados</p>
         </div>
@@ -186,7 +190,7 @@ async function requestPasswordReset(req, res) {
   }
 }
 
-// Función para validar token de restablecimiento
+// Función para validar token de restablecimiento de contraseña
 async function validateResetToken(req, res) {
   try {
     const { token } = req.params;
@@ -225,7 +229,7 @@ async function resetPassword(req, res) {
     const saltRounds = 10;
     const contraseñaHasheada = await bcrypt.hash(contraseña, saltRounds);
     
-    // Actualizar contraseña y limpiar tokens
+    // Actualizar contraseña y limpiar tokens de restablecimiento
     usuario.contraseña = contraseñaHasheada;
     usuario.resetPasswordToken = undefined;
     usuario.resetPasswordExpires = undefined;

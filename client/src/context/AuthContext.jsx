@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await api.get('/api/auth/me', {
+          const response = await api.get('http://localhost:5000/api/auth/me', {  // OJO!! Se cambia esta linea y se jode pero todo
             headers: { Authorization: `Bearer ${token}` }
           });
           

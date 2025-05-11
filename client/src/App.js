@@ -18,6 +18,8 @@ import PeliculaDetail from "./pages/PeliculaDetail";
 import OlvideContraseñaPage from "./components/OlvideContraseña/OlvideContraseña";
 import RecuperarContraseña from "./components/OlvideContraseña/RecuperarContraseña";
 import Listas from "./components/Usuario/MisListas/Listas"; // Importa el componente de listas
+import UserDashboard from "./components/Admin/UserDashboard";
+import ContentDashboard from "./components/Admin/ContentDashboard";
 
 // Importa el componente de gestión de usuarios (acceso para admin y moderadores)
 import UserManagement from "./components/Admin/UserManagement";
@@ -51,6 +53,8 @@ const App = () => {
           <Route path="/perfil" element={<PerfilUsuario />} />
           <Route path="/listas" element={<Listas />} /> {/* Dirige a la seccion de las listas del usuario*/}
           <Route path="recuperar-contrasena/:token" element={<RecuperarContraseña />} />
+          <Route path="/dashboard/users" element={<UserDashboard />} />
+          <Route path="/dashboard/content" element={<ContentDashboard />} />
         </Routes>
         <Footer />
       </Router>
