@@ -171,15 +171,6 @@ const Series = () => {
                     <p className="content-artist">{serie.genero}</p>
                   </div>
                 </Link>
-                <div className="content-actions">
-                  <Link 
-                    to={`/series/${serie.serie_id}/reviews`} 
-                    className="action-button" 
-                    title="Reseñar serie"
-                  >
-                    <i className="far fa-star"></i>
-                  </Link>
-                </div>
               </div>
             ))}
           </div>

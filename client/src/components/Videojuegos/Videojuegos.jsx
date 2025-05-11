@@ -170,7 +170,6 @@ const Videojuegos = () => {
           
           {filters.year === "all" && (
             <div className="filter-group-range">
-              <label>Rango de años</label>
               <div className="range-inputs">
                 <input
                   type="number"
@@ -268,20 +267,8 @@ const Videojuegos = () => {
                     <h3 className="content-title">{videojuego.titulo}</h3>
                     <p className="content-year">{videojuego.fecha_lanzamiento}</p>
                     <p className="content-artist">{videojuego.desarrolladora}</p>
-                    {videojuego.plataformas && (
-                      <p className="content-platform">{videojuego.plataformas}</p>
-                    )}
                   </div>
                 </Link>
-                <div className="content-actions">
-                  <Link 
-                    to={`/videojuegos/${videojuego.videojuego_id || videojuego.juego_id}/reviews`} 
-                    className="action-button" 
-                    title="Reseñar videojuego"
-                  >
-                    <i className="far fa-star"></i>
-                  </Link>
-                </div>
               </div>
             ))}
           </div>

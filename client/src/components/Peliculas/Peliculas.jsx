@@ -323,15 +323,6 @@ const Peliculas = () => {
                     <p className="content-artist">{pelicula.director}</p>
                   </div>
                 </Link>
-                <div className="content-actions">
-                  <Link 
-                    to={`/peliculas/${pelicula.pelicula_id}/reviews`} 
-                    className="action-button" 
-                    title="Reseñar película"
-                  >
-                    <i className="far fa-star"></i>
-                  </Link>
-                </div>
               </div>
             ))}
           </div>

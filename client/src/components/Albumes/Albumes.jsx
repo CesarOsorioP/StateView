@@ -285,15 +285,6 @@ const Albumes = () => {
                     <p className="content-artist">{album.artista && album.artista.nombre}</p>
                   </div>
                 </Link>
-                <div className="content-actions">
-                  <Link 
-                    to={`/albumes/${album.album_id}/reviews`} 
-                    className="action-button" 
-                    title="Reseñar álbum"
-                  >
-                    <i className="far fa-star"></i>
-                  </Link>
-                </div>
               </div>
             ))}
           </div>
