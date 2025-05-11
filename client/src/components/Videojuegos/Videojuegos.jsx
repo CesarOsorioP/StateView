@@ -1,4 +1,3 @@
-// src/components/Videojuegos.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from '../../api/api';
@@ -17,11 +16,6 @@ const Videojuegos = () => {
     sort: "asc" // "asc" = de más antiguos a más recientes, "desc" = lo inverso
   });
 
-  // Función para generar ID único para una plataforma
-  const getPlataformaId = (plataforma) => {
-    return `plataforma-${plataforma}`;
-  };
-
   useEffect(() => {
     const fetchVideojuegos = async () => {
       try {
@@ -33,51 +27,14 @@ const Videojuegos = () => {
         const plataformasMap = new Map();
         
         videojuegosData.forEach(videojuego => {
-          // Comprobar si el videojuego tiene plataformas
-          if (videojuego.plataformas) {
-            // Si plataformas es un array
-            if (Array.isArray(videojuego.plataformas)) {
-              videojuego.plataformas.forEach(plataforma => {
-                if (plataforma) {
-                  const plataformaId = getPlataformaId(plataforma);
-                  
-                  if (!plataformasMap.has(plataformaId)) {
-                    plataformasMap.set(plataformaId, {
-                      id: plataformaId,
-                      nombre: plataforma
-                    });
-                  }
-                }
+          if (videojuego.plataforma && videojuego.plataforma.nombre) {
+            const plataformaId = videojuego.plataforma.plataforma_id || `nombre-${videojuego.plataforma.nombre}`;
+            
+            if (!plataformasMap.has(plataformaId)) {
+              plataformasMap.set(plataformaId, {
+                id: plataformaId,
+                nombre: videojuego.plataforma.nombre
               });
-            } 
-            // Si plataformas es un string (posiblemente separado por comas)
-            else if (typeof videojuego.plataformas === 'string') {
-              const plataformasList = videojuego.plataformas.split(',').map(p => p.trim());
-              
-              plataformasList.forEach(plataforma => {
-                if (plataforma) {
-                  const plataformaId = getPlataformaId(plataforma);
-                  
-                  if (!plataformasMap.has(plataformaId)) {
-                    plataformasMap.set(plataformaId, {
-                      id: plataformaId,
-                      nombre: plataforma
-                    });
-                  }
-                }
-              });
-            }
-            // Si plataformas es un objeto con un campo 'nombre'
-            else if (typeof videojuego.plataformas === 'object' && videojuego.plataformas.nombre) {
-              const plataforma = videojuego.plataformas.nombre;
-              const plataformaId = getPlataformaId(plataforma);
-              
-              if (!plataformasMap.has(plataformaId)) {
-                plataformasMap.set(plataformaId, {
-                  id: plataformaId,
-                  nombre: plataforma
-                });
-              }
             }
           }
         });
@@ -95,75 +52,30 @@ const Videojuegos = () => {
     fetchVideojuegos();
   }, []);
 
-  // Función para extraer el año de la fecha de lanzamiento
-  const extractYear = (dateString) => {
-    if (!dateString) return null;
-    
-    // Intentamos extraer el año de diferentes formatos comunes
-    // Formato 1: dd/mm/aaaa o dd-mm-aaaa
-    const formatoConSeparadores = /(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})/;
-    // Formato 2: aaaa/mm/dd o aaaa-mm-dd
-    const formatoISOFecha = /(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})/;
-    // Formato 3: texto como "15 de Mayo de 2020"
-    const formatoTexto = /(\d{4})$/;
-    
-    let year = null;
-    
-    if (formatoConSeparadores.test(dateString)) {
-      const matches = dateString.match(formatoConSeparadores);
-      year = matches[3]; // El año está en la tercera posición capturada
-    } else if (formatoISOFecha.test(dateString)) {
-      const matches = dateString.match(formatoISOFecha);
-      year = matches[1]; // El año está en la primera posición capturada
-    } else if (formatoTexto.test(dateString)) {
-      const matches = dateString.match(formatoTexto);
-      year = matches[1]; // Extraer el año si aparece al final del string
-    } else if (dateString.length === 4 && !isNaN(dateString)) {
-      // Si es solo un año (4 dígitos)
-      year = dateString;
+  // Extrae los años únicos para el selector de año individual
+  const years = ["all", ...new Set(videojuegos.map(videojuego => {
+    let year = videojuego.fecha_lanzamiento;
+    if (year && year.length > 4) {
+      year = year.substring(0, 4);
     }
-    
     return year;
-  };
-
-  // Extrae los años únicos a partir de los videojuegos obtenidos
-  const years = ["all", ...new Set(videojuegos.map(videojuego => 
-    extractYear(videojuego.fecha_lanzamiento)
-  ).filter(Boolean).sort((a, b) => parseInt(a) - parseInt(b)))];
+  }).filter(Boolean))];
 
   // Encuentra el año mínimo y máximo para el selector de rango
   const allYears = videojuegos
-    .map(videojuego => extractYear(videojuego.fecha_lanzamiento) ? parseInt(extractYear(videojuego.fecha_lanzamiento)) : null)
+    .map(videojuego => videojuego.fecha_lanzamiento ? parseInt(videojuego.fecha_lanzamiento.substring(0, 4)) : null)
     .filter(Boolean);
   
-  const minYear = allYears.length > 0 ? Math.min(...allYears) : 1970; // Los videojuegos empezaron a popularizarse en los 70
+  const minYear = allYears.length > 0 ? Math.min(...allYears) : 1900;
   const maxYear = allYears.length > 0 ? Math.max(...allYears) : new Date().getFullYear();
-
-  // Función para verificar si un videojuego tiene una plataforma específica
-  const hasPlataforma = (videojuego, plataformaId) => {
-    if (!videojuego.plataformas) return false;
-    
-    // Si plataformas es un array
-    if (Array.isArray(videojuego.plataformas)) {
-      return videojuego.plataformas.some(p => getPlataformaId(p) === plataformaId);
-    } 
-    // Si plataformas es un string (posiblemente separado por comas)
-    else if (typeof videojuego.plataformas === 'string') {
-      const plataformasList = videojuego.plataformas.split(',').map(p => p.trim());
-      return plataformasList.some(p => getPlataformaId(p) === plataformaId);
-    }
-    // Si plataformas es un objeto con un campo 'nombre'
-    else if (typeof videojuego.plataformas === 'object' && videojuego.plataformas.nombre) {
-      return getPlataformaId(videojuego.plataformas.nombre) === plataformaId;
-    }
-    
-    return false;
-  };
 
   // Aplica todos los filtros
   const filteredVideojuegos = videojuegos.filter(videojuego => {
     // Extraer año del videojuego
-    const gameYear = extractYear(videojuego.fecha_lanzamiento);
+    let gameYear = videojuego.fecha_lanzamiento;
+    if (gameYear && gameYear.length > 4) {
+      gameYear = gameYear.substring(0, 4);
+    }
     const yearNum = gameYear ? parseInt(gameYear) : 0;
     
     // Filtro por año específico
@@ -180,7 +92,13 @@ const Videojuegos = () => {
     
     // Filtro por plataforma
     if (filters.plataforma !== "all") {
-      if (!hasPlataforma(videojuego, filters.plataforma)) {
+      if (!videojuego.plataforma || !videojuego.plataforma.nombre) {
+        return false;
+      }
+      
+      const plataformaId = videojuego.plataforma.plataforma_id || `nombre-${videojuego.plataforma.nombre}`;
+      
+      if (plataformaId !== filters.plataforma) {
         return false;
       }
     }
@@ -190,8 +108,8 @@ const Videojuegos = () => {
 
   // Ordena por año: ascendente (más antiguo) o descendente (más reciente)
   const sortedVideojuegos = [...filteredVideojuegos].sort((a, b) => {
-    const yearA = extractYear(a.fecha_lanzamiento) ? parseInt(extractYear(a.fecha_lanzamiento)) : 0;
-    const yearB = extractYear(b.fecha_lanzamiento) ? parseInt(extractYear(b.fecha_lanzamiento)) : 0;
+    let yearA = a.fecha_lanzamiento ? parseInt(a.fecha_lanzamiento.substring(0, 4)) : 0;
+    let yearB = b.fecha_lanzamiento ? parseInt(b.fecha_lanzamiento.substring(0, 4)) : 0;
     return filters.sort === "asc" ? yearA - yearB : yearB - yearA;
   });
 
@@ -207,7 +125,6 @@ const Videojuegos = () => {
         }
       }));
     } else {
-      // Si se selecciona un año específico, limpia el rango de años
       if (name === "year" && value !== "all") {
         setFilters(prev => ({
           ...prev,
@@ -215,36 +132,12 @@ const Videojuegos = () => {
           yearRange: { from: "", to: "" }
         }));
       } else {
-        // Asegúrate de que el cambio de filtro se aplica correctamente
-        setFilters(prev => {
-          const newFilters = {
-            ...prev,
-            [name]: value
-          };
-          return newFilters;
-        });
+        setFilters(prev => ({
+          ...prev,
+          [name]: value
+        }));
       }
     }
-  };
-
-  // Formatear géneros para mostrar (si está disponible)
-  const formatGeneros = (generos) => {
-    if (!generos) return "";
-    
-    if (Array.isArray(generos)) {
-      return generos.join(", ");
-    } else if (typeof generos === 'string') {
-      return generos;
-    } else if (typeof generos === 'object') {
-      // Si es un objeto, intentar extraer nombres
-      const generosArray = Object.values(generos)
-        .filter(g => g && (typeof g === 'string' || (typeof g === 'object' && g.nombre)))
-        .map(g => typeof g === 'string' ? g : g.nombre);
-      
-      return generosArray.join(", ");
-    }
-    
-    return "";
   };
 
   return (
@@ -276,7 +169,6 @@ const Videojuegos = () => {
           
           {filters.year === "all" && (
             <div className="filter-group-range">
-              <label>Rango de años</label>
               <div className="range-inputs">
                 <input
                   type="number"
@@ -313,7 +205,7 @@ const Videojuegos = () => {
             >
               <option value="all">Todas las plataformas</option>
               {plataformas
-                .sort((a, b) => a.nombre.localeCompare(b.nombre)) // Ordenar alfabéticamente
+                .sort((a, b) => a.nombre.localeCompare(b.nombre))
                 .map(plataforma => (
                   <option 
                     key={plataforma.id || `plataforma-${plataforma.nombre}`} 
@@ -365,15 +257,15 @@ const Videojuegos = () => {
 
           <div className="content-grid">
             {sortedVideojuegos.map(videojuego => (
-              <div key={videojuego.videojuego_id || `game-${videojuego.titulo}`} className="content-card">
-                <Link to={`/videojuegos/${videojuego.videojuego_id}`} className="content-link">
+              <div key={videojuego.videojuego_id} className="content-card">
+                <Link to={`/videojuegos/${videojuego.juego_id}`} className="content-link">
                   <div className="poster-container">
-                    <img src={videojuego.imagen || videojuego.portada} alt={videojuego.titulo || videojuego.nombre} className="poster" />
+                    <img src={videojuego.imagen} alt={videojuego.titulo} className="poster" />
                   </div>
                   <div className="content-info">
-                    <h3 className="content-title">{videojuego.titulo || videojuego.nombre}</h3>
-                    <p className="content-year">{extractYear(videojuego.fecha_lanzamiento)}</p>
-                    <p className="content-artist">{formatGeneros(videojuego.generos)}</p>
+                    <h3 className="content-title">{videojuego.titulo}</h3>
+                    <p className="content-year">{videojuego.fecha_lanzamiento}</p>
+                    <p className="content-artist">{videojuego.desarrolladora}</p>
                   </div>
                 </Link>
                 <div className="content-actions">

@@ -224,7 +224,6 @@ const Peliculas = () => {
           
           {filters.year === "all" && (
             <div className="filter-group-range">
-              <label>Rango de años</label>
               <div className="range-inputs">
                 <input
                   type="number"
