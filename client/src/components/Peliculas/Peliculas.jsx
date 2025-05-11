@@ -1,21 +1,55 @@
 // src/components/Peliculas.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import api from '../../api/api'
+import api from '../../api/api';
 
 const Peliculas = () => {
   const [peliculas, setPeliculas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [directores, setDirectores] = useState([]);
   const [filters, setFilters] = useState({
     year: "all",
+    yearRange: {
+      from: "",
+      to: ""
+    },
+    director: "all",
     sort: "asc" // "asc" = de más antiguas a más recientes, "desc" = lo inverso
   });
+
+  // Función para generar ID único para un director
+  const getDirectorId = (director) => {
+    return `director-${director}`;
+  };
 
   useEffect(() => {
     const fetchPeliculas = async () => {
       try {
         const response = await api.get("/api/peliculas");
-        setPeliculas(response.data);
+        const peliculasData = response.data;
+        console.log("Películas data:", peliculasData);
+        setPeliculas(peliculasData);
+        
+        // Extraer directores únicos
+        const directoresMap = new Map();
+        
+        peliculasData.forEach(pelicula => {
+          if (pelicula.director) {
+            const directorId = getDirectorId(pelicula.director);
+            
+            if (!directoresMap.has(directorId)) {
+              directoresMap.set(directorId, {
+                id: directorId,
+                nombre: pelicula.director
+              });
+            }
+          }
+        });
+        
+        const uniqueDirectores = Array.from(directoresMap.values());
+        console.log("Directores únicos:", uniqueDirectores);
+        
+        setDirectores(uniqueDirectores);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching peliculas:", error);
@@ -62,12 +96,48 @@ const Peliculas = () => {
     extractYear(pelicula.fecha_estreno)
   ).filter(Boolean).sort((a, b) => parseInt(a) - parseInt(b)))];
 
-  // Aplica el filtro de año
+  // Encuentra el año mínimo y máximo para el selector de rango
+  const allYears = peliculas
+    .map(pelicula => extractYear(pelicula.fecha_estreno) ? parseInt(extractYear(pelicula.fecha_estreno)) : null)
+    .filter(Boolean);
+  
+  const minYear = allYears.length > 0 ? Math.min(...allYears) : 1900;
+  const maxYear = allYears.length > 0 ? Math.max(...allYears) : new Date().getFullYear();
+
+  // Aplica todos los filtros
   const filteredPeliculas = peliculas.filter(pelicula => {
-    if (filters.year !== "all") {
-      const movieYear = extractYear(pelicula.fecha_estreno);
-      return movieYear === filters.year;
+    // Extraer año de la película
+    const movieYear = extractYear(pelicula.fecha_estreno);
+    const yearNum = movieYear ? parseInt(movieYear) : 0;
+    
+    // Filtro por año específico
+    if (filters.year !== "all" && movieYear !== filters.year) {
+      return false;
     }
+    
+    // Filtro por rango de años
+    if (filters.year === "all" && 
+        ((filters.yearRange.from && yearNum < parseInt(filters.yearRange.from)) || 
+         (filters.yearRange.to && yearNum > parseInt(filters.yearRange.to)))) {
+      return false;
+    }
+    
+    // Filtro por director
+    if (filters.director !== "all") {
+      // Verificar si la película tiene información de director
+      if (!pelicula.director) {
+        return false;
+      }
+      
+      // Usar la misma función para generar el ID del director
+      const peliculaDirectorId = getDirectorId(pelicula.director);
+      
+      // Comparar con el ID del filtro seleccionado
+      if (peliculaDirectorId !== filters.director) {
+        return false;
+      }
+    }
+    
     return true;
   });
 
@@ -80,10 +150,37 @@ const Peliculas = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    console.log(`Changing filter ${name} to:`, value); // Para depuración
+    
+    if (name === "from" || name === "to") {
+      setFilters(prev => ({
+        ...prev,
+        yearRange: {
+          ...prev.yearRange,
+          [name]: value
+        }
+      }));
+    } else {
+      // Si se selecciona un año específico, limpia el rango de años
+      if (name === "year" && value !== "all") {
+        setFilters(prev => ({
+          ...prev,
+          [name]: value,
+          yearRange: { from: "", to: "" }
+        }));
+      } else {
+        // Asegúrate de que el cambio de filtro se aplica correctamente
+        setFilters(prev => {
+          const newFilters = {
+            ...prev,
+            [name]: value
+          };
+          console.log("Nuevos filtros:", newFilters); // Para depuración
+          return newFilters;
+        });
+      }
+    }
   };
 
   // Formatear duración de la película (si está disponible)
@@ -106,33 +203,100 @@ const Peliculas = () => {
       </div>
 
       <div className="filters-container">
-        <div className="filter-group">
-          <label>Año</label>
-          <select 
-            name="year" 
-            value={filters.year} 
-            onChange={handleFilterChange}
-            className="filter-select"
-          >
-            {years.map(year => (
-              <option key={year} value={year}>
-                {year === "all" ? "Todos los años" : year}
-              </option>
-            ))}
-          </select>
-        </div>
+        <div className="filter-section">
+          <h3>Filtros</h3>
+          
+          <div className="filter-group">
+            <label>Año</label>
+            <select 
+              name="year" 
+              value={filters.year} 
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              {years.map(year => (
+                <option key={year || 'unknown'} value={year || ''}>
+                  {year === "all" ? "Todos los años" : (year || 'Año desconocido')}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {filters.year === "all" && (
+            <div className="filter-group-range">
+              <label>Rango de años</label>
+              <div className="range-inputs">
+                <input
+                  type="number"
+                  name="from"
+                  placeholder="Desde"
+                  min={minYear}
+                  max={maxYear}
+                  value={filters.yearRange.from}
+                  onChange={handleFilterChange}
+                  className="filter-input"
+                />
+                <span>-</span>
+                <input
+                  type="number"
+                  name="to"
+                  placeholder="Hasta"
+                  min={minYear}
+                  max={maxYear}
+                  value={filters.yearRange.to}
+                  onChange={handleFilterChange}
+                  className="filter-input"
+                />
+              </div>
+            </div>
+          )}
 
-        <div className="filter-group">
-          <label>Ordenar por</label>
-          <select 
-            name="sort" 
-            value={filters.sort} 
-            onChange={handleFilterChange}
-            className="filter-select"
+          <div className="filter-group">
+            <label>Director</label>
+            <select 
+              name="director" 
+              value={filters.director} 
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              <option value="all">Todos los directores</option>
+              {directores
+                .sort((a, b) => a.nombre.localeCompare(b.nombre)) // Ordenar alfabéticamente
+                .map(director => (
+                  <option 
+                    key={director.id || `director-${director.nombre}`} 
+                    value={director.id || ''}
+                  >
+                    {director.nombre || 'Director desconocido'}
+                  </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Ordenar por</label>
+            <select 
+              name="sort" 
+              value={filters.sort} 
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              <option value="asc">Más antiguas</option>
+              <option value="desc">Más recientes</option>
+            </select>
+          </div>
+          
+          <button 
+            className="reset-filters-btn"
+            onClick={() => setFilters({
+              year: "all",
+              yearRange: { from: "", to: "" },
+              director: "all",
+              sort: "asc"
+            })}
           >
-            <option value="asc">Más antiguas</option>
-            <option value="desc">Más recientes</option>
-          </select>
+            Limpiar filtros
+          </button>
         </div>
       </div>
 
@@ -161,7 +325,6 @@ const Peliculas = () => {
                   </div>
                 </Link>
                 <div className="content-actions">
-                  {/* Enlace para ir a la página de reseñas para esta película */}
                   <Link 
                     to={`/peliculas/${pelicula.pelicula_id}/reviews`} 
                     className="action-button" 
