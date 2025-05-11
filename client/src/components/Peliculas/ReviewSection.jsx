@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
+  FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
 import ReportModal from '../Reportes/ReportModal';
@@ -26,11 +26,6 @@ const MovieReviewSection = ({ movieId, movie, onMovieUpdate }) => {
   
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
-
-  // Estados para modal de reporte
-  const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [reportedUserId, setReportedUserId] = useState(null);
-  const [reportReviewId, setReportReviewId] = useState(null);  
 
   // Obtener el ID del usuario actual de forma consistente
   const currentUserId = user?._id || user?.id;
@@ -628,4 +623,4 @@ const MovieReviewSection = ({ movieId, movie, onMovieUpdate }) => {
   );
 };
 
-export default MovieReviewSection;
+export default ReviewSection;

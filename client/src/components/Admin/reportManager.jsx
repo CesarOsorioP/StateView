@@ -655,7 +655,7 @@ const ReportManager = () => {
                   </td>
                   <td className="actions-cell">
                     <button 
-                      className="action-button view-button"
+                      className="action-button4 view-button"
                       onClick={() => handleManageReport(report._id)}
                       title="Ver detalles"
                     >
@@ -665,14 +665,14 @@ const ReportManager = () => {
                     {report.estado === 'Pendiente' && (
                       <>
                         <button 
-                          className="action-button approve-button"
+                          className="action-button4 approve-button"
                           onClick={() => handleChangeStatus(report._id, 'Resuelto')}
                           title="Marcar como resuelto"
                         >
                           <i className="fas fa-check"></i>
                         </button>
                         <button 
-                          className="action-button reject-button"
+                          className="action-button4 reject-button"
                           onClick={() => handleChangeStatus(report._id, 'Rechazado')}
                           title="Rechazar reporte"
                         >
@@ -683,7 +683,7 @@ const ReportManager = () => {
                     
                     {report.reportedUser && report.reportedUser._id && (
                       <div className="dropdown">
-                        <button className="action-button user-action-button">
+                        <button className="action-button4 user-action-button">
                           <i className="fas fa-user-cog"></i>
                         </button>
                         <div className="dropdown-content">

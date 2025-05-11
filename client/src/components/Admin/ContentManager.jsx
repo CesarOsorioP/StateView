@@ -293,7 +293,7 @@ const ContentManager = () => {
                     )}
                     <td>
                       <button 
-                        className="action-button delete" 
+                        className="action-button3 delete" 
                         onClick={() => handleDelete(item._id)}
                       >
                         Eliminar

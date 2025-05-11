@@ -190,7 +190,7 @@
   }
   
   /* Botones de acciones en la tabla */
-  .action-button {
+  .action-button3 {
     background-color: transparent;
     border: 1px solid blueviolet;
     color: blueviolet;
@@ -201,18 +201,18 @@
     transition: all 0.3s ease;
   }
   
-  .action-button:hover {
+  .action-button3:hover {
     background-color: blueviolet;
     color: white;
     transform: scale(1.05);
   }
   
-  .action-button.delete {
+  .action-button3.delete {
     border-color: #ff6b6b;
     color: #ff6b6b;
   }
   
-  .action-button.delete:hover {
+  .action-button3.delete:hover {
     background-color: #ff6b6b;
     color: white;
   }
@@ -434,7 +434,7 @@
       font-size: 0.9rem;
     }
     
-    .action-button {
+    .action-button2 {
       padding: 5px 8px;
       font-size: 0.8rem;
     }
