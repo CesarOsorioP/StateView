@@ -24,24 +24,26 @@ const Videojuegos = () => {
         setVideojuegos(videojuegosData);
         
         // Extraer plataformas únicas
-        const plataformasMap = new Map();
+        const plataformasUnicas = new Set();
         
         videojuegosData.forEach(videojuego => {
-          if (videojuego.plataforma && videojuego.plataforma.nombre) {
-            const plataformaId = videojuego.plataforma.plataforma_id || `nombre-${videojuego.plataforma.nombre}`;
-            
-            if (!plataformasMap.has(plataformaId)) {
-              plataformasMap.set(plataformaId, {
-                id: plataformaId,
-                nombre: videojuego.plataforma.nombre
-              });
-            }
+          if (videojuego.plataformas) {
+            // Asumiendo que plataformas puede ser un string con múltiples plataformas separadas por comas
+            const plataformasList = videojuego.plataformas.split(',').map(p => p.trim());
+            plataformasList.forEach(plataforma => {
+              if (plataforma) {
+                plataformasUnicas.add(plataforma);
+              }
+            });
           }
         });
         
-        const uniquePlataformas = Array.from(plataformasMap.values());
+        const plataformasArray = Array.from(plataformasUnicas).map(nombre => ({
+          id: nombre,
+          nombre: nombre
+        }));
         
-        setPlataformas(uniquePlataformas);
+        setPlataformas(plataformasArray);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching videojuegos:", error);
@@ -92,13 +94,12 @@ const Videojuegos = () => {
     
     // Filtro por plataforma
     if (filters.plataforma !== "all") {
-      if (!videojuego.plataforma || !videojuego.plataforma.nombre) {
+      if (!videojuego.plataformas) {
         return false;
       }
       
-      const plataformaId = videojuego.plataforma.plataforma_id || `nombre-${videojuego.plataforma.nombre}`;
-      
-      if (plataformaId !== filters.plataforma) {
+      const plataformasList = videojuego.plataformas.split(',').map(p => p.trim());
+      if (!plataformasList.includes(filters.plataforma)) {
         return false;
       }
     }
@@ -169,6 +170,7 @@ const Videojuegos = () => {
           
           {filters.year === "all" && (
             <div className="filter-group-range">
+              <label>Rango de años</label>
               <div className="range-inputs">
                 <input
                   type="number"
@@ -208,10 +210,10 @@ const Videojuegos = () => {
                 .sort((a, b) => a.nombre.localeCompare(b.nombre))
                 .map(plataforma => (
                   <option 
-                    key={plataforma.id || `plataforma-${plataforma.nombre}`} 
-                    value={plataforma.id || ''}
+                    key={plataforma.id} 
+                    value={plataforma.id}
                   >
-                    {plataforma.nombre || 'Plataforma desconocida'}
+                    {plataforma.nombre}
                   </option>
               ))}
             </select>
@@ -257,7 +259,7 @@ const Videojuegos = () => {
 
           <div className="content-grid">
             {sortedVideojuegos.map(videojuego => (
-              <div key={videojuego.videojuego_id} className="content-card">
+              <div key={videojuego.videojuego_id || videojuego.juego_id} className="content-card">
                 <Link to={`/videojuegos/${videojuego.juego_id}`} className="content-link">
                   <div className="poster-container">
                     <img src={videojuego.imagen} alt={videojuego.titulo} className="poster" />
@@ -266,11 +268,14 @@ const Videojuegos = () => {
                     <h3 className="content-title">{videojuego.titulo}</h3>
                     <p className="content-year">{videojuego.fecha_lanzamiento}</p>
                     <p className="content-artist">{videojuego.desarrolladora}</p>
+                    {videojuego.plataformas && (
+                      <p className="content-platform">{videojuego.plataformas}</p>
+                    )}
                   </div>
                 </Link>
                 <div className="content-actions">
                   <Link 
-                    to={`/videojuegos/${videojuego.videojuego_id}/reviews`} 
+                    to={`/videojuegos/${videojuego.videojuego_id || videojuego.juego_id}/reviews`} 
                     className="action-button" 
                     title="Reseñar videojuego"
                   >
