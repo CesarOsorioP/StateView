@@ -5,7 +5,7 @@ const express = require('express');
 const connectDB = require('./config/db');
 const personaRoutes = require('./routes/personaRoutes');
 const peliculaRoutes = require('./routes/peliculaRoutes');
-const serieRoutes = require('./routes/serieRoutes')
+const serieRoutes = require('./routes/serieRoutes');
 const videojuegoRoutes = require('./routes/videojuegoRoutes');
 const albumRoutes = require('./routes/albumRoutes');
 const authRoutes = require('./routes/authRoutes');
@@ -15,13 +15,25 @@ const moderadorRoutes = require('./routes/moderadorRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const criticoRoutes = require('./routes/criticoRoutes');
 
-
 const app = express();
 
-// Configura Cors para permitir solicitudes desde http://localhost:3000
+// ✅ CORS: permite tanto localhost como Vercel
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://state-view.vercel.app'
+];
+
 app.use(cors({
-    origin: "http://localhost:3000",
-  }));
+  origin: function (origin, callback) {
+    // Permite solicitudes sin origin (por ejemplo, herramientas como Postman)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
+  credentials: true // si usas cookies o sesiones
+}));
 
 // Conecta a MongoDB Atlas
 connectDB();
@@ -29,10 +41,10 @@ connectDB();
 // Middleware para parsear JSON
 app.use(express.json());
 
-// Ruta para la API de Personas (ruta base: /api/personas)
+// Rutas
 app.use('/api/persona', personaRoutes);
 app.use('/api/peliculas', peliculaRoutes);
-app.use('/api/series' , serieRoutes);
+app.use('/api/series', serieRoutes);
 app.use('/api/videojuegos', videojuegoRoutes);
 app.use('/api/albums', albumRoutes);
 app.use('/api/auth', authRoutes);

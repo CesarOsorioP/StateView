@@ -19,7 +19,8 @@ import OlvideContraseñaPage from "./components/OlvideContraseña/OlvideContrase
 
 // Importa el componente de gestión de usuarios (acceso para admin y moderadores)
 import UserManagement from "./components/Admin/UserManagement";
-import ContentManagement from "./components/Admin/ContentManager"
+import ContentManagement from "./components/Admin/ContentManager";
+import PerfilUsuario from "./components/Usuario/PerfilUsuario";
 
 const App = () => {
   return (
@@ -41,7 +42,11 @@ const App = () => {
           {/* Ruta para la gestión de usuarios (acceso restringido a Administradores y Moderadores) */}
           <Route path="/gestionar-usuario" element={<UserManagement />} />
           <Route path="/gestionar-contenido" element={<ContentManagement />} />
+<<<<<<< HEAD
           <Route path="/olvide-contrasena" element={<OlvideContraseñaPage />} />
+=======
+          <Route path="/perfil" element={<PerfilUsuario />} />
+>>>>>>> gesakro
         </Routes>
         <Footer />
       </Router>
