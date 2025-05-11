@@ -7,6 +7,7 @@ import api from '../../api/api';
 const Albumes = () => {
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [artists, setArtists] = useState([]);
   const [filters, setFilters] = useState({
     year: "all",
@@ -26,8 +27,16 @@ const Albumes = () => {
   useEffect(() => {
     const fetchAlbums = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const response = await api.get("/api/albums");
-        const albumsData = response.data;
+        
+        // Verificar que la respuesta tenga la propiedad data y sea un array
+        if (!response.data || !Array.isArray(response.data.data)) {
+          throw new Error('La respuesta de la API no es un array válido');
+        }
+
+        const albumsData = response.data.data;
         setAlbums(albumsData);
         
         // Extraer artistas únicos - usando nombre del artista como identificador primario
@@ -49,11 +58,12 @@ const Albumes = () => {
         });
         
         const uniqueArtists = Array.from(artistsMap.values());
-        
         setArtists(uniqueArtists);
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching albums:", error);
+        setError('Error al cargar los álbumes. Por favor, intenta de nuevo más tarde.');
+        setAlbums([]); // Asegurarnos de que albums sea un array vacío en caso de error
+      } finally {
         setLoading(false);
       }
     };
@@ -145,17 +155,24 @@ const Albumes = () => {
           yearRange: { from: "", to: "" }
         }));
       } else {
-        // Asegúrate de que el cambio de filtro se aplica correctamente
-        setFilters(prev => {
-          const newFilters = {
-            ...prev,
-            [name]: value
-          };
-          return newFilters;
-        });
+        setFilters(prev => ({
+          ...prev,
+          [name]: value
+        }));
       }
     }
   };
+
+  if (error) {
+    return (
+      <div className="content-page">
+        <div className="error-container">
+          <h2>Error</h2>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="content-page">
@@ -222,7 +239,7 @@ const Albumes = () => {
             >
               <option value="all">Todos los artistas</option>
               {artists
-                .sort((a, b) => a.nombre.localeCompare(b.nombre)) // Ordenar alfabéticamente
+                .sort((a, b) => a.nombre.localeCompare(b.nombre))
                 .map(artist => (
                   <option 
                     key={artist.id || `artist-${artist.nombre}`} 
@@ -277,7 +294,15 @@ const Albumes = () => {
               <div key={album.album_id || `album-${album.nombre}`} className="content-card">
                 <Link to={`/albumes/${album.album_id}`} className="content-link">
                   <div className="poster-container">
-                    <img src={album.portada} alt={album.nombre} className="poster" />
+                    <img 
+                      src={album.portada} 
+                      alt={album.nombre} 
+                      className="poster"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/placeholder-image.jpg';
+                      }}
+                    />
                   </div>
                   <div className="content-info">
                     <h3 className="content-title">{album.nombre}</h3>

@@ -23,26 +23,35 @@ const AlbumDetail = () => {
     const fetchAlbumDetail = async () => {
       try {
         const response = await api.get(`/api/albums/${albumId}`);
-        setAlbum(response.data);
-        console.log("Datos del álbum recibidos:", response.data);
+        // Acceder correctamente a los datos del álbum
+        if (response.data && response.data.data) {
+          setAlbum(response.data.data);
+          console.log("Datos del álbum recibidos:", response.data.data);
 
-        // Verificar si el usuario tiene marcado como "me gusta" o "ya escuchado"
-        if (user) {
-          try {
-            const userPrefsResponse = await api.get(
-              `/api/albumPreferences/${albumId}`,
-              { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-            );
-            if (userPrefsResponse.data) {
-              setLiked(userPrefsResponse.data.liked || false);
-              setListened(userPrefsResponse.data.listened || false);
+          // Verificar si el usuario tiene marcado como "me gusta" o "ya escuchado"
+          if (user) {
+            try {
+              const userPrefsResponse = await api.get(
+                `/api/albums/${albumId}/preferences`,
+                { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+              );
+              if (userPrefsResponse.data && userPrefsResponse.data.data) {
+                setLiked(userPrefsResponse.data.data.liked || false);
+                setListened(userPrefsResponse.data.data.listened || false);
+              }
+            } catch (error) {
+              console.error("Error fetching user preferences:", error);
+              // No mostrar error al usuario si falla la carga de preferencias
+              setLiked(false);
+              setListened(false);
             }
-          } catch (error) {
-            console.error("Error fetching user preferences:", error);
           }
+        } else {
+          throw new Error('Formato de respuesta inválido');
         }
       } catch (error) {
         console.error("Error fetching album details:", error);
+        setAlbum(null);
       } finally {
         setLoadingAlbum(false);
       }
@@ -69,7 +78,7 @@ const AlbumDetail = () => {
       }
 
       await api.post(
-        `/api/albumPreferences/${albumId}`,
+        `/api/albums/${albumId}/preferences`,
         { [type]: updatedValue },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -78,16 +87,32 @@ const AlbumDetail = () => {
       // Revertir el cambio visual en caso de error
       if (type === 'liked') setLiked(!liked);
       else if (type === 'listened') setListened(!listened);
+      
+      // Mostrar mensaje de error al usuario
+      alert(`No se pudo actualizar la preferencia. Por favor, intenta de nuevo más tarde.`);
     }
   };
 
   return (
     <div className="album-detail-page">
       {loadingAlbum ? (
-        <p>Cargando detalles del álbum...</p>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Cargando detalles del álbum...</p>
+        </div>
       ) : album ? (
         <div className="album-info">
-          <img src={album.portada} alt={album.nombre} className="album-cover" />
+          <div className="album-cover-container">
+            <img 
+              src={album.portada} 
+              alt={album.nombre} 
+              className="album-cover"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/placeholder-image.jpg';
+              }}
+            />
+          </div>
           <div className="album-meta">
             <h2>{album.nombre}</h2>
             <p><strong>Artista: </strong>{album.artista?.nombre || 'Desconocido'}</p>
@@ -127,7 +152,10 @@ const AlbumDetail = () => {
           </div>
         </div>
       ) : (
-        <p>Álbum no encontrado</p>
+        <div className="error-container">
+          <h2>Error</h2>
+          <p>No se pudo cargar la información del álbum</p>
+        </div>
       )}
 
       <hr />
