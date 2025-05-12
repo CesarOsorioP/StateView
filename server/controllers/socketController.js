@@ -24,15 +24,15 @@ const configureSocketServer = (io) => {
     // Configurar intervalo para actualizar estadísticas
     const userStatsInterval = setInterval(async () => {
       await sendUserStats(socket);
-    }, 3000); // Cada 10 segundos
+    }, 3000); // Cada 3 segundos
     
     const contentStatsInterval = setInterval(async () => {
       await sendContentStats(socket);
-    }, 3000); // Cada 15 segundos
+    }, 3000); // Cada 3 segundos
     
     const activityInterval = setInterval(async () => {
       await sendUserActivity(socket);
-    }, 3000); // Cada 20 segundos
+    }, 3000); // Cada 3 segundos
     
     // Limpiar intervalos al desconectar
     socket.on('disconnect', () => {

@@ -25,7 +25,7 @@ const ReportModal = ({ isOpen, onClose, reportedUserId, reviewId = null }) => {
     setError('');
 
     try {
-      await api.post('http://localhost:5000/api/reportes', {
+      await api.post('/api/reportes', {
         reporter: user.id || user._id,
         reportedUser: reportedUserId,
         review: reviewId,
