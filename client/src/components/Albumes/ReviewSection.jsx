@@ -57,11 +57,14 @@ const ReviewSection = ({ albumId, album }) => {
   // Determinar si el usuario ya tiene una reseña para este álbum
   const currentUserId = user?.id || user?._id;
   const userReview = user && reviews.find(review => {
-    // review.userId puede venir como objeto (por populate) o como string
+    // review.userId o review.autor pueden venir como objeto (por populate) o como string
     if (typeof review.userId === 'object' && review.userId) {
       return review.userId._id === currentUserId;
     }
-    return review.userId === currentUserId;
+    if (typeof review.autor === 'object' && review.autor) {
+      return review.autor._id === currentUserId;
+    }
+    return review.userId === currentUserId || review.autor === currentUserId;
   });
 
   // Renderizado de estrellas (para calificación)
@@ -231,20 +234,29 @@ const ReviewSection = ({ albumId, album }) => {
       return;
     }
 
+    // Aseguramos que todos los campos necesarios estén presentes
     const reviewData = {
       userId: currentUserId,
+      autor: currentUserId,
       itemId: itemIdToUse,
       review_txt: newReview,
-      rating: rating,
-      onModel: "Album" // Especificamos que es un álbum
+      contenido: newReview,
+      rating: parseFloat(rating),
+      calificacion: parseFloat(rating),
+      onModel: "Album",
+      estado: "Activo"
     };
 
     try {
+      console.log("Enviando datos de reseña:", reviewData);
       const response = await api.post("/api/reviews", reviewData, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         }
       });
+      console.log("Respuesta del servidor:", response.data);
+      
       // Se añade la reseña creada al inicio de la lista
       setReviews(prev => {
         const newReviewItem = response.data.review;
@@ -254,7 +266,8 @@ const ReviewSection = ({ albumId, album }) => {
       setNewReview('');
       setRating(0);
     } catch (error) {
-      console.error("Error al enviar la reseña:", error);
+      console.error("Error al enviar la reseña:", error.response?.data || error.message);
+      alert(`Error al crear la reseña: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -262,8 +275,9 @@ const ReviewSection = ({ albumId, album }) => {
   const handleEdit = () => {
     if (!userReview) return;
     setIsEditing(true);
-    setEditReviewText(userReview.review_txt || '');
-    setEditRating(userReview.rating || 0);
+    // Usar cualquiera de los campos aliases que existan
+    setEditReviewText(userReview.review_txt || userReview.contenido || '');
+    setEditRating(userReview.rating || userReview.calificacion || 0);
   };
 
   // Función para actualizar la reseña
@@ -272,18 +286,35 @@ const ReviewSection = ({ albumId, album }) => {
     if (!userReview) return;
     
     try {
-      const response = await api.put(`/api/reviews/${userReview._id}`, {
+      // Aseguramos que todos los campos necesarios estén presentes
+      const updateData = {
         review_txt: editReviewText,
-        rating: editRating
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        contenido: editReviewText,
+        rating: parseFloat(editRating),
+        calificacion: parseFloat(editRating),
+        // Preservamos explícitamente los campos obligatorios que no cambian
+        userId: userReview.userId || userReview.autor,
+        autor: userReview.autor || userReview.userId,
+        itemId: userReview.itemId,
+        onModel: userReview.onModel || "Album"
+      };
+      
+      console.log("Enviando datos de actualización:", updateData);
+      const response = await api.put(`/api/reviews/${userReview._id}`, updateData, {
+        headers: { 
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
       });
+      
+      console.log("Respuesta del servidor:", response.data);
       // Actualizamos la reseña en el estado
       const updatedReview = response.data.review;
       setReviews(prev => prev.map(review => review._id === userReview._id ? updatedReview : review));
       setIsEditing(false);
     } catch (error) {
-      console.error("Error al actualizar la reseña:", error);
+      console.error("Error al actualizar la reseña:", error.response?.data || error.message);
+      alert(`Error al actualizar la reseña: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -307,6 +338,32 @@ const ReviewSection = ({ albumId, album }) => {
   const getUserDisplayName = (userObj) => {
     if (!userObj) return "Usuario";
     return userObj.email || userObj.username || userObj.nombre || "Usuario";
+  };
+
+  // Función para obtener el texto de la reseña teniendo en cuenta los aliases
+  const getReviewText = (review) => {
+    return review.review_txt || review.contenido || '';
+  };
+
+  // Función para obtener la calificación teniendo en cuenta los aliases
+  const getReviewRating = (review) => {
+    return review.rating || review.calificacion || 0;
+  };
+
+  // Función para obtener la fecha de la reseña
+  const getReviewDate = (review) => {
+    return review.fechaReview || review.createdAt || new Date();
+  };
+
+  // Función para obtener el autor de la reseña teniendo en cuenta los aliases
+  const getReviewAuthor = (review) => {
+    if (typeof review.userId === 'object' && review.userId) {
+      return review.userId;
+    }
+    if (typeof review.autor === 'object' && review.autor) {
+      return review.autor;
+    }
+    return null;
   };
 
   return (
@@ -356,14 +413,12 @@ const ReviewSection = ({ albumId, album }) => {
               <div className="review-header">
                 <strong>{getUserDisplayName(user)}</strong>
                 <span className="review-date">
-                  {userReview && userReview.fechaReview ? 
-                    new Date(userReview.fechaReview).toLocaleDateString("es-ES") : 
-                    new Date().toLocaleDateString("es-ES")}
+                  {new Date(getReviewDate(userReview)).toLocaleDateString("es-ES")}
                 </span>
               </div>
-              <p className="review-text">{userReview.review_txt || ''}</p>
+              <p className="review-text">{getReviewText(userReview)}</p>
               <div className="review-rating">
-                {displayStars(userReview.rating || 0)}
+                {displayStars(getReviewRating(userReview))}
               </div>
               <div className="review-actions">
                 <button onClick={handleEdit} className="edit-button">Editar Reseña</button>
@@ -373,7 +428,7 @@ const ReviewSection = ({ albumId, album }) => {
               {/* Contador de likes para la reseña del usuario */}
               <div className="review-likes">
                 <span className="likes-count">
-                  {userReview.likedReview?.length || 0} Me gusta
+                  {userReview.likedReview?.length || userReview.likes || 0} Me gusta
                 </span>
               </div>
 
@@ -406,28 +461,31 @@ const ReviewSection = ({ albumId, album }) => {
           {reviews
             .filter(review => {
               if (!user || !review) return true;
+              // Filtrar con ambos campos de usuario
               if (typeof review.userId === 'object' && review.userId) {
                 return review.userId._id !== currentUserId;
               }
-              return review.userId !== currentUserId;
+              if (typeof review.autor === 'object' && review.autor) {
+                return review.autor._id !== currentUserId;
+              }
+              return review.userId !== currentUserId && review.autor !== currentUserId;
             })
             .map((review) => (
               <div key={review._id} className="review-card">
                 <div className="review-header">
                   <strong>
-                    {typeof review.userId === 'object' && review.userId
-                      ? getUserDisplayName(review.userId)
-                      : "Usuario"}
+                    {getUserDisplayName(getReviewAuthor(review))}
                   </strong>
                   <span className="review-date">
-                    {review.fechaReview ? 
-                      new Date(review.fechaReview).toLocaleDateString("es-ES") : 
-                      ""}
+                    {new Date(getReviewDate(review)).toLocaleDateString("es-ES")}
                   </span>
+                  {review.estado && review.estado !== 'Activo' && (
+                    <span className="review-status">Estado: {review.estado}</span>
+                  )}
                 </div>
-                <p className="review-text">{review.review_txt || ''}</p>
+                <p className="review-text">{getReviewText(review)}</p>
                 <div className="review-rating">
-                  {displayStars(review.rating || 0)}
+                  {displayStars(getReviewRating(review))}
                 </div>
                 
                 {/* Botón de Like y contador para reseñas */}
@@ -435,11 +493,13 @@ const ReviewSection = ({ albumId, album }) => {
                   <button 
                     className={`like-button ${hasUserLikedReview(review) ? 'liked' : ''}`}
                     onClick={() => handleReviewLikeToggle(review._id)}
-                    disabled={!user}
-                    title={user ? (hasUserLikedReview(review) ? "Quitar me gusta" : "Me gusta") : "Inicia sesión para dar me gusta"}
+                    disabled={!user || review.estado !== 'Activo'}
+                    title={!user ? "Inicia sesión para dar me gusta" : 
+                           review.estado !== 'Activo' ? "Esta reseña no está activa" :
+                           hasUserLikedReview(review) ? "Quitar me gusta" : "Me gusta"}
                   >
                     {hasUserLikedReview(review) ? <FaThumbsUp /> : <FaRegThumbsUp />}
-                    <span>{review.likedReview?.length || 0}</span>
+                    <span>{review.likedReview?.length || review.likes || 0}</span>
                   </button>
                 </div>
                 
@@ -448,6 +508,7 @@ const ReviewSection = ({ albumId, album }) => {
                   <button 
                     className="toggle-comments-button"
                     onClick={() => toggleComments(review._id)}
+                    disabled={review.estado !== 'Activo'}
                   >
                     <FaComment /> {showCommentsByReview[review._id] ? 'Ocultar comentarios' : 'Ver comentarios'}
                   </button>
