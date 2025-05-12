@@ -17,6 +17,7 @@ import {
 import { io } from "socket.io-client";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../api/api"; // Importamos la configuración de API
 import "./UserDashboard.css";
 
 // Registrar los componentes necesarios en Chart.js
@@ -85,8 +86,24 @@ const UserDashboard = () => {
   const prevStatsRef = useRef({});
   const chartRef = useRef(null);
 
+  // Obtenemos la URL base para las conexiones
+  const [baseURL, setBaseURL] = useState("");
+  
+  useEffect(() => {
+    // Extraemos la URL base del API
+    const getBaseURL = () => {
+      const url = api.defaults.baseURL || process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      setBaseURL(url);
+      return url;
+    };
+    
+    getBaseURL();
+  }, []);
+
   // Socket.io connection setup
   useEffect(() => {
+    if (!baseURL) return; // No intentamos conectar si aún no tenemos la URL base
+    
     const token = localStorage.getItem("token");
     
     if (!token) {
@@ -94,13 +111,21 @@ const UserDashboard = () => {
       return;
     }
 
-    const socket = io("api/dashboard/users", {
-      auth: { token }
+    console.log(`Conectando a socket en: ${baseURL}/dashboard/users`);
+    
+    const socket = io(`${baseURL}/dashboard/users`, {
+      auth: { token },
+      transports: ['websocket', 'polling'] // Intentar primero websocket, luego polling si falla
     });
 
     socket.on("connect", () => {
       console.log("Conectado al dashboard de usuarios");
       setIsConnected(true);
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Error de conexión al socket:", err.message);
+      setIsConnected(false);
     });
 
     socket.on("userStats", (data) => {
@@ -122,6 +147,7 @@ const UserDashboard = () => {
     socket.on("contentStats", (data) => {
       console.log("Estadísticas de contenido:", data);
       setContentStats(data);
+      setLastUpdate(new Date());
     });
 
     socket.on("disconnect", () => {
@@ -129,14 +155,55 @@ const UserDashboard = () => {
       setIsConnected(false);
     });
 
+    // Solicitar datos iniciales
+    socket.emit("requestInitialData");
+
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [baseURL]);
 
-  // Efecto para simular datos en desarrollo
+  // Efecto para cargar datos iniciales mediante API REST si socket falla
   useEffect(() => {
-    // Solo para desarrollo, se reemplazará con datos reales de Socket.io
+    // Si el socket está conectado, no necesitamos esto
+    if (isConnected) return;
+    
+    // Solo si tenemos la baseURL y aún no hay datos cargados
+    if (baseURL && Object.keys(stats).length === 0) {
+      const fetchInitialData = async () => {
+        try {
+          // Intentamos obtener datos iniciales mediante API REST como fallback
+          const [usersResponse, contentResponse] = await Promise.all([
+            api.get('/api/dashboard/users/stats'),
+            api.get('/api/dashboard/content/stats')
+          ]);
+          
+          if (usersResponse.data) {
+            setStats(usersResponse.data);
+          }
+          
+          if (contentResponse.data) {
+            setContentStats(contentResponse.data);
+          }
+          
+          setLastUpdate(new Date());
+        } catch (error) {
+          console.error("Error al cargar datos iniciales:", error);
+          // Si falla la API REST, cargamos datos de prueba (solo en desarrollo)
+          if (process.env.NODE_ENV === 'development') {
+            loadMockData();
+          }
+        }
+      };
+      
+      fetchInitialData();
+    }
+  }, [baseURL, isConnected, stats]);
+
+  // Función para cargar datos de prueba (solo para desarrollo)
+  const loadMockData = () => {
+    console.log("Cargando datos de prueba (solo para desarrollo)");
+    
     const mockContentStats = {
       reviews: { Pelicula: 47, Serie: 32, Videojuego: 23, Album: 18 },
       contentCount: { Pelicula: 25, Serie: 15, Videojuego: 30, Album: 20 },
@@ -146,16 +213,15 @@ const UserDashboard = () => {
     
     setContentStats(mockContentStats);
     
-    // Simulamos datos de usuarios para desarrollo
-    if (Object.keys(stats).length === 0) {
-      setStats({
-        "Activo": 124,
-        "Inactivo": 45,
-        "Pendiente": 22,
-        "Suspendido": 8
-      });
-    }
-  }, [stats]);
+    setStats({
+      "Activo": 124,
+      "Inactivo": 45,
+      "Pendiente": 22,
+      "Suspendido": 8
+    });
+    
+    setLastUpdate(new Date());
+  };
 
   // Utilidades
   const formatDate = (date) => {

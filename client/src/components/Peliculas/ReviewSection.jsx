@@ -310,12 +310,16 @@ const fetchReviews = useCallback(async () => {
         throw new Error("No se pudo obtener el ID de la película");
       }
 
-      const reviewData = {
+const reviewData = {
         userId,
         itemId,
         onModel: "Pelicula",
         review_txt: newReview,
-        rating: rating
+        rating: rating,
+        // Mapear a los campos que espera el backend
+        autor: userId,
+        contenido: newReview,
+        calificacion: rating
       };
 
       // Cambiar la URL para usar la API configurada en lugar de hardcoded localhost
