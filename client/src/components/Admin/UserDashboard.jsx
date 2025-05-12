@@ -94,7 +94,7 @@ const UserDashboard = () => {
       return;
     }
 
-    const socket = io("http://localhost:5000/dashboard/users", {
+    const socket = io("api/dashboard/users", {
       auth: { token }
     });
 
