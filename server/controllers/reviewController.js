@@ -120,19 +120,26 @@ async function createReview(req, res) {
       });
     }
 
+    // Crear la reseña con valores explícitos para todos los campos requeridos
+    const reviewData = {
+      userId,
+      autor: userId,  // Asegúrate de que este campo esté presente
+      itemId: mongoItemId,
+      review_txt,
+      contenido: review_txt,  // Asegúrate de que este campo esté presente
+      rating: parseFloat(rating),
+      calificacion: parseFloat(rating),  // Asegúrate de que este campo esté presente
+      onModel,
+      estado: req.body.estado || 'Activo'
+    };
+
     // Crear y guardar la reseña
-    const review = new Review({ 
-      userId, 
-      itemId: mongoItemId, 
-      review_txt, 
-      rating, 
-      onModel 
-    });
+    const review = new Review(reviewData);
     await review.save();
     console.log('[createReview] Reseña guardada:', review);
 
     // Actualizar rating del ítem
-    const updatedItem = await updateItemRating(mongoItemId, onModel, rating);
+    const updatedItem = await updateItemRating(mongoItemId, onModel, parseFloat(rating));
     console.log('[createReview] Ítem actualizado:', updatedItem);
 
     res.status(201).json({ 
@@ -186,9 +193,11 @@ async function updateReview(req, res) {
     await updateItemRating(review.itemId, review.onModel, review.rating, true);
     await updateItemRating(review.itemId, review.onModel, rating);
 
-    // Actualizar reseña
+    // Actualizar reseña con valores explícitos para todos los campos
     review.review_txt = review_txt;
-    review.rating = rating;
+    review.contenido = review_txt;  // Actualizar también el campo alias
+    review.rating = parseFloat(rating);
+    review.calificacion = parseFloat(rating);  // Actualizar también el campo alias
     review.fechaReview = Date.now();
     await review.save();
 
