@@ -156,11 +156,12 @@ const Navbar = () => {
                   </>
                 )}
                 
-                {/* Elementos para moderadores */}
+                {/* Elementos para moderadores, administradores y superadministradores */}
                 {(userRole === "Moderador" || userRole === "Administrador" || userRole === "Superadministrador") && (
                   <>
                     <Link to="/gestionar-reportes"><i className="fas fa-flag"></i> Reportes</Link>
                     <Link to="/gestionar-usuario"><i className="fas fa-users-cog"></i> Gestionar Usuarios</Link>
+                    <Link to="/dashboard/users"><i className="fas fa-chart-bar"></i> Estadísticas</Link>
                   </>
                 )}
                 
@@ -168,12 +169,9 @@ const Navbar = () => {
                 {(userRole === "Administrador" || userRole === "Superadministrador") && (
                   <>
                     <Link to="/gestionar-contenido"><i className="fas fa-database"></i> Gestionar Contenido</Link>
-
                   </>
                 )}
                 
-               
-
                 <Link to="/configuracion"><i className="fas fa-cog"></i> Configuración</Link>
                 <button onClick={handleLogout} className="logout-button">
                   <i className="fas fa-sign-out-alt"></i> Cerrar Sesión
