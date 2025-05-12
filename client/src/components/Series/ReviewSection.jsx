@@ -8,10 +8,6 @@ import ReviewFilters from './ReviewFilters';
 import ReportModal from '../Reportes/ReportModal';
 import api from '../../api/api'
 
-// Constante para los tipos de modelos
-const MODEL_TYPES = {
-  SERIE: 'Serie'
-};
 
 const SeriesReviewSection = ({ seriesId, series }) => {
   const { user } = useAuth();
@@ -365,7 +361,7 @@ const SeriesReviewSection = ({ seriesId, series }) => {
         throw new Error("No se encontró token de autenticación");
       }
       
-      const response = await api.put(`http://localhost:5000/api/reviews/${userReview._id}`, {
+      const response = await api.put(`/api/reviews/${userReview._id}`, {
         review_txt: editReviewText,
         rating: editRating
       }, {

@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../api/api'; // Importamos el cliente axios configurado
 import './ContentManagement.css';
 
 const ContentManager = () => {
@@ -23,9 +22,6 @@ const ContentManager = () => {
     albums: 'albums'
   };
 
-  // API base URL
-  const API_BASE_URL = 'http://localhost:5000/api';
-
   // Cargar contenido inicial al montar el componente o cuando cambia el tipo
   useEffect(() => {
     fetchContent();
@@ -35,7 +31,7 @@ const ContentManager = () => {
   const fetchContent = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/${contentEndpoints[contentType]}`);
+      const res = await api.get(`/api/${contentEndpoints[contentType]}`);
       
       // Verificar si la respuesta tiene datos directamente o dentro de una propiedad 'data'
       const contentData = res.data.data || res.data;
@@ -108,16 +104,16 @@ const ContentManager = () => {
         if (!artist || !album) {
           throw new Error('Formato incorrecto. Usa "Artista - Álbum"');
         }
-        endpoint = `${API_BASE_URL}/${contentEndpoints[contentType]}/refresh?artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}`;
+        endpoint = `/api/${contentEndpoints[contentType]}/refresh?artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}`;
       } else {
         // Para películas, series y videojuegos
-        endpoint = `${API_BASE_URL}/${contentEndpoints[contentType]}/refresh?title=${encodeURIComponent(searchQuery)}`;
+        endpoint = `/api/${contentEndpoints[contentType]}/refresh?title=${encodeURIComponent(searchQuery)}`;
       }
       
       console.log('Intentando agregar contenido con la URL:', endpoint);
       
-      // Realizar la solicitud GET para agregar/refrescar contenido (como en el controlador original)
-      const response = await axios.get(endpoint);
+      // Realizar la solicitud GET para agregar/refrescar contenido usando el cliente api
+      const response = await api.get(endpoint);
       
       if (response.data) {
         await fetchContent(); // Recargar la lista después de agregar
@@ -157,11 +153,11 @@ const ContentManager = () => {
         // Obtener el ID específico según el tipo de contenido
         const specificId = itemToDelete[idFieldMap[contentType]] || contentId;
         
-        const deleteUrl = `${API_BASE_URL}/${contentEndpoints[contentType]}/${specificId}`;
+        const deleteUrl = `/api/${contentEndpoints[contentType]}/${specificId}`;
         
         console.log(`Intentando eliminar ${contentType.slice(0, -1)} con URL:`, deleteUrl);
         
-        await axios.delete(deleteUrl);
+        await api.delete(deleteUrl);
         
         // Actualizar el estado eliminando el elemento
         setContent((prev) => prev.filter((item) => item._id !== contentId));
@@ -173,6 +169,63 @@ const ContentManager = () => {
         setLoading(false);
       }
     }
+  };
+
+  // Función para extraer el año de lanzamiento según el tipo de contenido
+  const extractYear = (item) => {
+    if (!item) return 'N/A';
+    
+    // Para películas
+    if (contentType === 'peliculas') {
+      if (item.fecha_estreno) {
+        // Intentar extraer el año de una fecha (formato: "DD MMM YYYY" o "YYYY-MM-DD" o "YYYY")
+        const yearMatch = item.fecha_estreno.match(/\d{4}/);
+        return yearMatch ? yearMatch[0] : 'N/A';
+      }
+      return 'N/A';
+    }
+    
+    // Para series
+    if (contentType === 'series') {
+      if (item.fechaInicio) {
+        // Intentar extraer el año de una fecha
+        const yearMatch = item.fechaInicio.match(/\d{4}/);
+        return yearMatch ? yearMatch[0] : 'N/A';
+      }
+      return 'N/A';
+    }
+    
+    // Para videojuegos
+    if (contentType === 'videojuegos') {
+      if (item.fecha_lanzamiento) {
+        // Intentar extraer el año de una fecha
+        const yearMatch = item.fecha_lanzamiento.match(/\d{4}/);
+        return yearMatch ? yearMatch[0] : 'N/A';
+      }
+      return 'N/A';
+    }
+    
+    // Para álbumes
+    if (contentType === 'albums') {
+      if (item.fecha_estreno) {
+        // Intentar extraer el año de una fecha
+        const yearMatch = item.fecha_estreno.match(/\d{4}/);
+        return yearMatch ? yearMatch[0] : 'N/A';
+      }
+      return 'N/A';
+    }
+    
+    // Si tenemos solo el año
+    if (item.año) {
+      return item.año;
+    }
+    
+    // Si tenemos una fecha en formato estándar
+    if (item.fechaLanzamiento) {
+      return item.fechaLanzamiento.substring(0, 4);
+    }
+    
+    return 'N/A';
   };
 
   // Función para abrir el modal (para futuras implementaciones)
@@ -287,7 +340,7 @@ const ContentManager = () => {
                               : 'Artista desconocido')}
                       </td>
                     )}
-                    <td>{item.año || (item.fechaLanzamiento && item.fechaLanzamiento.substring(0, 4)) || 'N/A'}</td>
+                    <td>{extractYear(item)}</td>
                     {(contentType === 'peliculas' || contentType === 'series') && (
                       <td>{Array.isArray(item.genero) ? item.genero.join(', ') : (item.genero || 'N/A')}</td>
                     )}

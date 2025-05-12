@@ -349,7 +349,6 @@ const fetchReviews = useCallback(async () => {
       setHoverRating(0);
       
       // Mostrar mensaje de éxito
-      setErrorMessage('Reseña creada exitosamente');
       setTimeout(() => setErrorMessage(''), 3000);
 
     } catch (error) {

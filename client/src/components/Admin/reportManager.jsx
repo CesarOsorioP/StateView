@@ -43,7 +43,7 @@ const ReportManager = () => {
   useEffect(() => {
     const fetchReports = async () => {
       try {
-        const res = await api.get('http://localhost:5000/api/reportes/');
+        const res = await api.get('/api/reportes/');
         // Asegurarse de que res.data.data existe y es un array
         const reportData = Array.isArray(res.data.data) ? res.data.data : 
                            Array.isArray(res.data) ? res.data : [];
@@ -256,7 +256,7 @@ const ReportManager = () => {
       };
 
       // Actualizar reporte
-      const res = await api.put(`http://localhost:5000/api/reportes/${selectedReport}`, dataToSubmit);
+      const res = await api.put(`/api/reportes/${selectedReport}`, dataToSubmit);
       // Manejar diferentes estructuras de respuesta
       const updatedReport = res.data.data || res.data;
       
@@ -284,7 +284,7 @@ const ReportManager = () => {
     setLoadingItem(true);
     try {
       // Usar el endpoint que obtiene el elemento reportado
-      const res = await api.get(`http://localhost:5000/api/reportes/${reportId}/item`);
+      const res = await api.get(`/api/reportes/${reportId}/item`);
       if (res.data && res.data.data) {
         setReportedItem(res.data.data);
       } else {
@@ -325,7 +325,7 @@ const ReportManager = () => {
     setConfirmAction(() => async () => {
       setLoading(true);
       try {
-        const res = await api.put(`http://localhost:5000/api/reportes/${reportId}`, { 
+        const res = await api.put(`/api/reportes/${reportId}`, { 
           estado: nuevoEstado,
           mod_id: user._id 
         });
@@ -355,7 +355,7 @@ const ReportManager = () => {
       setLoading(true);
       try {
         // Actualizar estado del usuario reportado
-        await api.put(`http://localhost:5000/api/persona/${userId}`, { estado: newStatus });
+        await api.put(`/api/persona/${userId}`, { estado: newStatus });
         
         showToastMessage(`Usuario ${userName} ha sido ${newStatus.toLowerCase()}`, 'success');
       } catch (error) {

@@ -5,11 +5,13 @@ import {
   FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
+import ReviewFilters from './ReviewFilters';
 import "./reviewSection.css";
 
 const ReviewSection = ({ albumId, album }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
+  const [filteredReviews, setFilteredReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
   // Estados para crear reseña
@@ -25,6 +27,10 @@ const ReviewSection = ({ albumId, album }) => {
   
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
+
+  // Estados para filtros
+  const [sortOption, setSortOption] = useState('newest');
+  const [ratingFilter, setRatingFilter] = useState('all');
 
   // Obtener reseñas para el álbum usando useCallback
   const fetchReviews = useCallback(async () => {
@@ -53,6 +59,34 @@ const ReviewSection = ({ albumId, album }) => {
     setLoadingReviews(true);
     fetchReviews();
   }, [fetchReviews, albumId, album]);
+
+  // Aplicar filtros a las reseñas
+  useEffect(() => {
+    if (reviews.length > 0) {
+      let tempReviews = [...reviews];
+      
+      // Aplicar ordenamiento según los criterios seleccionados
+      tempReviews.sort((a, b) => {
+        // Si el filtro es por valoración
+        if (ratingFilter === 'highRated') {
+          // Ordenar de mayor a menor valoración
+          return b.rating - a.rating;
+        } else if (ratingFilter === 'lowRated') {
+          // Ordenar de menor a mayor valoración
+          return a.rating - b.rating;
+        } else {
+          // Si el filtro es 'all', ordenar por fecha
+          const dateA = new Date(a.fechaReview);
+          const dateB = new Date(b.fechaReview);
+          return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
+        }
+      });
+      
+      setFilteredReviews(tempReviews);
+    } else {
+      setFilteredReviews([]);
+    }
+  }, [reviews, sortOption, ratingFilter]);
 
   // Determinar si el usuario ya tiene una reseña para este álbum
   const currentUserId = user?.id || user?._id;
@@ -313,6 +347,16 @@ const ReviewSection = ({ albumId, album }) => {
     <div className="album-reviews">
       <h3>Reseñas</h3>
 
+      {/* Componente de filtros - Mostrarlo solo si hay más de una reseña */}
+      {filteredReviews.length > 1 && (
+        <ReviewFilters
+          sortOption={sortOption}
+          setSortOption={setSortOption}
+          ratingFilter={ratingFilter}
+          setRatingFilter={setRatingFilter}
+        />
+      )}
+
       {/* Si el usuario está autenticado y no tiene reseña publicada, se muestra el formulario de creación */}
       {user && !userReview && !isEditing && (
         <form onSubmit={handleReviewSubmit} className="review-form">
@@ -326,7 +370,13 @@ const ReviewSection = ({ albumId, album }) => {
             <label>Calificación: </label>
             {renderStars(rating, hoverRating, setRating, setHoverRating)}
           </div>
-          <button type="submit" className="submit-review">Publicar Reseña</button>
+          <button 
+            type="submit" 
+            className="submit-review"
+            disabled={!rating || !newReview.trim()}
+          >
+            Publicar Reseña
+          </button>
         </form>
       )}
 
@@ -345,7 +395,13 @@ const ReviewSection = ({ albumId, album }) => {
                 {renderStars(editRating, editHoverRating, setEditRating, setEditHoverRating)}
               </div>
               <div className="edit-buttons">
-                <button type="submit" className="update-review">Actualizar Reseña</button>
+                <button 
+                  type="submit" 
+                  className="update-review"
+                  disabled={!editRating || !editReviewText.trim()}
+                >
+                  Actualizar Reseña
+                </button>
                 <button type="button" className="cancel-edit" onClick={() => setIsEditing(false)}>
                   Cancelar
                 </button>
@@ -401,9 +457,9 @@ const ReviewSection = ({ albumId, album }) => {
       {/* Mostrar todas las reseñas (excluyendo la del usuario actual para evitar duplicados) */}
       {loadingReviews ? (
         <p>Cargando reseñas...</p>
-      ) : reviews.length > 0 ? (
+      ) : filteredReviews.length > 0 ? (
         <div className="reviews-list">
-          {reviews
+          {filteredReviews
             .filter(review => {
               if (!user || !review) return true;
               if (typeof review.userId === 'object' && review.userId) {
