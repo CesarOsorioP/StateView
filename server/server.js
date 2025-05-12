@@ -4,7 +4,7 @@ const express = require('express');
 const connectDB = require('./config/db');
 const http = require('http');
 const { Server } = require('socket.io');
-const Persona = require('./models/Persona');
+const { configureSocketServer } = require('./controllers/socketController');
 
 // Importación de rutas
 const personaRoutes = require('./routes/personaRoutes');
@@ -53,58 +53,19 @@ const server = http.createServer(app);
 // Configura Socket.IO una sola vez con el servidor HTTP
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // Dominio del frontend
-    methods: ["GET", "POST"]
+    origin: allowedOrigins, // Usa la misma configuración de CORS
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
+
+// Configura los sockets utilizando el controlador
+configureSocketServer(io);
 
 // Middleware para disponer de "io" en todas las peticiones
 app.use((req, res, next) => {
   req.io = io;
   next();
-});
-
-// Definir namespaces para los dashboards
-
-// Namespace para el dashboard de usuarios
-// Configuración del namespace del dashboard de usuarios
-const dashboardUsers = io.of('/dashboard/users');
-dashboardUsers.on('connection', (socket) => {
-  console.log('Cliente conectado al dashboard de usuarios');
-
-  // Configura un intervalo para actualizar las estadísticas cada 3 segundos
-  const intervalId = setInterval(async () => {
-    try {
-      // Consulta de agregación para contar usuarios por rol
-      const statsArray = await Persona.aggregate([
-        { $group: { _id: "$estado", count: { $sum: 1 } } }
-      ]);
-      const statsObj = {};
-      statsArray.forEach(item => {
-        statsObj[item._id] = item.count;
-      });
-      // Envía las estadísticas actualizadas al cliente
-      socket.emit("userStats", statsObj);
-    } catch (error) {
-      console.error("Error al obtener estadísticas de usuarios:", error);
-    }
-  }, 3000); // 3000 ms = 3 segundos
-
-  // Limpia el intervalo cuando el socket se desconecta para evitar fugas de memoria
-  socket.on('disconnect', () => {
-    console.log('Cliente desconectado del dashboard de usuarios');
-    clearInterval(intervalId);
-  });
-});
-
-// Namespace para el dashboard de contenido
-const dashboardContent = io.of('/dashboard/content');
-dashboardContent.on('connection', (socket) => {
-  console.log('Cliente conectado al dashboard de contenido');
-  
-  socket.on('disconnect', () => {
-    console.log('Cliente desconectado del dashboard de contenido');
-  });
 });
 
 // Rutas
