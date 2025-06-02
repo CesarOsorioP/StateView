@@ -44,10 +44,6 @@ const Signup = () => {
       return;
     }
 
-    if (!aceptaTerminos) {
-      setError("Debes aceptar los términos y condiciones");
-      return;
-    }
 
     setIsLoading(true);
 
@@ -134,20 +130,6 @@ const Signup = () => {
               placeholder="Confirma tu contraseña"
               required
             />
-          </div>
-
-          <div className="signup-terms-section">
-            <input
-              type="checkbox"
-              id="signup-terminos"
-              checked={aceptaTerminos}
-              onChange={(e) => setAceptaTerminos(e.target.checked)}
-            />
-            <label htmlFor="signup-terminos">
-              Acepto los{" "}
-              <a href="/terminos">Términos y Condiciones</a> y la{" "}
-              <a href="/privacidad">Política de Privacidad</a>
-            </label>
           </div>
 
           {error && <div className="signup-error-message">{error}</div>}
