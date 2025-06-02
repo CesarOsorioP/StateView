@@ -146,17 +146,7 @@ const Signup = () => {
 
         <div className="signup-divider">o</div>
 
-        <div className="signup-social-buttons">
-          <button className="signup-social-button">
-            <i className="fab fa-google"></i>
-          </button>
-          <button className="signup-social-button">
-            <i className="fab fa-facebook-f"></i>
-          </button>
-          <button className="signup-social-button">
-            <i className="fab fa-apple"></i>
-          </button>
-        </div>
+        
 
         <div className="signup-footer">
           <span>¿Ya tienes una cuenta? </span>

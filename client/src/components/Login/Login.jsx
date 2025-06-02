@@ -83,17 +83,7 @@ const Login = () => {
 
         <div className="login-divider">o</div>
 
-        <div className="login-social-buttons">
-          <button className="login-social-button">
-            <i className="fab fa-google"></i>
-          </button>
-          <button className="login-social-button">
-            <i className="fab fa-facebook-f"></i>
-          </button>
-          <button className="login-social-button">
-            <i className="fab fa-apple"></i>
-          </button>
-        </div>
+        
 
         <div className="login-footer">
           <span>¿No tienes una cuenta? </span>
