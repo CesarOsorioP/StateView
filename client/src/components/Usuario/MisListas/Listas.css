@@ -1,0 +1,577 @@
+/* Paleta de colores morados-azules */
+:root {
+  --primary-dark: #0a0a0f;
+  --secondary-dark: #1a1a2e;
+  --tertiary-dark: #16213e;
+  --purple-primary: #4a3aff;
+  --purple-secondary: #6c63ff;
+  --purple-accent: #3a2aff;
+  --purple-dark: #2a1b8f;
+  --purple-light: #8b85ff;
+  --text-primary: #ffffff;
+  --text-secondary: #b2b2b2;
+  --text-muted: #808080;
+  --success: #00b894;
+  --error: #e17055;
+  --warning: #fdcb6e;
+  --border-color: #2d3748;
+  --shadow-dark: rgba(0, 0, 0, 0.5);
+  --shadow-purple: rgba(74, 58, 255, 0.3);
+  --gradient-primary: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+  --gradient-secondary: linear-gradient(135deg, #1a1a2e, #16213e);
+  --gradient-accent: linear-gradient(135deg, var(--purple-accent), var(--purple-primary));
+  --gradient-background: linear-gradient(135deg, #0f0f1a, #1a1a2e, #16213e);
+}
+
+/* Reset y estilos base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Contenedor principal */
+.listas-container {
+  min-height: 100vh;
+  background: var(--gradient-background);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header de las listas */
+.listas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--border-color);
+  position: relative;
+}
+
+.listas-header::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100px;
+  height: 4px;
+  background: var(--gradient-primary);
+  border-radius: 2px;
+}
+
+.listas-header h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 8px var(--shadow-purple);
+  margin: 0;
+}
+
+/* Botón de crear lista */
+.create-lista-btn {
+  padding: 12px 32px;
+  background: var(--gradient-primary);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 16px var(--shadow-purple);
+  position: relative;
+  overflow: hidden;
+}
+
+.create-lista-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  transform: translate(-50%, -50%);
+}
+
+.create-lista-btn:hover {
+  background: var(--gradient-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-purple);
+}
+
+.create-lista-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Grid de listas */
+.listas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* Tarjetas de lista */
+.lista-card {
+  background: var(--secondary-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.lista-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: 2px 0 0 2px;
+  transition: width 0.3s ease;
+}
+
+.lista-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px var(--shadow-purple);
+  border-color: var(--purple-primary);
+  background: var(--primary-dark);
+}
+
+.lista-card:hover::before {
+  width: 8px;
+}
+
+/* Header de la tarjeta de lista */
+.lista-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.lista-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--purple-secondary);
+  margin: 0;
+  flex: 1;
+  transition: color 0.3s ease;
+  cursor: pointer;
+}
+
+.lista-header h3:hover {
+  color: var(--purple-primary);
+}
+
+/* Acciones de la lista */
+.lista-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.visibility-btn,
+.delete-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--tertiary-dark);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  border: 2px solid transparent;
+}
+
+.visibility-btn:hover,
+.delete-btn:hover {
+  transform: scale(1.1);
+  border-color: var(--purple-primary);
+  box-shadow: 0 4px 12px var(--shadow-purple);
+}
+
+.visibility-btn.public {
+  background: var(--gradient-primary);
+  color: var(--text-primary);
+}
+
+.visibility-btn.private {
+  background: var(--gradient-secondary);
+}
+
+.delete-btn:hover {
+  background: var(--error);
+  color: var(--text-primary);
+  border-color: var(--error);
+}
+
+/* Descripción de la lista */
+.lista-description {
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  flex-grow: 1;
+}
+
+.lista-description:hover {
+  color: var(--text-primary);
+}
+
+/* Estadísticas de la lista */
+.lista-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--tertiary-dark);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.lista-stats:hover {
+  background: var(--primary-dark);
+  border-color: var(--purple-primary);
+  color: var(--purple-secondary);
+}
+
+.lista-stats span {
+  font-weight: 600;
+  color: var(--purple-primary);
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Contenido del modal */
+.modal-content {
+  background: var(--secondary-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px var(--shadow-dark);
+  position: relative;
+  animation: slideIn 0.3s ease-out;
+}
+
+.modal-content h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--purple-secondary);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* Grupos de formulario */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--tertiary-dark);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--purple-primary);
+  background: var(--primary-dark);
+  box-shadow: 0 0 0 3px rgba(74, 58, 255, 0.1);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.form-group textarea {
+  min-height: 80px;
+}
+
+/* Checkbox personalizado */
+.form-group label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.form-group input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--purple-primary);
+  cursor: pointer;
+}
+
+/* Acciones del formulario */
+.form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.submit-btn,
+.cancel-btn {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.submit-btn {
+  background: var(--gradient-primary);
+  color: var(--text-primary);
+  box-shadow: 0 4px 16px var(--shadow-purple);
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: var(--gradient-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-purple);
+}
+
+.cancel-btn {
+  background: var(--tertiary-dark);
+  color: var(--text-secondary);
+  border: 2px solid var(--border-color);
+}
+
+.cancel-btn:hover {
+  background: var(--secondary-dark);
+  color: var(--text-primary);
+  border-color: var(--purple-primary);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Mensajes de estado */
+.error-message {
+  background: var(--error);
+  color: var(--text-primary);
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin: 20px 0;
+  border: 1px solid rgba(225, 112, 85, 0.3);
+  box-shadow: 0 4px 16px rgba(225, 112, 85, 0.2);
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Spinner de carga */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.loading::after {
+  content: '';
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--purple-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 16px;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .listas-container {
+    padding: 20px 16px;
+  }
+  
+  .listas-header {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .listas-header h2 {
+    font-size: 2rem;
+  }
+  
+  .listas-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .lista-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .lista-actions {
+    align-self: flex-end;
+  }
+  
+  .modal-content {
+    padding: 24px;
+    margin: 10px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .listas-container {
+    padding: 16px 12px;
+  }
+  
+  .listas-header h2 {
+    font-size: 1.8rem;
+  }
+  
+  .create-lista-btn {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+  }
+  
+  .lista-card {
+    padding: 16px;
+  }
+  
+  .lista-header h3 {
+    font-size: 1.2rem;
+  }
+  
+  .modal-content {
+    padding: 20px;
+  }
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--secondary-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--purple-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--purple-secondary);
+}
+
+/* Efectos adicionales */
+.lista-card {
+  animation: slideIn 0.4s ease-out;
+}
+
+.lista-card:nth-child(even) {
+  animation-delay: 0.1s;
+}
+
+.lista-card:nth-child(3n) {
+  animation-delay: 0.2s;
+}

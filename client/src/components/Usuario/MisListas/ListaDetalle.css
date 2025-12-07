@@ -1,0 +1,379 @@
+/* Paleta de colores morados-azules */
+:root {
+  --primary-dark: #0a0a0f;
+  --secondary-dark: #1a1a2e;
+  --tertiary-dark: #16213e;
+  --purple-primary: #4a3aff;
+  --purple-secondary: #6c63ff;
+  --purple-accent: #3a2aff;
+  --purple-dark: #2a1b8f;
+  --purple-light: #8b85ff;
+  --text-primary: #ffffff;
+  --text-secondary: #b2b2b2;
+  --text-muted: #808080;
+  --success: #00b894;
+  --error: #e17055;
+  --warning: #fdcb6e;
+  --border-color: #2d3748;
+  --shadow-dark: rgba(0, 0, 0, 0.5);
+  --shadow-purple: rgba(74, 58, 255, 0.3);
+  --gradient-primary: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+  --gradient-secondary: linear-gradient(135deg, #1a1a2e, #16213e);
+  --gradient-accent: linear-gradient(135deg, var(--purple-accent), var(--purple-primary));
+  --gradient-background: linear-gradient(135deg, #0f0f1a, #1a1a2e, #16213e);
+}
+
+/* Estilos generales */
+.lista-detalle-container {
+  min-height: 100vh;
+  background: var(--gradient-background);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.lista-detalle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--border-color);
+  position: relative;
+}
+
+.lista-detalle-header::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100px;
+  height: 4px;
+  background: var(--gradient-primary);
+  border-radius: 2px;
+}
+
+.lista-detalle-header h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 8px var(--shadow-purple);
+  margin: 0;
+}
+
+.back-button,
+.add-content-btn {
+  padding: 12px 24px;
+  background: var(--gradient-primary);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 16px var(--shadow-purple);
+  position: relative;
+  overflow: hidden;
+}
+
+.back-button:hover,
+.add-content-btn:hover {
+  background: var(--gradient-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-purple);
+}
+
+/* Info de la lista */
+.lista-info {
+  margin-bottom: 40px;
+}
+
+.lista-description {
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.lista-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--tertiary-dark);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.lista-stats span {
+  font-weight: 600;
+  color: var(--purple-primary);
+}
+
+/* Grid de elementos de la lista */
+.elementos-grid,
+.search-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  padding-top: 20px;
+}
+
+/* Tarjetas de elementos */
+.elemento-card,
+.search-result-item {
+  background: var(--secondary-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  height: 100%; /* Asegura que todas las tarjetas tengan la misma altura en el grid */
+  display: flex;
+  flex-direction: column;
+}
+
+.elemento-card::before,
+.search-result-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: 2px 0 0 2px;
+  transition: width 0.3s ease;
+}
+
+.elemento-card:hover,
+.search-result-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px var(--shadow-purple);
+  border-color: var(--purple-primary);
+  background: var(--primary-dark); /* Unificar hover background */
+}
+
+.elemento-card:hover::before,
+.search-result-item:hover::before {
+  width: 8px;
+}
+
+/* Imagen del elemento */
+.elemento-imagen {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  transition: transform 0.3s ease;
+}
+
+.elemento-card:hover .elemento-imagen,
+.search-result-item:hover .elemento-imagen {
+  transform: scale(1.05);
+}
+
+/* Información del elemento */
+.elemento-info {
+  flex-grow: 1; /* Permite que la información ocupe el espacio restante */
+  margin-bottom: 16px; /* Espacio antes del botón de eliminar/añadir */
+}
+
+.elemento-info h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.elemento-info p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* Botón de eliminar elemento */
+.remove-element-btn,
+.add-element-btn {
+  align-self: flex-end; /* Alinea el botón a la derecha en el contenedor flex-column */
+  background: var(--error);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  position: absolute; /* Posicionamiento absoluto para el botón de cerrar */
+  top: 10px;
+  right: 10px;
+}
+
+.add-element-btn {
+  background: var(--purple-primary); /* Color diferente para el botón de añadir */
+}
+
+.remove-element-btn:hover,
+.add-element-btn:hover {
+  background: var(--purple-accent);
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 16px var(--shadow-purple);
+}
+
+/* Modal de búsqueda */
+.search-modal {
+  background: var(--secondary-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 800px; /* Aumentar el ancho máximo del modal */
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px var(--shadow-dark);
+  position: relative;
+  animation: slideIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.search-modal .modal-header h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--purple-secondary);
+  margin: 0;
+}
+
+.close-modal-button {
+  background: var(--tertiary-dark);
+  color: var(--text-secondary);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.close-modal-button:hover {
+  background: var(--error);
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+/* Formulario de búsqueda */
+.search-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.search-input {
+  flex-grow: 1;
+  padding: 12px 16px;
+  background: var(--tertiary-dark);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--purple-primary);
+  background: var(--primary-dark);
+  box-shadow: 0 0 0 3px rgba(74, 58, 255, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-button {
+  padding: 12px 24px;
+  background: var(--gradient-primary);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 16px var(--shadow-purple);
+}
+
+.search-button:hover {
+  background: var(--gradient-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-purple);
+}
+
+/* Estilos para cuando no hay resultados */
+.no-results-message {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 20px;
+  font-size: 1.1rem;
+}
+
+/* Responsive Design for search modal */
+@media (max-width: 768px) {
+  .search-modal {
+    padding: 24px;
+    margin: 10px;
+  }
+
+  .search-modal .modal-header h3 {
+    font-size: 1.5rem;
+  }
+
+  .search-form {
+    flex-direction: column;
+  }
+
+  .search-results {
+    grid-template-columns: 1fr; /* Una columna en pantallas pequeñas */
+  }
+}
+
+@media (max-width: 480px) {
+  .search-modal {
+    padding: 20px;
+  }
+
+  .search-modal .modal-header h3 {
+    font-size: 1.2rem;
+  }
+}
+

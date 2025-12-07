@@ -23,6 +23,16 @@ async function fetchVideojuegoFromRawg(tituloJuego) {
     const idJuego = resultadoBusqueda.id;
 
     // Paso 2: Obtener los detalles completos del videojuego usando su ID
+    return await fetchVideojuegoFromRawgById(idJuego);
+  } catch (error) {
+    console.error('Error al obtener el videojuego desde RAWG API:', error.message);
+    throw error;
+  }
+}
+
+async function fetchVideojuegoFromRawgById(idJuego) {
+  try {
+    const API_KEY = process.env.RAWG_API_KEY;
     const respuestaDetalle = await axios.get(`https://api.rawg.io/api/games/${idJuego}`, {
       params: {
         key: API_KEY
@@ -68,7 +78,7 @@ async function fetchVideojuegoFromRawg(tituloJuego) {
 
     return videojuegoData;
   } catch (error) {
-    console.error('Error al obtener el videojuego desde RAWG API:', error.message);
+    console.error('Error al obtener el videojuego por ID desde RAWG API:', error.message);
     throw error;
   }
 }
@@ -90,4 +100,71 @@ async function saveVideojuegoFromRawg(tituloJuego) {
   }
 }
 
-module.exports = { fetchVideojuegoFromRawg, saveVideojuegoFromRawg };
+async function saveVideojuegoById(idJuego) {
+  try {
+    const videojuegoData = await fetchVideojuegoFromRawgById(idJuego);
+    let videojuego = await Videojuego.findOne({ juego_id: videojuegoData.juego_id });
+    if (!videojuego) {
+      videojuego = new Videojuego(videojuegoData);
+      const videojuegoGuardado = await videojuego.save();
+      return videojuegoGuardado;
+    }
+    return videojuego;
+  } catch (error) {
+    console.error('Error al guardar el videojuego por ID:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Busca videojuegos en la RAWG API y devuelve múltiples resultados.
+ */
+async function searchVideojuegosEnRawg(query) {
+  try {
+    const API_KEY = process.env.RAWG_API_KEY;
+    const response = await axios.get('https://api.rawg.io/api/games', {
+      params: {
+        search: query,
+        key: API_KEY,
+        page_size: 12 // Limitamos a 12 resultados
+      }
+    });
+
+    if (!response.data.results) {
+      throw new Error('No se encontraron resultados.');
+    }
+
+    // Mapear los resultados a un formato más amigable
+    return response.data.results.map(game => ({
+      imdbID: game.id.toString(), // Usamos imdbID para mantener consistencia con el frontend
+      Title: game.name,
+      Year: game.released ? game.released.split('-')[0] : 'N/A',
+      Poster: game.background_image || '',
+      Type: 'game',
+      // Datos adicionales que podrían ser útiles
+      Metacritic: game.metacritic || 'N/A',
+      Rating: game.rating || 'N/A',
+      Platforms: game.platforms ? game.platforms.map(p => p.platform.name).join(', ') : 'N/A',
+      // Datos necesarios para el refresh
+      juego_id: game.id.toString(),
+      titulo: game.name,
+      desarrolladora: game.developers ? game.developers.map(dev => dev.name).join(', ') : '',
+      publicadora: game.publishers ? game.publishers.map(pub => pub.name).join(', ') : '',
+      plataformas: game.platforms ? game.platforms.map(p => p.platform.name).join(', ') : '',
+      genero: game.genres ? game.genres.map(gen => gen.name).join(', ') : '',
+      fecha_lanzamiento: game.released,
+      sinopsis: game.description_raw || '',
+      imagen: game.background_image || ''
+    }));
+  } catch (error) {
+    console.error('Error al buscar videojuegos en RAWG:', error.message);
+    throw error;
+  }
+}
+
+module.exports = { 
+  fetchVideojuegoFromRawg, 
+  saveVideojuegoFromRawg,
+  searchVideojuegosEnRawg,
+  saveVideojuegoById // New export
+};

@@ -1,6 +1,21 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+const reviewDenormalizedSchema = new Schema({
+  reviewId: { type: Schema.Types.ObjectId, required: true },
+  userId: { type: Schema.Types.ObjectId, required: true },
+  username: { type: String },
+  userAvatar: { type: String },
+  review_txt: { type: String },
+  rating: { type: Number },
+  fechaReview: { type: Date },
+  likesCount: { type: Number, default: 0 }
+}, { _id: false, toJSON: { virtuals: true }, toObject: { virtuals: true } });
+
+reviewDenormalizedSchema.virtual('likes').get(function() {
+  return this.likesCount;
+});
+
 const episodioSchema = new Schema({
   episodio_id: { type: String, required: true },
   episodio_numero: { type: String }, // Viene como string desde OMDb
@@ -25,7 +40,19 @@ const serieSchema = new Schema({
   poster: { type: String },          // URL de la imagen
   fechaInicio: { type: String },       // Fecha de inicio de la serie
   fechaFinal: { type: String },        // Fecha final de la serie (si existe)
-  temporadas: { type: [temporadaSchema], default: [] }  // Arreglo de temporadas
+  temporadas: { type: [temporadaSchema], default: [] },  // Arreglo de temporadas
+  reviews: [reviewDenormalizedSchema], // Denormalized reviews
+  totalRating: { type: Number, default: 0 },    // Suma total de ratings
+  ratingCount: { type: Number, default: 0 },    // Número total de ratings
+  averageRating: { type: Number, default: 0 }   // Rating promedio
 });
 
-module.exports = mongoose.model("series", serieSchema);
+// Middleware para calcular el rating promedio antes de guardar
+serieSchema.pre('save', function(next) {
+  if (this.ratingCount > 0) {
+    this.averageRating = this.totalRating / this.ratingCount;
+  }
+  next();
+});
+
+module.exports = mongoose.model("Serie", serieSchema);

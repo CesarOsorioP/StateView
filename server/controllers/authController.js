@@ -1,19 +1,50 @@
 // controllers/authController.js
+
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const Persona = require('../models/Persona');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+const EMAIL_HOST = process.env.EMAIL_HOST || 'smtp.gmail.com';
+const EMAIL_PORT = parseInt(process.env.EMAIL_PORT || 587);
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-// Función para registrar un usuario
+// Configurar el transporte de nodemailer
+const transporter = nodemailer.createTransport({
+  host: EMAIL_HOST,
+  port: EMAIL_PORT,
+  secure: EMAIL_PORT === 465, // true para puerto 465
+  auth: {
+    user: EMAIL_USER,
+    pass: EMAIL_PASS
+  },
+  debug: true, // Muestra salida de depuración
+  logger: true // Registra información en la consola
+});
+
+// Función para registrar un usuario (signUp)
 async function signUp(req, res) {
   try {
-    const { nombre, email, contraseña, imagenPerfil } = req.body;
-    const usuarioExistente = await Persona.findOne({ email });
-    if (usuarioExistente) {
+    // Extraemos los campos enviados en el body, incluyendo imagenPerfil e imagenBanner
+    const { nombre, email, contraseña, imagenPerfil, imagenBanner, meGusta, listas, historial } = req.body;
+
+    // Verificar si el email ya está registrado
+    const usuarioExistenteCorreo = await Persona.findOne({ email });
+    if (usuarioExistenteCorreo) {
       return res.status(400).json({ error: 'El email ya está registrado.' });
     }
+
+    // Verificar si el nombre de usuario ya está registrado
+    const usuarioExistenteNombre = await Persona.findOne({ nombre });
+    if (usuarioExistenteNombre) {
+      return res.status(400).json({ error: 'Este nombre de usuario ya está registrado.' });
+    }
+
     const saltRounds = 10;
     const contraseñaHasheada = await bcrypt.hash(contraseña, saltRounds);
     const nuevaPersona = new Persona({
@@ -21,20 +52,38 @@ async function signUp(req, res) {
       email,
       contraseña: contraseñaHasheada,
       imagenPerfil,
-      rol: 'Usuario'
+      imagenBanner,
+      rol: 'Usuario',
+      // Inicializamos los arrays si no se pasan valores
+      meGusta: meGusta || [],
+      listas: listas || [],
+      historial: historial || []
     });
     await nuevaPersona.save();
+
+    // (Opcional) Aquí podrías emitir un evento para actualizar el dashboard en tiempo real
+
     res.status(201).json({ message: 'Usuario registrado correctamente.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }
 
-// Función para iniciar sesión
+// Función para iniciar sesión (login)
+// Esta función acepta ya sea correo o nombre de usuario en el campo 'email'
 async function login(req, res) {
   try {
+    // El campo 'email' en el body contendrá ya sea el correo o el nombre de usuario
     const { email, contraseña } = req.body;
-    const persona = await Persona.findOne({ email });
+    let persona;
+
+    // Si el input contiene una arroba, buscamos por email; de lo contrario, por nombre (username)
+    if (email.includes('@')) {
+      persona = await Persona.findOne({ email });
+    } else {
+      persona = await Persona.findOne({ nombre: email });
+    }
+
     if (!persona) {
       return res.status(400).json({ error: 'Credenciales inválidas.' });
     }
@@ -53,7 +102,7 @@ async function login(req, res) {
     // Genera el token
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     
-    console.log("Token generado:", token); // Log para verificar el token
+    console.log("Token generado:", token);
 
     res.status(200).json({
       token,
@@ -66,18 +115,16 @@ async function login(req, res) {
   }
 }
 
-
-// Nueva función para obtener los datos del usuario actual
+// Función para obtener los datos del usuario actual (excluyendo la contraseña)
 async function getCurrentUser(req, res) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       return res.status(401).json({ error: 'No se proporcionó token' });
     }
-    const token = authHeader.split(' ')[1]; // Se asume "Bearer <token>"
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const token = authHeader.split(' ')[1]; // Se asume formato "Bearer <token>"
     // Busca al usuario excluyendo la contraseña
-    const user = await Persona.findById(decoded.id).select('-contraseña');
+    const user = await Persona.findById(jwt.verify(token, JWT_SECRET).id).select('-contraseña');
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
@@ -87,4 +134,125 @@ async function getCurrentUser(req, res) {
   }
 }
 
-module.exports = { signUp, login, getCurrentUser };
+// Función para solicitar restablecimiento de contraseña
+async function requestPasswordReset(req, res) {
+  try {
+    const { email } = req.body;
+    console.log(`[requestPasswordReset] Solicitud recibida para: ${email}`);
+    
+    // Buscar al usuario por email
+    const usuario = await Persona.findOne({ email });
+    if (!usuario) {
+      console.log(`[requestPasswordReset] Usuario no encontrado para el email: ${email}`);
+      // Por seguridad, no revelamos si el email existe o no
+      return res.status(200).json({ 
+        message: 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.' 
+      });
+    }
+    
+    // Generar token único
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    
+    // Guardar token con tiempo de expiración (1 hora)
+    usuario.resetPasswordToken = resetToken;
+    usuario.resetPasswordExpires = Date.now() + 3600000; // 1 hora en milisegundos
+    await usuario.save();
+    
+    // Crear URL para restablecer contraseña
+    const resetUrl = `${FRONTEND_URL}/recuperar-contrasena/${resetToken}`;
+    
+    // Enviar email
+    const mailOptions = {
+      from: `"StateView" <${EMAIL_USER}>`,
+      to: usuario.email,
+      subject: 'Restablecimiento de contraseña - StateView',
+      html: `
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+          <h2 style="color: #3498db; text-align: center;">StateView</h2>
+          <h3>Restablecimiento de contraseña</h3>
+          <p>Hola ${usuario.nombre},</p>
+          <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #3498db; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">Restablecer Contraseña</a>
+          </div>
+          <p>Este enlace expirará en 1 hora.</p>
+          <p>Si no solicitaste este cambio, ignora este mensaje y tu contraseña seguirá siendo la misma.</p>
+          <hr style="border: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #777; font-size: 12px; text-align: center;">© 2025 StateView - Todos los derechos reservados</p>
+        </div>
+      `
+    };
+    
+    console.log(`Intentando enviar correo de recuperación a: ${usuario.email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Correo enviado: %s', info.messageId);
+    
+    res.status(200).json({ 
+      message: 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.' 
+    });
+  } catch (error) {
+    console.error('Error al solicitar restablecimiento:', error); // Log error completo
+    res.status(500).json({ error: 'Error al procesar la solicitud' });
+  }
+}
+
+// Función para validar token de restablecimiento de contraseña
+async function validateResetToken(req, res) {
+  try {
+    const { token } = req.params;
+    
+    const usuario = await Persona.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+    
+    if (!usuario) {
+      return res.status(400).json({ error: 'El token es inválido o ha expirado' });
+    }
+    
+    res.status(200).json({ message: 'Token válido', email: usuario.email });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al validar el token' });
+  }
+}
+
+// Función para restablecer la contraseña
+async function resetPassword(req, res) {
+  try {
+    const { token } = req.params;
+    const { contraseña } = req.body;
+    
+    const usuario = await Persona.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+    
+    if (!usuario) {
+      return res.status(400).json({ error: 'El token es inválido o ha expirado' });
+    }
+    
+    // Hashear la nueva contraseña
+    const saltRounds = 10;
+    const contraseñaHasheada = await bcrypt.hash(contraseña, saltRounds);
+    
+    // Actualizar contraseña y limpiar tokens de restablecimiento
+    usuario.contraseña = contraseñaHasheada;
+    usuario.resetPasswordToken = undefined;
+    usuario.resetPasswordExpires = undefined;
+    
+    await usuario.save();
+    
+    res.status(200).json({ message: 'Contraseña actualizada correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al restablecer la contraseña' });
+  }
+}
+
+module.exports = { 
+  signUp, 
+  login, 
+  getCurrentUser, 
+  requestPasswordReset, 
+  validateResetToken, 
+  resetPassword 
+};

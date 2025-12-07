@@ -1,16 +1,36 @@
 // routes/videojuegoRoutes.js
 const express = require('express');
 const router = express.Router();
-const { refreshVideojuego, obtenerVideojuegos, obtenerVideojuegoPorId } = require('../controllers/videojuegoController');
+const { 
+  refreshVideojuego, 
+  obtenerVideojuegos, 
+  obtenerVideojuegoPorId, 
+  eliminarVideojuego,
+  obtenerVideojuegoPorItemId,
+  buscarVideojuegos,
+  buscarVideojuegosEnRawg,
+  agregarVideojuegoPorId
+} = require('../controllers/videojuegoController');
 
-// Endpoint para agregar/actualizar un videojuego usando RAWG API
-// Ejemplo: GET /api/videojuegos/refresh?title=The%20Witcher%203
+// Endpoint para agregar videojuego por ID
+router.post('/add-by-id', agregarVideojuegoPorId);
+
+// Endpoint para buscar videojuegos en la API externa
+router.get('/search-rawg', buscarVideojuegosEnRawg);
+
+// Endpoint para buscar videojuegos en la base de datos
+router.get('/buscar', buscarVideojuegos);
+
+// Endpoint para actualizar/agregar un videojuego
 router.get('/refresh', refreshVideojuego);
 
-// Endpoint para obtener todos los videojuegos almacenados
+// Endpoint para obtener todos los videojuegos
 router.get('/', obtenerVideojuegos);
 
-// Endpoint para obtener un álbum individual por su album_id
+// Endpoint para obtener un videojuego individual
 router.get('/:gameId', obtenerVideojuegoPorId);
+
+// Endpoint para eliminar un videojuego
+router.delete('/:juegoId', eliminarVideojuego);
 
 module.exports = router;

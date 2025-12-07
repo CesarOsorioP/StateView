@@ -21,6 +21,7 @@ const protect = (req, res, next) => {
     // Verificar el token
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
+    if (decoded.id && !decoded._id) req.user._id = decoded.id;
     next();
   } catch (error) {
     res.status(401).json({ error: 'No autorizado, token no válido' });
@@ -29,14 +30,16 @@ const protect = (req, res, next) => {
 
 /**
  * Middleware para restringir el acceso a ciertos roles.
- * Recibe una lista de roles permitidos y verifica si req.user.rol está incluido.
+ * Si el usuario es Administrador o Superadministrador, se le permite el acceso sin importar los roles indicados.
+ * En otros casos se valida que el rol del usuario esté incluido en la lista de roles permitidos.
  */
 const restrictTo = (...roles) => {
   return (req, res, next) => {
+    if (req.user.rol === 'Administrador' || req.user.rol === 'Superadministrador') {
+      return next();
+    }
     if (!roles.includes(req.user.rol)) {
-      return res
-        .status(403)
-        .json({ error: 'Acceso denegado: No tienes permisos para realizar esta acción' });
+      return res.status(403).json({ error: 'Acceso denegado: No tienes permisos para realizar esta acción' });
     }
     next();
   };

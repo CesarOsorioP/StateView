@@ -1,25 +1,40 @@
-// src/components/Series.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import "./Series.css";
+import api from '../../api/api';
 
 const Series = () => {
   const [series, setSeries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     year: "all",
-    sort: "asc" // "asc" = de más antiguos a más recientes, "desc" = lo inverso
+    genre: "all",
+    sort: "asc"
   });
+  const [genres, setGenres] = useState(["all"]);
+  const [years, setYears] = useState(["all"]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     const fetchSeries = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/series");
+        const response = await api.get("/api/serie");
         setSeries(response.data);
+        
+        // Extraer años y géneros únicos
+        const uniqueYears = ["all", ...new Set(response.data.map(serie => {
+          return serie.fechaInicio && serie.fechaInicio.substring(0, 4);
+        }).filter(Boolean).sort())];
+        
+        const uniqueGenres = ["all", ...new Set(response.data.flatMap(serie => 
+          serie.genero ? serie.genero.split(", ") : []
+        ).sort())];
+        
+        setYears(uniqueYears);
+        setGenres(uniqueGenres);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching series:", error);
         setLoading(false);
       }
     };
@@ -27,44 +42,34 @@ const Series = () => {
     fetchSeries();
   }, []);
 
-  // Extrae los años únicos a partir de las series obtenidas
-  // Ahora usando fecha_inicio en lugar de fecha_estreno
-  const years = ["all", ...new Set(series.map(serie => {
-    let year = serie.fechaInicio;
-    if (year && year.length >= 4) {
-      year = year.substring(0, 4);
-    }
-    return year;
-  }).filter(Boolean).sort())];
-
-  // Aplica el filtro de año
   const filteredSeries = series.filter(serie => {
+    // Filtro por año
     if (filters.year !== "all") {
-      let serieYear = serie.fechaInicio;
-      if (serieYear && serieYear.length >= 4) {
-        serieYear = serieYear.substring(0, 4);
-      }
-      return serieYear === filters.year;
+      const serieYear = serie.fechaInicio && serie.fechaInicio.substring(0, 4);
+      if (serieYear !== filters.year) return false;
     }
+    
+    // Filtro por género
+    if (filters.genre !== "all") {
+      const serieGenres = serie.genero ? serie.genero.split(", ") : [];
+      if (!serieGenres.includes(filters.genre)) return false;
+    }
+    
     return true;
   });
 
-  // Ordena por año: ascendente (más antiguo) o descendente (más reciente)
   const sortedSeries = [...filteredSeries].sort((a, b) => {
-    let yearA = a.fechaInicio ? parseInt(a.fechaInicio.substring(0, 4)) : 0;
-    let yearB = b.fechaInicio ? parseInt(b.fechaInicio.substring(0, 4)) : 0;
+    const yearA = a.fechaInicio ? parseInt(a.fechaInicio.substring(0, 4)) : 0;
+    const yearB = b.fechaInicio ? parseInt(b.fechaInicio.substring(0, 4)) : 0;
     
-    // Si los años son iguales, verifica si alguna serie ha finalizado
     if (yearA === yearB) {
       const hasEndedA = a.fechaFinal && a.fechaFinal.trim() !== '';
       const hasEndedB = b.fechaFinal && b.fechaFinal.trim() !== '';
       
-      // Si solo una ha finalizado, ordénalas (series finalizadas van primero en orden ascendente)
       if (hasEndedA !== hasEndedB) {
         return filters.sort === "asc" ? (hasEndedA ? -1 : 1) : (hasEndedA ? 1 : -1);
       }
       
-      // Si ambas finalizaron, compara por año de finalización
       if (hasEndedA && hasEndedB) {
         const endYearA = parseInt(a.fechaFinal.substring(0, 4));
         const endYearB = parseInt(b.fechaFinal.substring(0, 4));
@@ -83,7 +88,6 @@ const Series = () => {
     }));
   };
 
-  // Función para mostrar el estado de la serie (En emisión o finalizada)
   const getSerieStatus = (serie) => {
     if (serie.fechaFinal && serie.fechaFinal.trim() !== '') {
       return `${serie.fechaInicio} - ${serie.fechaFinal}`;
@@ -98,7 +102,7 @@ const Series = () => {
         <p>Explora y descubre las mejores series de televisión</p>
       </div>
 
-      <div className="filters-container">
+      <div className="filters-container compact-filters">
         <div className="filter-group">
           <label>Año</label>
           <select 
@@ -110,6 +114,22 @@ const Series = () => {
             {years.map(year => (
               <option key={year} value={year}>
                 {year === "all" ? "Todos los años" : year}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Género</label>
+          <select 
+            name="genre" 
+            value={filters.genre} 
+            onChange={handleFilterChange}
+            className="filter-select"
+          >
+            {genres.map(genre => (
+              <option key={genre} value={genre}>
+                {genre === "all" ? "Todos los géneros" : genre}
               </option>
             ))}
           </select>
@@ -140,29 +160,31 @@ const Series = () => {
             Mostrando {sortedSeries.length} series
           </div>
 
-          <div className="content-grid">
-            {sortedSeries.map(serie => (
-              <div key={serie.serie_id} className="content-card">
-                <Link to={`/series/${serie.serie_id}`} className="content-link">
+          <div className="pagination-bar">
+            {Array.from({ length: Math.ceil(sortedSeries.length / itemsPerPage) }, (_, i) => (
+              <button
+                key={i + 1}
+                className={currentPage === i + 1 ? 'active' : ''}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+
+          <div className="content-grid compact-grid">
+            {sortedSeries.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(serie => (
+              <div key={serie.serie_id || serie._id} className="content-card">
+                <Link to={`/serie/${serie.serie_id || serie._id}`} className="content-link">
                   <div className="poster-container">
                     <img src={serie.poster} alt={serie.titulo} className="poster" />
                   </div>
                   <div className="content-info">
                     <h3 className="content-title">{serie.titulo}</h3>
-                    <p className="content-year">{getSerieStatus(serie)}</p>
+                    <p className="content-year">{serie.fechaInicio ? serie.fechaInicio.substring(0, 4) : ''}</p>
                     <p className="content-artist">{serie.genero}</p>
                   </div>
                 </Link>
-                <div className="content-actions">
-                  {/* Enlace para ir a la página de reseñas para esta serie */}
-                  <Link 
-                    to={`/series/${serie.serie_id}/reviews`} 
-                    className="action-button" 
-                    title="Reseñar serie"
-                  >
-                    <i className="far fa-star"></i>
-                  </Link>
-                </div>
               </div>
             ))}
           </div>

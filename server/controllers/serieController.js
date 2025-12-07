@@ -1,5 +1,20 @@
-const { saveSerieFromOMDb } = require('../services/serieService');
+const { saveSerieFromOMDb, searchSeriesEnOMDb, saveSerieById } = require('../services/serieService');
 const Serie = require('../models/Serie');
+const mongoose = require('mongoose');
+
+async function agregarSeriePorId(req, res) {
+  try {
+    const { imdbId } = req.body;
+    if (!imdbId) {
+      return res.status(400).json({ error: 'Falta el parámetro "imdbId"' });
+    }
+    const serie = await saveSerieById(imdbId);
+    res.json({ message: 'Serie agregada correctamente', data: serie });
+  } catch (error) {
+    console.error('Error en agregarSeriePorId:', error);
+    res.status(500).json({ error: 'Error agregando la serie: ' + error.message });
+  }
+}
 
 /**
  * Endpoint para refrescar o agregar una serie desde OMDb API.
@@ -36,6 +51,7 @@ async function obtenerSeriePorId(req, res) {
     // Se asume que en tu modelo el campo único es 'series_id'
     const { seriesId } = req.params;
     const serie = await Serie.findOne({ serie_id: seriesId });
+    console.log('ID de serie solicitado:', seriesId);
     if (!serie) {
       return res.status(404).json({ error: 'Serie no encontrada' });
     }
@@ -45,4 +61,89 @@ async function obtenerSeriePorId(req, res) {
   }
 }
 
-module.exports = { refreshSerie, obtenerSeries, obtenerSeriePorId };
+
+async function eliminarSerie(req, res) {
+  try {
+    const { serieId } = req.params;
+    
+    let serie = null;
+    
+    // Intentar borrar por serie_id
+    serie = await Serie.findOneAndDelete({ serie_id: serieId });
+    
+    // Si no se encuentra, intentar por _id
+    if (!serie && mongoose.Types.ObjectId.isValid(serieId)) {
+      serie = await Serie.findByIdAndDelete(serieId);
+    }
+
+    if (!serie) {
+      return res.status(404).json({ error: 'Serie no encontrada' });
+    }
+    res.json({ message: 'Serie eliminada correctamente', data: serie });
+  } catch (error) {
+    res.status(500).json({ error: `Error eliminando la serie: ${error.message}` });
+  }
+}
+
+async function buscarSeries(req, res) {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Se requiere un término de búsqueda' 
+      });
+    }
+
+    const series = await Serie.find({
+      $or: [
+        { titulo: { $regex: q, $options: 'i' } },
+        { descripcion: { $regex: q, $options: 'i' } }
+      ]
+    }).limit(20);
+
+    res.json({
+      success: true,
+      data: series
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+}
+
+async function buscarSeriesEnOMDb(req, res) {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Se requiere un término de búsqueda' 
+      });
+    }
+
+    const resultados = await searchSeriesEnOMDb(query);
+    res.json({
+      success: true,
+      data: resultados
+    });
+  } catch (error) {
+    console.error('Error en buscarSeriesEnOMDb:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+}
+
+module.exports = { 
+  refreshSerie, 
+  obtenerSeries, 
+  obtenerSeriePorId, 
+  eliminarSerie,
+  buscarSeries,
+  buscarSeriesEnOMDb,
+  agregarSeriePorId // New export
+};

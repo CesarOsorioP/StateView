@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { 
   FaHeart, FaRegHeart, FaGamepad
 } from 'react-icons/fa';
-import ReviewSection from '../components/Albumes/ReviewSection';
+import ReviewSection from '../components//Videojuegos/ReviewSection';
 import "./pageStyles/VideojuegosDetail.css";
+import api from '../api/api';
 
 const GameDetail = () => {
   const { gameId } = useParams();
@@ -22,20 +22,22 @@ const GameDetail = () => {
   useEffect(() => {
     const fetchGameDetail = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/videojuegos/${gameId}`);
+        const response = await api.get(`/api/videojuego/${gameId}`);
         setGame(response.data);
-        
-        // Verificar si el usuario tiene marcado como "me gusta" o "ya jugado"
-        if (user) {
+        const userId = localStorage.getItem('userId');
+        if (userId) {
           try {
-            const userPrefsResponse = await axios.get(
-              `http://localhost:5000/api/gamePreferences/${gameId}`,
-              { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-            );
-            if (userPrefsResponse.data) {
-              setLiked(userPrefsResponse.data.liked || false);
-              setPlayed(userPrefsResponse.data.played || false);
-            }
+            // Historial (jugado)
+            const historialResponse = await api.get(`/api/persona/${userId}/historial`);
+            const historialData = Array.isArray(historialResponse.data) ? historialResponse.data : [];
+            const isPlayed = historialData.some(item => item.contenido_id === response.data.juego_id && item.tipo === 'Videojuego');
+            setPlayed(isPlayed);
+
+            // Me gusta
+            const megustaResponse = await api.get(`/api/persona/${userId}/megusta`);
+            const megustaData = Array.isArray(megustaResponse.data) ? megustaResponse.data : [];
+            const isLiked = megustaData.some(item => item.contenido_id === response.data.juego_id && item.tipo === 'Videojuego');
+            setLiked(isLiked);
           } catch (error) {
             console.error("Error fetching user preferences:", error);
           }
@@ -47,35 +49,35 @@ const GameDetail = () => {
       }
     };
     fetchGameDetail();
-  }, [gameId, user]);
+  }, [gameId]);
 
-  // Función para actualizar "me gusta" y "ya jugado"
-  const handlePreferenceToggle = async (type) => {
-    if (!user) {
-      alert("Debes iniciar sesión para realizar esta acción.");
-      return;
-    }
-
+  const handlePlayedToggle = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return alert('Debes iniciar sesión para realizar esta acción.');
     try {
-      let updatedValue;
-      if (type === 'liked') {
-        updatedValue = !liked;
-        setLiked(updatedValue);
-      } else if (type === 'played') {
-        updatedValue = !played;
-        setPlayed(updatedValue);
+      if (!played) {
+        await api.post(`/api/persona/${userId}/historial`, { contenido_id: game.juego_id, tipo: 'Videojuego' });
+      } else {
+        await api.delete(`/api/persona/${userId}/historial`, { data: { contenido_id: game.juego_id, tipo: 'Videojuego' } });
       }
-
-      await axios.post(
-        `http://localhost:5000/api/gamePreferences/${gameId}`,
-        { [type]: updatedValue },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
+      setPlayed(!played);
     } catch (error) {
-      console.error(`Error updating ${type} preference:`, error);
-      // Revertir el cambio visual en caso de error
-      if (type === 'liked') setLiked(!liked);
-      else if (type === 'played') setPlayed(!played);
+      setPlayed(played);
+    }
+  };
+
+  const handleLikedToggle = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return alert('Debes iniciar sesión para realizar esta acción.');
+    try {
+      if (!liked) {
+        await api.post(`/api/persona/${userId}/megusta`, { contenido_id: game.juego_id, tipo: 'Videojuego' });
+      } else {
+        await api.delete(`/api/persona/${userId}/megusta`, { data: { contenido_id: game.juego_id, tipo: 'Videojuego' } });
+      }
+      setLiked(!liked);
+    } catch (error) {
+      setLiked(liked);
     }
   };
 
@@ -105,7 +107,7 @@ const GameDetail = () => {
               <div className="game-actions">
                 <button 
                   className={`action-button ${liked ? 'active' : ''}`}
-                  onClick={() => handlePreferenceToggle('liked')}
+                  onClick={handleLikedToggle}
                   title={liked ? "Quitar me gusta" : "Me gusta"}
                 >
                   {liked ? <FaHeart /> : <FaRegHeart />}
@@ -114,7 +116,7 @@ const GameDetail = () => {
                 
                 <button 
                   className={`action-button ${played ? 'active' : ''}`}
-                  onClick={() => handlePreferenceToggle('played')}
+                  onClick={handlePlayedToggle}
                   title={played ? "Marcar como no jugado" : "Marcar como jugado"}
                 >
                   <FaGamepad />

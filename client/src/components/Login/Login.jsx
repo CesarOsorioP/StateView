@@ -1,11 +1,10 @@
-// src/components/Login.js
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import "./Login.css";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");  // Usamos 'identifier' en lugar de 'email'
   const [contraseña, setContraseña] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -18,16 +17,23 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const result = await login(email, contraseña);
+      // Validar que los campos no estén vacíos
+      if (!identifier.trim() || !contraseña.trim()) {
+        setError("Por favor, completa todos los campos");
+        setIsLoading(false);
+        return;
+      }
+
+      const result = await login(identifier, contraseña);
       
       if (result.success) {
-        // Redireccionar al usuario a la página principal
         navigate("/");
       } else {
         setError(result.error);
       }
     } catch (error) {
-      setError("Error al iniciar sesión");
+      console.error("Error en el formulario de login:", error);
+      setError("Error al iniciar sesión. Intenta nuevamente.");
     } finally {
       setIsLoading(false);
     }
@@ -41,13 +47,13 @@ const Login = () => {
 
         <form onSubmit={handleLogin}>
           <div className="login-group">
-            <label className="login-label">Email</label>
+            <label className="login-label">Correo o Nombre de Usuario</label>
             <input
               className="login-input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Ingresa tu email"
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="Ingresa tu correo o nombre de usuario"
               required
             />
           </div>
@@ -71,7 +77,9 @@ const Login = () => {
           </button>
         </form>
 
-        <a href="#" className="login-auth-link">¿Olvidaste tu contraseña?</a>
+        <Link to="/olvide-contrasena" className="login-auth-Link"> 
+          ¿Olvidaste contraseña?
+        </Link>
 
         <div className="login-divider">o</div>
 

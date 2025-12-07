@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  FaThumbsUp, FaRegThumbsUp, FaEdit, FaTrash, FaCheck, FaTimes
+  FaThumbsUp, FaRegThumbsUp, FaEdit, FaTrash, FaCheck, FaTimes, FaFlag
 } from 'react-icons/fa';
 import './commentSection.css';
-
+import api from '../../api/api';
+import ReportModal from '../Reportes/ReportModal'; // Import the ReportModal component
 
 const CommentSection = ({ reviewId, toggleComments }) => {
   const { user } = useAuth();
@@ -19,14 +20,20 @@ const CommentSection = ({ reviewId, toggleComments }) => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState('');
   
+  // Estados para el modal de reporte
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportedUserId, setReportedUserId] = useState(null);
+  
   // Cargar comentarios - useCallback para evitar recrear la función en cada render
   const loadComments = useCallback(async () => {
+    if (!reviewId) return;
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/comments?reviewId=${reviewId}`);
+      const response = await api.get(`/api/comment?reviewId=${reviewId}`);
       setComments(response.data);
     } catch (error) {
-      console.error("Error al cargar comentarios:", error);
+      console.error('Error al cargar comentarios:', error);
+      setComments([]);
     } finally {
       setLoading(false);
     }
@@ -97,12 +104,12 @@ const CommentSection = ({ reviewId, toggleComments }) => {
       
       if (hasLiked) {
         // Si ya tiene like, lo quitamos
-        await axios.delete(`http://localhost:5000/api/comments/${commentId}/unlike`, {
+        await api.delete(`/api/comment/${commentId}/unlike`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       } else {
         // Si no tiene like, lo añadimos
-        await axios.post(`http://localhost:5000/api/comments/${commentId}/like`, {}, {
+        await api.post(`/api/comment/${commentId}/like`, {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       }
@@ -116,46 +123,20 @@ const CommentSection = ({ reviewId, toggleComments }) => {
   // Función para enviar un nuevo comentario
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      alert("Debes iniciar sesión para comentar.");
-      return;
-    }
-
     if (!newComment || newComment.trim() === '') {
       alert("El comentario no puede estar vacío.");
       return;
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/comments",
-        { reviewId, comment_txt: newComment },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
-      
-      // Añadir el nuevo comentario
-      const addedComment = response.data.comment;
-      setComments(prev => [addedComment, ...prev]);
-      
-      // Limpiar el formulario
+      const response = await api.post('/api/comment', {
+        reviewId,
+        comment_txt: newComment
+      });
+      setComments([...comments, response.data.comment]);
       setNewComment('');
     } catch (error) {
-      if (error.response && error.response.data.existingComment) {
-        alert("Ya has comentado en esta reseña. Puedes editar tu comentario existente.");
-        
-        // Opcional: Hacer scroll hasta el comentario existente
-        const existingCommentElement = document.getElementById(`comment-${error.response.data.existingComment._id}`);
-        if (existingCommentElement) {
-          existingCommentElement.scrollIntoView({ behavior: 'smooth' });
-          existingCommentElement.classList.add('highlight-comment');
-          setTimeout(() => {
-            existingCommentElement.classList.remove('highlight-comment');
-          }, 3000);
-        }
-      } else {
-        console.error("Error al enviar comentario:", error);
-        alert("Error al enviar el comentario. Inténtalo de nuevo.");
-      }
+      console.error('Error al enviar comentario:', error);
     }
   };
 
@@ -179,8 +160,8 @@ const CommentSection = ({ reviewId, toggleComments }) => {
     }
 
     try {
-      const response = await axios.put(
-        `http://localhost:5000/api/comments/${commentId}`,
+      const response = await api.put(
+        `/api/comment/${commentId}`,
         { comment_txt: editCommentText },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -207,7 +188,7 @@ const CommentSection = ({ reviewId, toggleComments }) => {
     }
 
     try {
-      await axios.delete(`http://localhost:5000/api/comments/${commentId}`, {
+      await api.delete(`/api/comment/${commentId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -217,6 +198,17 @@ const CommentSection = ({ reviewId, toggleComments }) => {
       console.error("Error al eliminar comentario:", error);
       alert("Error al eliminar el comentario. Inténtalo de nuevo.");
     }
+  };
+
+  // Función para abrir el modal de reporte
+  const handleReportUser = (userId) => {
+    if (!user) {
+      alert("Debes iniciar sesión para reportar.");
+      return;
+    }
+    
+    setReportedUserId(userId);
+    setIsReportModalOpen(true);
   };
 
   // Verificar si el usuario es el autor del comentario
@@ -233,6 +225,14 @@ const CommentSection = ({ reviewId, toggleComments }) => {
   const hasUserCommented = () => {
     if (!user) return false;
     return comments.some(comment => isCommentOwner(comment));
+  };
+
+  // Obtener el ID de usuario de un comentario (ya sea objeto o string)
+  const getCommentUserIdValue = (comment) => {
+    if (typeof comment.userId === 'object') {
+      return comment.userId._id;
+    }
+    return comment.userId;
   };
 
   return (
@@ -261,9 +261,11 @@ const CommentSection = ({ reviewId, toggleComments }) => {
             <div key={comment._id} id={`comment-${comment._id}`} className="comment-item">
               <div className="comment-header">
                 <strong>
-                  {typeof comment.userId === 'object' 
-                    ? comment.userId.email || comment.userId.username 
-                    : "Usuario"}
+                  <Link to={`/perfil/${typeof comment.userId === 'object' ? (comment.userId.nombre || comment.userId.username) : 'Usuario'}`} className="user-link" style={{color: 'inherit', textDecoration: 'none'}}>
+                    {typeof comment.userId === 'object' 
+                      ? comment.userId.nombre || comment.userId.username || comment.userId.email 
+                      : "Usuario"}
+                  </Link>
                 </strong>
                 <span className="comment-date">
                   {new Date(comment.commentDate).toLocaleDateString("es-ES")}
@@ -310,6 +312,17 @@ const CommentSection = ({ reviewId, toggleComments }) => {
                   <span>{comment.liked_comment?.length || 0}</span>
                 </button>
 
+                {/* Botón de reporte (solo visible si no es el propietario) */}
+                {user && !isCommentOwner(comment) && (
+                  <button
+                    className="report-button"
+                    onClick={() => handleReportUser(getCommentUserIdValue(comment))}
+                    title="Reportar usuario"
+                  >
+                    <FaFlag />
+                  </button>
+                )}
+
                 {/* Botones de editar y eliminar (solo para el autor) */}
                 {isCommentOwner(comment) && editingCommentId !== comment._id && (
                   <div className="owner-actions">
@@ -336,6 +349,14 @@ const CommentSection = ({ reviewId, toggleComments }) => {
       ) : (
         <p className="no-comments">No hay comentarios aún.</p>
       )}
+
+      {/* Modal de reporte */}
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        reportedUserId={reportedUserId}
+        reviewId={reviewId}
+      />
     </div>
   );
 };

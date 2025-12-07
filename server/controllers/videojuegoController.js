@@ -1,6 +1,21 @@
 // controllers/videojuegoController.js
-const { saveVideojuegoFromRawg } = require('../services/videojuegoService');
+const { saveVideojuegoFromRawg, searchVideojuegosEnRawg, saveVideojuegoById } = require('../services/videojuegoService');
 const Videojuego = require('../models/Videojuego');
+const mongoose = require('mongoose');
+
+async function agregarVideojuegoPorId(req, res) {
+  try {
+    const { gameId } = req.body;
+    if (!gameId) {
+      return res.status(400).json({ error: 'Falta el parámetro "gameId"' });
+    }
+    const videojuego = await saveVideojuegoById(gameId);
+    res.json({ message: 'Videojuego agregado correctamente', data: videojuego });
+  } catch (error) {
+    console.error('Error en agregarVideojuegoPorId:', error);
+    res.status(500).json({ error: 'Error agregando el videojuego: ' + error.message });
+  }
+}
 
 async function refreshVideojuego(req, res) {
   try {
@@ -42,4 +57,88 @@ async function obtenerVideojuegoPorId(req, res) {
   }
 }
 
-module.exports = { refreshVideojuego, obtenerVideojuegos, obtenerVideojuegoPorId };
+async function eliminarVideojuego(req, res) {
+  try {
+    const { juegoId } = req.params;
+    
+    let juego = null;
+    
+    // Intentar por juego_id
+    juego = await Videojuego.findOneAndDelete({ juego_id: juegoId });
+    
+    // Si no se encuentra, intentar por _id
+    if (!juego && mongoose.Types.ObjectId.isValid(juegoId)) {
+      juego = await Videojuego.findByIdAndDelete(juegoId);
+    }
+
+    if (!juego) {
+      return res.status(404).json({ error: 'Videojuego no encontrado' });
+    }
+    res.json({ message: 'Videojuego eliminado correctamente', data: juego });
+  } catch (error) {
+    res.status(500).json({ error: `Error eliminando el videojuego: ${error.message}` });
+  }
+}
+
+async function buscarVideojuegos(req, res) {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Se requiere un término de búsqueda' 
+      });
+    }
+
+    const videojuegos = await Videojuego.find({
+      $or: [
+        { titulo: { $regex: q, $options: 'i' } },
+        { descripcion: { $regex: q, $options: 'i' } }
+      ]
+    }).limit(20);
+
+    res.json({
+      success: true,
+      data: videojuegos
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+}
+
+async function buscarVideojuegosEnRawg(req, res) {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Se requiere un término de búsqueda' 
+      });
+    }
+
+    const resultados = await searchVideojuegosEnRawg(query);
+    res.json({
+      success: true,
+      data: resultados
+    });
+  } catch (error) {
+    console.error('Error en buscarVideojuegosEnRawg:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+}
+
+module.exports = { 
+  refreshVideojuego, 
+  obtenerVideojuegos, 
+  obtenerVideojuegoPorId, 
+  eliminarVideojuego,
+  buscarVideojuegos,
+  buscarVideojuegosEnRawg,
+  agregarVideojuegoPorId // New export
+};

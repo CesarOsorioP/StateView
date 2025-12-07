@@ -1,0 +1,156 @@
+.notificaciones-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.notificaciones-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.notificaciones-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #24292e;
+}
+
+.marcar-todas-btn {
+  padding: 8px 16px;
+  background-color: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  color: #24292e;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.marcar-todas-btn:hover {
+  background-color: #e1e4e8;
+}
+
+.notificaciones-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.notificaciones-loading,
+.notificaciones-error,
+.notificaciones-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #586069;
+  font-size: 1.1rem;
+}
+
+.notificaciones-error {
+  color: #cb2431;
+}
+
+.notificaciones-list-container {
+  padding: 16px;
+}
+
+.notificaciones-list-header {
+  margin-bottom: 16px;
+}
+
+.notificaciones-list-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #24292e;
+  margin: 0 0 8px 0;
+}
+
+.notificaciones-list-subtitle {
+  font-size: 0.9rem;
+  color: #586069;
+  margin: 0;
+}
+
+.notificaciones-list-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notificaciones-list-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: #586069;
+}
+
+.notificaciones-list-empty-icon {
+  font-size: 2rem;
+  color: #d1d5da;
+  margin-bottom: 16px;
+}
+
+.notificaciones-list-empty-text {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.notificaciones-list-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e1e4e8;
+}
+
+.notificaciones-list-action-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.notificaciones-list-action-btn:hover {
+  background-color: rgba(180, 139, 228, 0.1);
+}
+
+@media (max-width: 768px) {
+  .notificaciones-container {
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .notificaciones-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .notificaciones-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .marcar-todas-btn {
+    width: 100%;
+  }
+
+  .notificaciones-list-container {
+    padding: 12px;
+  }
+
+  .notificaciones-list-title {
+    font-size: 1.1rem;
+  }
+
+  .notificaciones-list-content {
+    gap: 8px;
+  }
+} 

@@ -147,9 +147,13 @@ body {
 .movie-card {
   background-color: #111;
   border-radius: 10px;
-  overflow: hidden;
   transition: transform 0.3s ease;
   border: 1px solid rgba(138, 43, 226, 0.3);
+  padding: 0 0 10px 0; /* Sólo padding abajo */
+  min-height: 350px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* ¡VITAL! Contiene todo lo que se salga */
 }
 
 .movie-card:hover {
@@ -160,6 +164,9 @@ body {
 .poster-container {
   position: relative;
   height: 240px;
+  /* Añadimos overflow: hidden solo al contenedor del poster */
+  overflow: hidden;
+  border-radius: 10px 10px 0 0;
 }
 
 .poster {
@@ -185,30 +192,54 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Agregamos flex para control de espacio */
+  flex: 0 0 auto;
 }
 
 .movie-year {
   margin: 0 10px;
   font-size: 0.8rem;
   color: #aaa;
+  /* Agregamos flex para control de espacio */
+  flex: 0 0 auto;
 }
 
 .card-actions {
   display: flex;
   justify-content: space-around;
-  padding: 10px;
+  padding: 6px; /* Reducido de 8px */
   border-top: 1px solid rgba(138, 43, 226, 0.3);
-  margin-top: 10px;
+  margin-top: auto;
+  flex: 0 0 auto;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 6px;
+  justify-content: space-evenly;
+  /* Añade estos 3 nuevos estilos: */
+  gap: 0; /* Espacio entre botones */
+  align-items: center; /* Centra verticalmente */
 }
-
 .action-button {
   background: none;
   border: none;
   color: #ccc;
-  font-size: 0.8rem;
+  font-size: 0.7rem; /* Reducido de 0.8rem */
   cursor: pointer;
-  padding: 5px;
+  padding: 3px; /* Reducido de 5px */
   transition: color 0.3s ease;
+  /* Nuevas propiedades: */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.action-button i {
+  font-size: 0.8rem; /* Tamaño específico para iconos */
 }
 
 .action-button:hover {
@@ -601,6 +632,11 @@ body {
   .nav-center {
     display: none;
   }
+  
+  /* Ajustamos altura mínima para versión móvil */
+  .movie-card {
+    min-height: 300px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -636,5 +672,14 @@ body {
   .nav-button {
     padding: 6px 10px;
     font-size: 0.8rem;
+  }
+  
+  /* Ajustamos altura mínima para versión móvil pequeña */
+  .movie-card {
+    min-height: 260px;
+  }
+  
+  .poster-container {
+    height: 160px;
   }
 }

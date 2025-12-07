@@ -1,11 +1,14 @@
 // src/components/SeriesDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { FaHeart, FaRegHeart, FaTv } from 'react-icons/fa';
-import ReviewSection from '../components/Albumes/ReviewSection';
+import { 
+  FaHeart, FaRegHeart, FaEye, FaRegEye,
+  FaBookmark, FaRegBookmark
+} from 'react-icons/fa';
+import ReviewSection from '../components/Series/ReviewSection';
 import "./pageStyles/SeriesDetail.css";
+import api from '../api/api';
 
 const SeriesDetail = () => {
   const { seriesId } = useParams();
@@ -20,23 +23,20 @@ const SeriesDetail = () => {
   useEffect(() => {
     const fetchSeriesDetail = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/series/${seriesId}`);
+        const response = await api.get(`/api/serie/${seriesId}`);
         setSeries(response.data);
-        
-        // Verificar si el usuario tiene marcado "me gusta" o "ya vista"
-        if (user) {
-          try {
-            const userPrefsResponse = await axios.get(
-              `http://localhost:5000/api/seriesPreferences/${seriesId}`,
-              { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-            );
-            if (userPrefsResponse.data) {
-              setLiked(userPrefsResponse.data.liked || false);
-              setWatched(userPrefsResponse.data.watched || false);
-            }
-          } catch (error) {
-            console.error("Error fetching user preferences:", error);
-          }
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          // Historial (vista)
+          const historialResponse = await api.get(`/api/persona/${userId}/historial`);
+          const historialData = Array.isArray(historialResponse.data.data) ? historialResponse.data.data : [];
+          const isWatched = historialData.some(item => item.contenido_id === seriesId && item.tipo === 'Serie');
+          setWatched(isWatched);
+          // Me gusta
+          const megustaResponse = await api.get(`/api/persona/${userId}/megusta`);
+          const megustaData = Array.isArray(megustaResponse.data.data) ? megustaResponse.data.data : [];
+          const isLiked = megustaData.some(item => item.contenido_id === seriesId && item.tipo === 'Serie');
+          setLiked(isLiked);
         }
       } catch (error) {
         console.error("Error fetching series details:", error);
@@ -46,35 +46,35 @@ const SeriesDetail = () => {
     };
 
     fetchSeriesDetail();
-  }, [seriesId, user]);
+  }, [seriesId]);
 
-  // Función para actualizar "me gusta" y "ya vista"
-  const handlePreferenceToggle = async (type) => {
-    if (!user) {
-      alert("Debes iniciar sesión para realizar esta acción.");
-      return;
-    }
-
+  const handleWatchedToggle = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return alert('Debes iniciar sesión para realizar esta acción.');
     try {
-      let updatedValue;
-      if (type === 'liked') {
-        updatedValue = !liked;
-        setLiked(updatedValue);
-      } else if (type === 'watched') {
-        updatedValue = !watched;
-        setWatched(updatedValue);
+      if (!watched) {
+        await api.post(`/api/persona/${userId}/historial`, { contenido_id: seriesId, tipo: 'Serie' });
+      } else {
+        await api.delete(`/api/persona/${userId}/historial`, { data: { contenido_id: seriesId, tipo: 'Serie' } });
       }
-
-      await axios.post(
-        `http://localhost:5000/api/seriesPreferences/${seriesId}`,
-        { [type]: updatedValue },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
+      setWatched(!watched);
     } catch (error) {
-      console.error(`Error updating ${type} preference:`, error);
-      // Revertir el cambio visual en caso de error
-      if (type === 'liked') setLiked(!liked);
-      else if (type === 'watched') setWatched(!watched);
+      setWatched(watched);
+    }
+  };
+
+  const handleLikedToggle = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return alert('Debes iniciar sesión para realizar esta acción.');
+    try {
+      if (!liked) {
+        await api.post(`/api/persona/${userId}/megusta`, { contenido_id: seriesId, tipo: 'Serie' });
+      } else {
+        await api.delete(`/api/persona/${userId}/megusta`, { data: { contenido_id: seriesId, tipo: 'Serie' } });
+      }
+      setLiked(!liked);
+    } catch (error) {
+      setLiked(liked);
     }
   };
 
@@ -88,8 +88,7 @@ const SeriesDetail = () => {
             <img src={series.poster} alt={series.titulo} className="series-cover" />
             <div className="series-meta">
               <h2>{series.titulo}</h2>
-              <p><strong>Creador: </strong>{series.creador}</p>
-              <p><strong>Plataformas: </strong>{series.plataformas}</p>
+              <p><strong>Creador: </strong>{series.creadores}</p>
               <p><strong>Género: </strong>{series.genero}</p>
               
               {/* Mostrar la cantidad de temporadas */}
@@ -120,7 +119,7 @@ const SeriesDetail = () => {
                 <div className="series-actions">
                   <button 
                     className={`action-button ${liked ? 'active' : ''}`}
-                    onClick={() => handlePreferenceToggle('liked')}
+                    onClick={handleLikedToggle}
                     title={liked ? "Quitar me gusta" : "Me gusta"}
                   >
                     {liked ? <FaHeart /> : <FaRegHeart />}
@@ -129,10 +128,10 @@ const SeriesDetail = () => {
                   
                   <button 
                     className={`action-button ${watched ? 'active' : ''}`}
-                    onClick={() => handlePreferenceToggle('watched')}
+                    onClick={handleWatchedToggle}
                     title={watched ? "Marcar como no vista" : "Marcar como vista"}
                   >
-                    <FaTv />
+                    <FaEye />
                     <span>{watched ? "Vista" : "Marcar como vista"}</span>
                   </button>
                 </div>
