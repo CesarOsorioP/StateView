@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from '../../api/api';
+import './Videojuegos.css';
 
 const Videojuegos = () => {
   const [videojuegos, setVideojuegos] = useState([]);
@@ -15,6 +16,8 @@ const Videojuegos = () => {
     plataforma: "all",
     sort: "asc" // "asc" = de más antiguos a más recientes, "desc" = lo inverso
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 18;
 
   useEffect(() => {
     const fetchVideojuegos = async () => {
@@ -107,8 +110,13 @@ const Videojuegos = () => {
     return true;
   });
 
-  // Ordena por año: ascendente (más antiguo) o descendente (más reciente)
+  // Ordena por año o alfabéticamente
   const sortedVideojuegos = [...filteredVideojuegos].sort((a, b) => {
+    if (filters.sort === "alphabetical") {
+      const titleA = (a.titulo || '').toLowerCase();
+      const titleB = (b.titulo || '').toLowerCase();
+      return titleA.localeCompare(titleB, 'es');
+    }
     let yearA = a.fecha_lanzamiento ? parseInt(a.fecha_lanzamiento.substring(0, 4)) : 0;
     let yearB = b.fecha_lanzamiento ? parseInt(b.fecha_lanzamiento.substring(0, 4)) : 0;
     return filters.sort === "asc" ? yearA - yearB : yearB - yearA;
@@ -142,18 +150,18 @@ const Videojuegos = () => {
   };
 
   return (
-    <div className="content-page">
-      <div className="content-header">
+    <div className="game-content-page">
+      <div className="game-content-header">
         <h1>Videojuegos</h1>
         <p>Explora y descubre los mejores videojuegos de todos los tiempos</p>
       </div>
 
-      <div className="filters-bar-horizontal">
+      <div className="game-filters-bar-horizontal">
         <select 
           name="year" 
           value={filters.year} 
           onChange={handleFilterChange}
-          className="filter-select"
+          className="game-filter-select"
         >
           {years.map(year => (
             <option key={year || 'unknown'} value={year || ''}>
@@ -171,7 +179,7 @@ const Videojuegos = () => {
               max={maxYear}
               value={filters.yearRange.from}
               onChange={handleFilterChange}
-              className="filter-input"
+              className="game-filter-input"
             />
             <span>-</span>
             <input
@@ -182,7 +190,7 @@ const Videojuegos = () => {
               max={maxYear}
               value={filters.yearRange.to}
               onChange={handleFilterChange}
-              className="filter-input"
+              className="game-filter-input"
             />
           </>
         )}
@@ -190,7 +198,7 @@ const Videojuegos = () => {
           name="plataforma" 
           value={filters.plataforma} 
           onChange={handleFilterChange}
-          className="filter-select"
+          className="game-filter-select"
         >
           <option value="all">Todas las plataformas</option>
           {plataformas
@@ -208,13 +216,14 @@ const Videojuegos = () => {
           name="sort" 
           value={filters.sort} 
           onChange={handleFilterChange}
-          className="filter-select"
+          className="game-filter-select"
         >
           <option value="asc">Más antiguos</option>
           <option value="desc">Más recientes</option>
+          <option value="alphabetical">A - Z</option>
         </select>
         <button 
-          className="clear-filters-btn"
+          className="game-clear-filters-btn"
           onClick={() => setFilters({
             year: "all",
             yearRange: { from: "", to: "" },
@@ -227,27 +236,69 @@ const Videojuegos = () => {
       </div>
 
       {loading ? (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
+        <div className="game-loading-container">
+          <div className="game-loading-spinner"></div>
           <p>Cargando videojuegos...</p>
         </div>
       ) : (
         <>
-          <div className="content-count">
+          <div className="game-content-count">
             Mostrando {sortedVideojuegos.length} videojuegos
           </div>
 
-          <div className="content-grid">
-            {sortedVideojuegos.map(videojuego => (
-              <div key={videojuego.videojuego_id || videojuego._id} className="content-card">
-                <Link to={`/videojuego/${videojuego.juego_id}`} className="content-link">
-                  <div className="poster-container">
-                    <img src={videojuego.imagen} alt={videojuego.titulo} className="poster" />
+          <div className="game-pagination-bar">
+            {Array.from({ length: Math.ceil(sortedVideojuegos.length / itemsPerPage) }, (_, i) => (
+              <button
+                key={i + 1}
+                className={currentPage === i + 1 ? 'active' : ''}
+                onClick={() => {
+                  setCurrentPage(i + 1);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <div className="game-pagination-jump">
+              <span>Ir a:</span>
+              <input
+                type="number"
+                min="1"
+                max={Math.ceil(sortedVideojuegos.length / itemsPerPage)}
+                value={currentPage}
+                onChange={(e) => {
+                  const page = parseInt(e.target.value);
+                  if (page >= 1 && page <= Math.ceil(sortedVideojuegos.length / itemsPerPage)) {
+                    setCurrentPage(page);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    const page = parseInt(e.target.value);
+                    if (page >= 1 && page <= Math.ceil(sortedVideojuegos.length / itemsPerPage)) {
+                      setCurrentPage(page);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }
+                }}
+                className="game-pagination-input"
+              />
+              <span>de {Math.ceil(sortedVideojuegos.length / itemsPerPage)}</span>
+            </div>
+          </div>
+
+          <div className="game-content-grid compact-grid ultra-compact-grid">
+            {sortedVideojuegos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(videojuego => (
+              <div key={videojuego.videojuego_id || videojuego._id} className="game-content-card">
+                <Link to={`/videojuego/${videojuego.juego_id}`} className="game-content-link">
+                  <div className="game-poster-container">
+                    <img src={videojuego.imagen} alt={videojuego.titulo} className="game-poster" />
                   </div>
-                  <div className="content-info">
-                    <h3 className="content-title">{videojuego.titulo}</h3>
-                    <p className="content-year">{videojuego.fecha_lanzamiento ? videojuego.fecha_lanzamiento.substring(0, 4) : ''}</p>
-                    <p className="content-artist">{videojuego.plataformas}</p>
+                  <div className="game-content-info">
+                    <h3 className="game-content-title">{videojuego.titulo}</h3>
+                    <p className="game-content-year">{videojuego.fecha_lanzamiento ? videojuego.fecha_lanzamiento.substring(0, 4) : ''}</p>
+                    <p className="game-content-artist">{videojuego.plataformas}</p>
                   </div>
                 </Link>
               </div>
@@ -255,9 +306,54 @@ const Videojuegos = () => {
           </div>
 
           {sortedVideojuegos.length === 0 && (
-            <div className="no-results">
+            <div className="game-no-results">
               <h3>No se encontraron videojuegos con los filtros seleccionados</h3>
               <p>Intenta cambiar tus filtros para ver más resultados</p>
+            </div>
+          )}
+
+          {/* Paginación al final */}
+          {sortedVideojuegos.length > 0 && (
+            <div className="game-pagination-bar">
+              {Array.from({ length: Math.ceil(sortedVideojuegos.length / itemsPerPage) }, (_, i) => (
+                <button
+                  key={i + 1}
+                  className={currentPage === i + 1 ? 'active' : ''}
+                  onClick={() => {
+                    setCurrentPage(i + 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <div className="game-pagination-jump">
+                <span>Ir a:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={Math.ceil(sortedVideojuegos.length / itemsPerPage)}
+                  value={currentPage}
+                  onChange={(e) => {
+                    const page = parseInt(e.target.value);
+                    if (page >= 1 && page <= Math.ceil(sortedVideojuegos.length / itemsPerPage)) {
+                      setCurrentPage(page);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      const page = parseInt(e.target.value);
+                      if (page >= 1 && page <= Math.ceil(sortedVideojuegos.length / itemsPerPage)) {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }
+                  }}
+                  className="game-pagination-input"
+                />
+                <span>de {Math.ceil(sortedVideojuegos.length / itemsPerPage)}</span>
+              </div>
             </div>
           )}
         </>

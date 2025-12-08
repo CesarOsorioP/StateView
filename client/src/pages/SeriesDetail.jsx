@@ -6,7 +6,7 @@ import {
   FaHeart, FaRegHeart, FaEye, FaRegEye,
   FaBookmark, FaRegBookmark
 } from 'react-icons/fa';
-import ReviewSection from '../components/Series/ReviewSection';
+import ReviewSection from '../components/Peliculas/ReviewSection';
 import "./pageStyles/SeriesDetail.css";
 import api from '../api/api';
 
@@ -140,7 +140,7 @@ const SeriesDetail = () => {
           </div>
           <hr />
           {/* Componente de reseñas */}
-          <ReviewSection seriesId={seriesId} series={series} />
+          <ReviewSection itemId={series._id || seriesId} itemData={series} onModel="Serie" />
         </>
       ) : (
         <p>Serie no encontrada</p>

@@ -24,8 +24,8 @@ class ReviewRepository {
 
   async find(filter) {
     return await Review.find(filter)
-      .populate('userId', 'nombre email')
-      .populate('itemId', 'titulo tipo');
+      .populate('userId', 'nombre email imagenPerfil')
+      .populate('itemId'); // Traer todo el documento para asegurar que tengamos IDs e imágenes
   }
 }
 

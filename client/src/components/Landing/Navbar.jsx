@@ -11,12 +11,18 @@ const Navbar = () => {
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const userMenuRef = useRef(null);
   const searchRef = useRef(null);
   const searchInputRef = useRef(null);
   
+  // Cerrar menú móvil al cambiar de ruta
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location]);
+
   // Para detectar clics fuera del menú de usuario y búsqueda
   useEffect(() => {
     function handleClickOutside(event) {
@@ -101,12 +107,25 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-left">
+        <button 
+          className="mobile-menu-toggle" 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Menú"
+        >
+          <i className={`fas ${isMobileMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
+        </button>
         <div className="logo">
           <Link to="/">StateView</Link>
         </div>
       </div>
       
-      <div className="navbar-center">
+      {/* Backdrop para cerrar el menú al hacer clic fuera */}
+      <div 
+        className={`mobile-nav-backdrop ${isMobileMenuOpen ? 'open' : ''}`} 
+        onClick={() => setIsMobileMenuOpen(false)}
+      ></div>
+
+      <div className={`navbar-center ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="nav-categories">
           <Link to="/peliculas" className={isActive("/peliculas") ? "active" : ""}>
             <i className="fas fa-film"></i>
@@ -149,9 +168,6 @@ const Navbar = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <button type="submit" className="navbar-search-submit">
-                  <i className="fas fa-search"></i>
-                </button>
               </form>
               <div className="navbar-search-results">
                 {isSearching && <div className="navbar-search-loading">Buscando...</div>}
@@ -187,110 +203,92 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Acciones del usuario (Notificaciones, Perfil o Iniciar Sesión/Registrarse) */}
+        {/* Notificaciones - Movido aquí para estar junto al buscador */}
+        {isAuthenticated && <NotificacionesNav />}
+
         <div className="navbar-actions">
           {isAuthenticated ? (
             <>
-              <NotificacionesNav />
-              <div className="user-section">
-                <div className="user-menu-container" ref={userMenuRef}>
-                  <div className="user-avatar" onClick={toggleUserMenu}>
-                    {user.imagenPerfil ? (
-                      <img src={user.imagenPerfil} alt={user.nombre} />
-                    ) : (
-                      <span className="avatar-circle">
-                        {getUserInitials()}
-                      </span>
-                    )}
-                    <div className="role-indicator">
-                      {userRole && (
-                        <span className="role-indicator" title={userRole}>
-                          {userRole === "Superadministrador" && <i className="fas fa-user-shield"></i>}
-                          {userRole === "Administrador" && <i className="fas fa-crown"></i>}
-                          {userRole === "Moderador" && <i className="fas fa-shield-alt"></i>}
-                          {userRole === "Critico" && <i className="fas fa-feather-alt"></i>}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {showUserMenu && (
-                    <div className="user-dropdown">
-                      <div className="user-info">
-                        <span className="user-name">{user.nombre || user.email}</span>
-                        <span className="user-role">{userRole}</span>
-                      </div>
-                      
-                      <Link to="/perfil" onClick={() => setShowUserMenu(false)}>
-                        <i className="fas fa-user"></i> Mi Perfil
-                      </Link>
-                      
-                      {/* Elementos para todos los usuarios */}
-                      {/* <Link to="/mis-reseñas" onClick={() => setShowUserMenu(false)}>
-                        <i className="fas fa-comment-alt"></i> Mis Reseñas
-                      </Link> */}
-                      <Link to="/listas" onClick={() => setShowUserMenu(false)}>
-                        <i className="fas fa-list"></i> Mis Listas
-                      </Link>
-                      {/* <Link to="/favoritos" onClick={() => setShowUserMenu(false)}>
-                        <i className="fas fa-heart"></i> Favoritos
-                      </Link> */}
-
-                      {/* Elementos para críticos */}
-                      {userRole === "Critico" && (
-                        <>
-                         
-                        </>
-                      )}
-
-                      {/* Elementos para moderadores, administradores y superadministradores */}
-                      {(userRole === "Moderador" || userRole === "Administrador" || userRole === "Superadministrador") && (
-                        <>
-                          <button 
-                            onClick={() => {
-                              navigate('/gestionar-insignias');
-                              setShowUserMenu(false);
-                            }}
-                            style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: '8px 16px', cursor: 'pointer' }}
-                          >
-                            <i className="fas fa-medal"></i> Gestionar Insignias
-                          </button>
-                          <Link to="/gestionar-reportes" onClick={() => setShowUserMenu(false)}>
-                            <i className="fas fa-flag"></i> Reportes
-                          </Link>
-                          <Link to="/gestionar-usuario" onClick={() => setShowUserMenu(false)}>
-                            <i className="fas fa-users-cog"></i> Gestionar Usuarios
-                          </Link>
-                          <Link to="/dashboard/users" onClick={() => setShowUserMenu(false)}>
-                            <i className="fas fa-chart-bar"></i> Estadísticas
-                          </Link>
-                        </>
-                      )}
-
-                      {/* Elementos para administradores */}
-                      {(userRole === "Administrador" || userRole === "Superadministrador") && (
-                        <>
-                          <Link to="/gestionar-contenido" onClick={() => setShowUserMenu(false)}>
-                            <i className="fas fa-database"></i> Gestionar Contenido
-                          </Link>
-                        </>
-                      )}
-
-                      {/* <Link to="/configuracion" onClick={() => setShowUserMenu(false)}>
-                        <i className="fas fa-cog"></i> Configuración
-                      </Link> */}
-                      <button onClick={handleLogout} className="logout-button">
-                        <i className="fas fa-sign-out-alt"></i> Cerrar Sesión
-                      </button>
-                    </div>
+              {/* Contenedor relativo para el menú de usuario */}
+              <div className="user-menu-container" ref={userMenuRef}>
+                {/* Avatar de usuario - Botón */}
+                <button 
+                  className="user-avatar" 
+                  onClick={toggleUserMenu}
+                  type="button"
+                >
+                  {user.imagenPerfil ? (
+                    <img src={user.imagenPerfil} alt={user.nombre} />
+                  ) : (
+                    <span className="avatar-circle">
+                      {getUserInitials()}
+                    </span>
                   )}
-                </div>
+                  
+                </button>
+                
+                {/* Menú desplegable - Fuera del botón avatar pero dentro del container relativo */}
+                {showUserMenu && (
+                  <div className="user-dropdown">
+                    <div className="user-info">
+                      <span className="user-name">{user.nombre || user.email}</span>
+                      <span className="user-role">{userRole}</span>
+                    </div>
+                    
+                    <Link to="/perfil" onClick={() => setShowUserMenu(false)}>
+                      <i className="fas fa-user"></i> Mi Perfil
+                    </Link>
+                    
+                    {/* Elementos para todos los usuarios */}
+                    <Link to="/listas" onClick={() => setShowUserMenu(false)}>
+                      <i className="fas fa-list"></i> Mis Listas
+                    </Link>
+
+                    {/* Elementos para moderadores, administradores y superadministradores */}
+                    {(userRole === "Moderador" || userRole === "Administrador" || userRole === "Superadministrador") && (
+                      <>
+                        <button 
+                          onClick={() => {
+                            navigate('/gestionar-insignias');
+                            setShowUserMenu(false);
+                          }}
+                          style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: '12px 18px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: '#ccc' }}
+                          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'; e.currentTarget.style.color = '#fff'; }}
+                          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#ccc'; }}
+                        >
+                          <i className="fas fa-medal"></i> Gestionar Insignias
+                        </button>
+                        <Link to="/gestionar-reportes" onClick={() => setShowUserMenu(false)}>
+                          <i className="fas fa-flag"></i> Reportes
+                        </Link>
+                        <Link to="/gestionar-usuario" onClick={() => setShowUserMenu(false)}>
+                          <i className="fas fa-users-cog"></i> Gestionar Usuarios
+                        </Link>
+                        <Link to="/dashboard/users" onClick={() => setShowUserMenu(false)}>
+                          <i className="fas fa-chart-bar"></i> Estadísticas
+                        </Link>
+                      </>
+                    )}
+
+                    {/* Elementos para administradores */}
+                    {(userRole === "Administrador" || userRole === "Superadministrador") && (
+                      <>
+                        <Link to="/gestionar-contenido" onClick={() => setShowUserMenu(false)}>
+                          <i className="fas fa-database"></i> Gestionar Contenido
+                        </Link>
+                      </>
+                    )}
+
+                    <button onClick={handleLogout} className="logout-button">
+                      <i className="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           ) : (
             <div className="navbar-auth">
               <Link to="/login" className="navbar-login-btn">Iniciar Sesión</Link>
-              <Link to="/signup" className="navbar-signup-btn">Registrarse</Link>
             </div>
           )}
         </div>

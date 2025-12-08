@@ -4,6 +4,21 @@ const { crearNotificacion } = require('./notificacionController'); // Importar l
 const Review = require('../models/Review'); // Importar el modelo Review
 const Persona = require('../models/Persona'); // Importar el modelo Persona
 
+async function getDisplayName(user) {
+  if (!user) return 'Usuario';
+  const direct = user.username || user.nombre;
+  if (direct) return direct;
+  try {
+    const persona = await Persona.findById(user.id || user._id);
+    if (persona) {
+      return persona.username || persona.nombre || persona.email || 'Usuario';
+    }
+  } catch (e) {
+    // fallback silencioso
+  }
+  return user.email || 'Usuario';
+}
+
 async function createComment(req, res) {
   try {
     // Obtener el ID del usuario autenticado
@@ -86,7 +101,7 @@ async function likeComment(req, res) {
   try {
     const commentId = req.params.commentId;
     const userId = req.user?.id || req.user?._id;
-    const userName = req.user?.nombre || 'Anónimo';
+    const userName = await getDisplayName(req.user);
     const totalLikes = await CommentService.likeComment(commentId, userId, userName);
     res.json({ message: 'Me gusta agregado.', totalLikes });
   } catch (error) {

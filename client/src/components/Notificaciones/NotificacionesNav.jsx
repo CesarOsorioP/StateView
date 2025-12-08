@@ -7,6 +7,9 @@ import './NotificacionesNav.css';
 const NotificacionesNav = () => {
   const [notificaciones, setNotificaciones] = useState([]);
   const [noLeidas, setNoLeidas] = useState(0);
+  const [hasNew, setHasNew] = useState(false);
+  const [pulse, setPulse] = useState(false);
+  const prevNoLeidasRef = React.useRef(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -15,6 +18,16 @@ const NotificacionesNav = () => {
     const interval = setInterval(fetchNotificaciones, 30000); // Actualizar cada 30 segundos
     return () => clearInterval(interval);
   }, []);
+
+  const getUnreadCount = (notifs = [], countResponse) => {
+    if (typeof countResponse === 'number' && !Number.isNaN(countResponse)) {
+      return countResponse;
+    }
+    const maybeCount = countResponse?.count ?? countResponse?.noLeidas ?? countResponse?.total;
+    if (typeof maybeCount === 'number' && !Number.isNaN(maybeCount)) return maybeCount;
+    if (Array.isArray(notifs)) return notifs.filter(n => !n.leida).length;
+    return 0;
+  };
 
   const fetchNotificaciones = async () => {
     try {
@@ -26,13 +39,28 @@ const NotificacionesNav = () => {
       console.log('notificacionesRes.data:', notificacionesRes.data);
       console.log('noLeidasRes.data:', noLeidasRes.data);
 
-      if (Array.isArray(notificacionesRes.data.data)) {
-        setNotificaciones(notificacionesRes.data.data);
-      } else {
-        console.error('API response for notifications is not an array:', notificacionesRes.data.data);
-        setNotificaciones([]); // Asegurarse de que sea un array para evitar errores de .map
+      const notifsArray = Array.isArray(notificacionesRes.data?.data)
+        ? notificacionesRes.data.data
+        : Array.isArray(notificacionesRes.data)
+          ? notificacionesRes.data
+          : [];
+
+      if (!Array.isArray(notifsArray)) {
+        console.error('API response for notifications is not an array:', notificacionesRes.data?.data);
       }
-      setNoLeidas(noLeidasRes.data.count);
+
+      setNotificaciones(notifsArray || []);
+
+      const newCount = getUnreadCount(notifsArray, noLeidasRes.data);
+      // Marcar si hay nuevas no leídas
+      const prevCount = prevNoLeidasRef.current;
+      setNoLeidas(newCount);
+      setHasNew(newCount > 0);
+      if (newCount > prevCount) {
+        setPulse(true);
+        setTimeout(() => setPulse(false), 2000);
+      }
+      prevNoLeidasRef.current = newCount;
     } catch (error) {
       console.error('Error al cargar notificaciones:', error);
     } finally {
@@ -63,7 +91,12 @@ const NotificacionesNav = () => {
       setNotificaciones(notificaciones.map(notif => 
         notif._id === id ? { ...notif, leida: true } : notif
       ));
-      setNoLeidas(prev => Math.max(0, prev - 1));
+      setNoLeidas(prev => {
+        const next = Math.max(0, prev - 1);
+        prevNoLeidasRef.current = next;
+        setHasNew(next > 0);
+        return next;
+      });
     } catch (error) {
       console.error('Error al marcar notificación como leída:', error);
     }
@@ -74,15 +107,33 @@ const NotificacionesNav = () => {
       await api.put('/api/notificaciones/leer-todas');
       setNotificaciones(notificaciones.map(notif => ({ ...notif, leida: true })));
       setNoLeidas(0);
+      prevNoLeidasRef.current = 0;
+      setHasNew(false);
     } catch (error) {
       console.error('Error al marcar todas las notificaciones como leídas:', error);
     }
   };
 
+  const eliminarTodasNotificaciones = async () => {
+    try {
+      await api.delete('/api/notificaciones/todas');
+      setNotificaciones([]);
+      setNoLeidas(0);
+      prevNoLeidasRef.current = 0;
+      setHasNew(false);
+    } catch (error) {
+      console.error('Error al eliminar todas las notificaciones:', error);
+    }
+  };
+
   return (
     <div className="notificaciones-nav">
-      <div className="notificaciones-icon" onClick={handleClick}>
+      <div 
+        className={`notificaciones-icon ${hasNew ? 'has-new' : ''} ${pulse ? 'has-new-pulse' : ''}`} 
+        onClick={handleClick}
+      >
         <FaBell />
+        {noLeidas > 0 && <span className="notificaciones-dot" />}
         {noLeidas > 0 && (
           <span className="notificaciones-badge">{noLeidas}</span>
         )}
@@ -92,16 +143,26 @@ const NotificacionesNav = () => {
         <div className="notificaciones-dropdown">
           <div className="notificaciones-header">
             <h3 className="notificaciones-title">Notificaciones</h3>
-            {noLeidas > 0 && (
-              <div className="notificaciones-actions">
+            <div className="notificaciones-actions">
+              {noLeidas > 0 && (
                 <button 
                   className="notificaciones-action-btn"
                   onClick={marcarTodasLeidas}
+                  title="Marcar todas como leídas"
                 >
-                  Marcar todas como leídas
+                  <i className="fas fa-check-double"></i> Leídas
                 </button>
-              </div>
-            )}
+              )}
+              {notificaciones.length > 0 && (
+                <button 
+                  className="notificaciones-action-btn delete"
+                  onClick={eliminarTodasNotificaciones}
+                  title="Eliminar todas"
+                >
+                  <i className="fas fa-trash-alt"></i> Limpiar
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="notificaciones-list">

@@ -21,6 +21,9 @@ const PeliculaDetail = () => {
 
   // Obtener detalles de la película
   useEffect(() => {
+    // Asegurar que la vista se muestre desde el inicio al navegar a una película
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     const fetchMovieDetail = async () => {
       try {
         setLoadingMovie(true);
@@ -34,7 +37,14 @@ const PeliculaDetail = () => {
         if (!response.data) {
           throw new Error('No se encontró la película');
         }
+        
+        console.log('=== PELICULA FETCHED ===');
+        console.log('Movie data:', response.data);
+        console.log('Movie._id:', response.data._id);
+        console.log('Movie.pelicula_id:', response.data.pelicula_id);
+        
         setMovie(response.data);
+        
         // Obtener estado de botones usando los endpoints correctos
         const userId = localStorage.getItem('userId');
         if (userId) {
@@ -92,14 +102,6 @@ const PeliculaDetail = () => {
     } catch (error) {
       setLiked(liked);
     }
-  };
-
-  // Función para actualizar la película cuando cambia su rating
-  const handleMovieUpdate = (updatedMovie) => {
-    setMovie(prevMovie => ({
-      ...prevMovie,
-      ...updatedMovie
-    }));
   };
 
   // Función para renderizar las estrellas de calificación
@@ -163,19 +165,6 @@ const PeliculaDetail = () => {
               })}
             </p>
             
-            {/* Mostrar el rating promedio si existe */}
-            {movie.averageRating && (
-              <div className="movie-rating">
-                <strong>Calificación promedio: </strong>
-                <div className="stars-container">
-                  {renderStars(movie.averageRating)}
-                  <span className="rating-value">
-                    {movie.averageRating.toFixed(1)} ({movie.ratingCount} reseñas)
-                  </span>
-                </div>
-              </div>
-            )}
-            
             {/* Botones de Me gusta y Ya vista */}
             {user && (
               <div className="movie-actions">
@@ -207,13 +196,24 @@ const PeliculaDetail = () => {
 
       <hr />
 
-      {/* Componente ReviewSection que maneja toda la lógica de reseñas */}
-      {movie && (
-        <ReviewSection 
-          movieId={movie._id || movieId} 
-          movie={movie} 
-          onMovieUpdate={handleMovieUpdate}
-        />
+      {/* CORRECCIÓN: Usar las props correctas que espera ReviewSection */}
+      {movie && movie._id && (
+        <>
+          <ReviewSection 
+            itemId={movie._id}
+            itemData={movie}
+            onModel="Pelicula"
+          />
+        </>
+      )}
+      
+      {movie && !movie._id && (
+        <div className="error-container">
+          <p className="error-message">
+            Error: La película no tiene un _id válido de MongoDB.
+            <pre>{JSON.stringify(movie, null, 2)}</pre>
+          </p>
+        </div>
       )}
     </div>
   );

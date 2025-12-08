@@ -88,6 +88,25 @@ async function login(req, res) {
       return res.status(400).json({ error: 'Credenciales inválidas.' });
     }
 
+    // Validaciones de estado
+    if (persona.estado === 'Desactivado') {
+      return res.status(403).json({ error: 'Tu cuenta está desactivada. Contacta a un administrador.' });
+    }
+
+    if (persona.estado === 'Restringido') {
+      const now = Date.now();
+      if (persona.restrictedUntil && persona.restrictedUntil.getTime() > now) {
+        const msLeft = persona.restrictedUntil.getTime() - now;
+        const horasLeft = Math.ceil(msLeft / (1000 * 60 * 60));
+        return res.status(403).json({ error: `Tu cuenta está temporalmente restringida. Intenta de nuevo en ~${horasLeft} horas.` });
+      } else {
+        // Restricción expirada: reactivar
+        persona.estado = 'Activo';
+        persona.restrictedUntil = null;
+        await persona.save();
+      }
+    }
+
     const coincide = await bcrypt.compare(contraseña, persona.contraseña);
     if (!coincide) {
       return res.status(400).json({ error: 'Credenciales inválidas.' });

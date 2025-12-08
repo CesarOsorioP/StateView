@@ -4,7 +4,7 @@ import './ReportModal.css';
 import api from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 
-const ReportModal = ({ isOpen, onClose, reportedUserId, reviewId = null }) => {
+const ReportModal = ({ isOpen, onClose, reportedUserId, reviewId = null, commentId = null }) => {
   const { user } = useAuth();
   const [motivo, setMotivo] = useState('');
   const [sending, setSending] = useState(false);
@@ -28,7 +28,8 @@ const ReportModal = ({ isOpen, onClose, reportedUserId, reviewId = null }) => {
       await api.post('http://localhost:5000/api/reportes', {
         reporter: user.id || user._id,
         reportedUser: reportedUserId,
-        review: reviewId,
+        review: reviewId || null,
+        comment: commentId || null,
         motivo: motivo
       }, {
         headers: {

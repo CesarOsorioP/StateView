@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from '../../api/api';
+import './Peliculas.css';
 
 const Peliculas = () => {
   const [peliculas, setPeliculas] = useState([]);
@@ -148,8 +149,13 @@ const Peliculas = () => {
     return true;
   });
 
-  // Ordena por año: ascendente (más antiguo) o descendente (más reciente)
+  // Ordena por año o alfabéticamente
   const sortedPeliculas = [...filteredPeliculas].sort((a, b) => {
+    if (filters.sort === "alphabetical") {
+      const titleA = (a.titulo || '').toLowerCase();
+      const titleB = (b.titulo || '').toLowerCase();
+      return titleA.localeCompare(titleB, 'es');
+    }
     const yearA = extractYear(a.fecha_estreno) ? parseInt(extractYear(a.fecha_estreno)) : 0;
     const yearB = extractYear(b.fecha_estreno) ? parseInt(extractYear(b.fecha_estreno)) : 0;
     return filters.sort === "asc" ? yearA - yearB : yearB - yearA;
@@ -231,6 +237,7 @@ const Peliculas = () => {
         <select name="sort" value={filters.sort} onChange={handleFilterChange} className="filter-select">
           <option value="asc">Más antiguas</option>
           <option value="desc">Más recientes</option>
+          <option value="alphabetical">A - Z</option>
         </select>
         <button className="clear-filters-btn" onClick={() => setFilters({ year: "all", yearRange: { from: "", to: "" }, director: "all", sort: "asc" })}>Limpiar</button>
       </div>
@@ -251,19 +258,49 @@ const Peliculas = () => {
           </div>
 
           <div className="pagination-bar">
-            {Array.from({ length: Math.ceil(sortedPeliculas.length / 20) }, (_, i) => (
+            {Array.from({ length: Math.ceil(sortedPeliculas.length / 18) }, (_, i) => (
               <button
                 key={i + 1}
                 className={currentPage === i + 1 ? 'active' : ''}
-                onClick={() => setCurrentPage(i + 1)}
+                onClick={() => {
+                  setCurrentPage(i + 1);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
                 {i + 1}
               </button>
             ))}
+            <div className="pagination-jump">
+              <span>Ir a:</span>
+              <input
+                type="number"
+                min="1"
+                max={Math.ceil(sortedPeliculas.length / 18)}
+                value={currentPage}
+                onChange={(e) => {
+                  const page = parseInt(e.target.value);
+                  if (page >= 1 && page <= Math.ceil(sortedPeliculas.length / 18)) {
+                    setCurrentPage(page);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    const page = parseInt(e.target.value);
+                    if (page >= 1 && page <= Math.ceil(sortedPeliculas.length / 18)) {
+                      setCurrentPage(page);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }
+                }}
+                className="pagination-input"
+              />
+              <span>de {Math.ceil(sortedPeliculas.length / 18)}</span>
+            </div>
           </div>
 
           <div className="content-grid compact-grid ultra-compact-grid">
-            {sortedPeliculas.slice((currentPage - 1) * 20, currentPage * 20).map(pelicula => (
+            {sortedPeliculas.slice((currentPage - 1) * 18, currentPage * 18).map(pelicula => (
               <div key={pelicula.pelicula_id || pelicula._id} className="content-card">
                 <Link to={`/pelicula/${pelicula.pelicula_id || pelicula._id}`} className="content-link">
                   <div className="poster-container">
@@ -294,6 +331,51 @@ const Peliculas = () => {
             <div className="no-results">
               <h3>No se encontraron películas con los filtros seleccionados</h3>
               <p>Intenta cambiar tus filtros para ver más resultados</p>
+            </div>
+          )}
+
+          {/* Paginación al final */}
+          {sortedPeliculas.length > 0 && (
+            <div className="pagination-bar">
+              {Array.from({ length: Math.ceil(sortedPeliculas.length / 18) }, (_, i) => (
+                <button
+                  key={i + 1}
+                  className={currentPage === i + 1 ? 'active' : ''}
+                  onClick={() => {
+                    setCurrentPage(i + 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <div className="pagination-jump">
+                <span>Ir a:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={Math.ceil(sortedPeliculas.length / 18)}
+                  value={currentPage}
+                  onChange={(e) => {
+                    const page = parseInt(e.target.value);
+                    if (page >= 1 && page <= Math.ceil(sortedPeliculas.length / 18)) {
+                      setCurrentPage(page);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      const page = parseInt(e.target.value);
+                      if (page >= 1 && page <= Math.ceil(sortedPeliculas.length / 18)) {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }
+                  }}
+                  className="pagination-input"
+                />
+                <span>de {Math.ceil(sortedPeliculas.length / 18)}</span>
+              </div>
             </div>
           )}
         </>

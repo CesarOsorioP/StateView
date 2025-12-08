@@ -60,6 +60,24 @@ async function editarPersona(req, res) {
 async function actualizarEstadoPersona(req, res) {
   try {
     const personaActualizada = await PersonaService.actualizarEstadoPersona(req.params.id, req.body.estado);
+    
+    // Notificación para estado "Advertido"
+    if (req.body.estado === 'Advertido') {
+      try {
+        const { crearNotificacion } = require('./notificacionController');
+        const emisorId = req.user?._id || req.user?.id || req.params.id;
+        await crearNotificacion(
+          req.params.id,
+          'advertencia',
+          'Has recibido una advertencia. Por favor, rectifica tu comportamiento y evita fomentar el odio.',
+          { tipo: 'usuario', id: req.params.id },
+          emisorId
+        );
+      } catch (e) {
+        console.error('No se pudo crear notificación de advertencia:', e.message);
+      }
+    }
+
     res.status(200).json({ message: 'Estado actualizado correctamente', data: personaActualizada });
   } catch (error) {
     res.status(500).json({ error: error.message });

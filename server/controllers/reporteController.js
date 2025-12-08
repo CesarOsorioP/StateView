@@ -1,5 +1,6 @@
 const Reporte = require('../models/Reporte');
 const Review = require('../models/Review');
+const Comment = require('../models/Comment');
 
 /**
  * Crea un nuevo reporte.
@@ -7,13 +8,23 @@ const Review = require('../models/Review');
  *   - reporter: ID del usuario que realiza el reporte.
  *   - reportedUser: ID del usuario reportado.
  *   - review (opcional): ID de la reseña que se está reportando.
+ *   - comment (opcional): ID del comentario que se está reportando.
  *   - motivo: Texto que describe el motivo del reporte.
  */
 async function crearReporte(req, res) {
   try {
-    const { reporter, reportedUser, review, motivo } = req.body;
+    const { reporter, reportedUser, review, comment, motivo } = req.body;
     if (!reporter || !reportedUser || !motivo) {
       return res.status(400).json({ error: "Faltan campos obligatorios: reporter, reportedUser y motivo." });
+    }
+    
+    // Validar que solo se reporte una reseña O un comentario, no ambos
+    if (review && comment) {
+      return res.status(400).json({ error: "No se puede reportar una reseña y un comentario al mismo tiempo." });
+    }
+    
+    if (!review && !comment) {
+      return res.status(400).json({ error: "Debe proporcionarse un review o un comment para reportar." });
     }
     
     let reportedContent = null;
@@ -27,22 +38,43 @@ async function crearReporte(req, res) {
       if (reviewData) {
         reportedContent = {
           texto: reviewData.review_txt,
-          tipo: reviewData.tipo || 'Reseña',
+          tipo: 'Reseña',
           contenidoTitulo: reviewData.itemId?.titulo || '',
           puntuacion: reviewData.rating,
           onModel: reviewData.onModel
         };
-        // Guardar el texto de la reseña en el campo contenido
         contenido = reviewData.review_txt;
-        tipoContenido = reviewData.tipo || 'Reseña';
+        tipoContenido = 'Reseña';
         contenidoReportado = reviewData.review_txt;
+      } else {
+        return res.status(404).json({ error: "Reseña no encontrada." });
+      }
+    }
+    
+    // Si hay un comentario reportado, obtener su contenido
+    if (comment) {
+      const commentData = await Comment.findById(comment).populate('reviewId');
+      if (commentData) {
+        reportedContent = {
+          texto: commentData.comment_txt,
+          tipo: 'Comentario',
+          contenidoTitulo: commentData.reviewId?.itemId?.titulo || '',
+          puntuacion: null,
+          onModel: commentData.reviewId?.onModel || null
+        };
+        contenido = commentData.comment_txt;
+        tipoContenido = 'Comentario';
+        contenidoReportado = commentData.comment_txt;
+      } else {
+        return res.status(404).json({ error: "Comentario no encontrado." });
       }
     }
     
     const nuevoReporte = new Reporte({
       reporter,
       reportedUser,
-      review,
+      review: review || null,
+      comment: comment || null,
       reportedContent,
       contenido,
       tipoContenido,
@@ -71,7 +103,9 @@ async function obtenerReportes(req, res) {
     
     const reportes = await Reporte.find(query)
       .populate("reporter", "nombre email")
-      .populate("reportedUser", "nombre email");
+      .populate("reportedUser", "nombre email")
+      .populate("review")
+      .populate("comment");
     
     res.status(200).json({ data: reportes });
   } catch (error) {

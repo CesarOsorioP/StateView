@@ -74,6 +74,24 @@ exports.marcarTodasLeidas = async (req, res) => {
   }
 };
 
+// Eliminar todas las notificaciones
+exports.eliminarTodasNotificaciones = async (req, res) => {
+  try {
+    await Notificacion.deleteMany({ usuario: req.user._id });
+
+    res.json({
+      success: true,
+      message: 'Todas las notificaciones han sido eliminadas'
+    });
+  } catch (error) {
+    console.error('Error al eliminar todas las notificaciones:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al eliminar todas las notificaciones'
+    });
+  }
+};
+
 // Obtener cantidad de notificaciones no leídas
 exports.getNotificacionesNoLeidas = async (req, res) => {
   try {

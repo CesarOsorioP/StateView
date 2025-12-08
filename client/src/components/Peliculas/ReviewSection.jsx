@@ -4,16 +4,17 @@ import {
   FaStar, FaStarHalfAlt, FaRegStar, FaThumbsUp, FaRegThumbsUp, FaComment, FaFlag
 } from 'react-icons/fa';
 import CommentSection from './commentSection';
-import ReviewFilters from './ReviewFilters'; // Importar el componente de filtros
+import ReviewFilters from './ReviewFilters';
 import ReportModal from '../Reportes/ReportModal';
 import { Link } from 'react-router-dom';
-
 import api from '../../api/api';
+import './ReviewSection.css';
 
-const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
+// Componente universal de Reseñas para cualquier tipo de contenido
+const ReviewSection = ({ itemId, itemData, onModel }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
-  const [filteredReviews, setFilteredReviews] = useState([]); // Añadir estado para reseñas filtradas
+  const [filteredReviews, setFilteredReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -28,12 +29,55 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
   const [editRating, setEditRating] = useState(0);
   const [editHoverRating, setEditHoverRating] = useState(0);
   
+  // Estado para controlar qué reseñas tienen el texto expandido
+  const [expandedReviews, setExpandedReviews] = useState({});
+  
   // Estado para controlar qué revisiones tienen los comentarios visibles
   const [showCommentsByReview, setShowCommentsByReview] = useState({});
 
+  // Helper para truncar texto (preserva saltos de línea y aplica "Ver más/menos" a todas las reseñas, incluida la propia)
+  const truncateText = (text, reviewId) => {
+    if (!text) return '';
+    const maxLength = 300; // Límite de caracteres antes de mostrar "Ver más"
+
+    const renderFull = (content) => (
+      <span className="review-text-content">{content}</span>
+    );
+
+    if (text.length <= maxLength) {
+      return renderFull(text);
+    }
+
+    if (expandedReviews[reviewId]) {
+      return (
+        <>
+          {renderFull(text)}
+          <button 
+            onClick={() => setExpandedReviews(prev => ({...prev, [reviewId]: false}))}
+            className="show-more-button"
+          >
+            Ver menos
+          </button>
+        </>
+      );
+    }
+    
+    return (
+      <>
+        {renderFull(text.slice(0, maxLength) + '...')}
+        <button 
+          onClick={() => setExpandedReviews(prev => ({...prev, [reviewId]: true}))}
+          className="show-more-button"
+        >
+          Ver más
+        </button>
+      </>
+    );
+  };
+
   // Estados para filtros
-  const [sortOption, setSortOption] = useState('newest'); // Añadir estado para opciones de ordenamiento
-  const [ratingFilter, setRatingFilter] = useState('all'); // Añadir estado para filtro de valoración
+  const [sortOption, setSortOption] = useState('newest');
+  const [ratingFilter, setRatingFilter] = useState('all');
 
   // Estados para modal de reporte
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -43,48 +87,47 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
   // Obtener el ID del usuario actual de forma consistente
   const currentUserId = user?._id || user?.id;
 
-  // Obtener reseñas para la película usando useCallback
+  // Obtener reseñas para el item usando useCallback
   const fetchReviews = useCallback(async () => {
-    // Si la película ya tiene reseñas cargadas (denormalización), usarlas directamente
-    if (movie && movie.reviews && Array.isArray(movie.reviews)) {
-      setReviews(movie.reviews);
-      setLoadingReviews(false);
-      return;
-    }
-
     try {
       setLoadingReviews(true);
-      // Usar el ID correcto según el modelo de película
-      const movieIdentifier = movie?._id || movie?.pelicula_id || movieId;
       
-      if (!movieIdentifier) {
-        console.error("No se pudo determinar el identificador de la película");
-        setErrorMessage("No se pudo cargar la información de la película");
+      // Si no hay itemId, no intentamos cargar reseñas y establecemos array vacío
+      if (!itemId) {
+        console.warn("ReviewSection: No itemId provided");
+        setReviews([]);
+        setLoadingReviews(false);
         return;
       }
 
-      // Añadir el filtro de tipo de contenido (onModel) a la consulta
-      // Asegurarse de que onModel esté presente
-      const response = await api.get(`/api/reviews?itemId=${movieIdentifier}&onModel=Pelicula`);
+      // Obtener reseñas desde la API (el backend ahora siempre incluye información de likes)
+      const response = await api.get(`/api/reviews?itemId=${itemId}&onModel=${onModel}`);
+      
       // Si la API devuelve un array directamente, usarlo. Si es objeto, intentar extraer .data o .reviews
       const reviewsData = Array.isArray(response.data) ? response.data : (response.data.data || response.data.reviews || []);
+      
       setReviews(reviewsData);
     } catch (error) {
       console.error("Error fetching reviews:", error);
-      setErrorMessage('No se pudieron cargar las reseñas. Inténtalo de nuevo más tarde.');
+      // Si ya teníamos reseñas (por denormalización), usarlas como fallback
+      if (itemData && itemData.reviews && Array.isArray(itemData.reviews) && itemData.reviews.length > 0) {
+        setReviews(itemData.reviews);
+      } else {
+        setErrorMessage('No se pudieron cargar las reseñas. Inténtalo de nuevo más tarde.');
+      }
     } finally {
       setLoadingReviews(false);
     }
-  }, [movie, movieId]);
+  }, [itemId, itemData, onModel]);
 
-  // Cargar reseñas cuando cambia la película
+  // Cargar reseñas cuando cambia el item
   useEffect(() => {
-    if (movie || movieId) {
+    if (itemId) {
       fetchReviews();
     }
-  }, [fetchReviews, movie, movieId]);
+  }, [fetchReviews, itemId]);
 
-  // Aplicar ordenamiento a las reseñas (nuevo useEffect)
+  // Aplicar ordenamiento a las reseñas
   useEffect(() => {
     if (reviews.length > 0) {
       let tempReviews = [...reviews];
@@ -93,15 +136,13 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
       tempReviews.sort((a, b) => {
         // Si el filtro es por valoración
         if (ratingFilter === 'highRated') {
-          // Ordenar de mayor a menor valoración
           return b.rating - a.rating;
         } else if (ratingFilter === 'lowRated') {
-          // Ordenar de menor a mayor valoración
           return a.rating - b.rating;
         } else {
           // Si el filtro es 'all', ordenar por fecha
-          const dateA = new Date(a.fechaReview);
-          const dateB = new Date(b.fechaReview);
+          const dateA = new Date(a.fechaReview || a.createdAt);
+          const dateB = new Date(b.fechaReview || b.createdAt);
           return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
         }
       });
@@ -117,13 +158,20 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
     return review.reviewId || review._id;
   };
 
-  // Determinar si el usuario ya tiene una reseña para esta película
+  // Determinar si el usuario ya tiene una reseña para este contenido
   const userReview = user && reviews.find(review => {
-    if (!review || !review.userId) return false;
-    if (typeof review.userId === 'object') {
-      return review.userId._id === currentUserId;
-    }
-    return review.userId === currentUserId;
+    if (!review) return false;
+    
+    // Manejar diferentes estructuras de userId (string o objeto)
+    const reviewUserId = typeof review.userId === 'object' && review.userId 
+      ? review.userId._id 
+      : review.userId;
+      
+    const reviewAutorId = typeof review.autor === 'object' && review.autor
+      ? review.autor._id
+      : review.autor;
+
+    return reviewUserId === currentUserId || reviewAutorId === currentUserId;
   });
 
   const userReviewId = userReview ? getActualReviewId(userReview) : null;
@@ -169,35 +217,43 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
 
   // Renderizado de estrellas para visualización (no interactivas)
   const displayStars = (value) => {
+    const safeValue = typeof value === 'number' && !isNaN(value) ? value : 0;
     return (
       <div className="stars-display">
         {[...Array(5)].map((_, index) => {
           const starValue = index + 1;
           
-          if (value >= starValue) {
+          if (safeValue >= starValue) {
             return <FaStar key={index} className="star-icon" />;
-          } else if (value >= starValue - 0.5) {
+          } else if (safeValue >= starValue - 0.5) {
             return <FaStarHalfAlt key={index} className="star-icon" />;
           } else {
             return <FaRegStar key={index} className="star-icon" />;
           }
         })}
-        <span className="rating-value-display">{value.toFixed(1)}</span>
+        <span className="rating-value-display">{safeValue.toFixed(1)}</span>
       </div>
     );
   };
 
   // Función para verificar si el usuario actual ha dado like a una reseña
   const hasUserLikedReview = (review) => {
-    if (!user || !review || !review.likedReview || !currentUserId) return false;
+    if (!user || !review || !currentUserId) return false;
+    
+    // Si no hay likedReview array, retornar false
+    if (!review.likedReview || !Array.isArray(review.likedReview)) return false;
     
     return review.likedReview.some(like => {
       if (!like) return false;
       
-      if (typeof like.id_liked_review === 'object') {
-        return like.id_liked_review?._id === currentUserId;
+      // Manejar diferentes formatos de id_liked_review
+      if (typeof like.id_liked_review === 'object' && like.id_liked_review) {
+        // Puede ser ObjectId o objeto con _id
+        const likeUserId = like.id_liked_review._id || like.id_liked_review;
+        return likeUserId?.toString() === currentUserId.toString();
       }
-      return like.id_liked_review === currentUserId;
+      // Si es string o ObjectId directamente
+      return like.id_liked_review?.toString() === currentUserId.toString();
     });
   };
 
@@ -220,13 +276,14 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
             // Quitamos el like
             return {
               ...r,
-              likedReview: r.likedReview.filter(like => {
+              likedReview: (r.likedReview || []).filter(like => {
                 if (!like) return false;
                 
-                if (typeof like.id_liked_review === 'object') {
-                  return like.id_liked_review?._id !== currentUserId;
+                if (typeof like.id_liked_review === 'object' && like.id_liked_review) {
+                  const likeUserId = like.id_liked_review._id || like.id_liked_review;
+                  return likeUserId?.toString() !== currentUserId.toString();
                 }
-                return like.id_liked_review !== currentUserId;
+                return like.id_liked_review?.toString() !== currentUserId.toString();
               })
             };
           } else {
@@ -247,41 +304,35 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
         return r;
       });
       
+      // Obtener el estado ANTES de la actualización optimista para saber qué acción realizar
+      const originalReview = reviews.find(r => getActualReviewId(r) === reviewId);
+      const wasLiked = hasUserLikedReview(originalReview);
+      
       setReviews(updatedReviews);
       
       // Llamada a la API
-      const reviewToUpdate = reviews.find(r => getActualReviewId(r) === reviewId);
-      const hasLiked = hasUserLikedReview(reviewToUpdate);
-      
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error("No se encontró token de autenticación");
-      }
+      if (!token) throw new Error("No se encontró token de autenticación");
       
-      if (hasLiked) {
-        // Si ya tiene like, lo quitamos
-        await api.delete(`/api/reviews/${reviewId}/unlike`, {
+      if (wasLiked) {
+        await api.delete(`/api/reviews/${reviewId}/like`, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        // Si no tiene like, lo añadimos
         await api.post(`/api/reviews/${reviewId}/like`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
     } catch (error) {
       console.error("Error al cambiar el estado del like:", error);
-      // En caso de error, revertimos el cambio optimista haciendo una recarga de las reseñas
+      // En caso de error, revertimos recargando
       fetchReviews();
       
-      // Mostrar mensaje de error
       if (error.response && error.response.data && error.response.data.error) {
         setErrorMessage(error.response.data.error);
       } else {
-        setErrorMessage('Error al procesar la acción. Inténtalo de nuevo.');
+        setErrorMessage('Error al procesar la acción.');
       }
-      
-      // Limpiar mensaje de error después de 3 segundos
       setTimeout(() => setErrorMessage(''), 3000);
     }
   };
@@ -294,7 +345,7 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
     }));
   };
 
-  // Función para crear reseña si el usuario aún no ha reseñado
+  // Función para crear reseña
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newReview.trim() || rating === 0) {
@@ -309,10 +360,10 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
     }
 
     const reviewData = {
-      itemId: movie?._id || movie?.pelicula_id || movieId,
+      itemId: itemId,
       review_txt: newReview,
       rating: rating,
-      onModel: 'Pelicula'
+      onModel: onModel
     };
 
     try {
@@ -323,11 +374,9 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
         }
       });
       
-      // Se añade la reseña creada al inicio de la lista
       setReviews(prev => {
         const newReviewItem = response.data.review;
         const newReviewId = getActualReviewId(newReviewItem);
-        // Aseguramos que no haya duplicados
         return [newReviewItem, ...prev.filter(item => getActualReviewId(item) !== newReviewId)];
       });
       setNewReview('');
@@ -339,16 +388,15 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
     }
   };
 
-  // Función para iniciar el proceso de edición
+  // Función para iniciar edición
   const handleEdit = () => {
     if (!userReview) return;
-    
     setIsEditing(true);
     setEditReviewText(userReview.review_txt || '');
     setEditRating(userReview.rating || 0);
   };
 
-  // Función para actualizar la reseña
+  // Función para actualizar reseña
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!editReviewText.trim() || !editRating) {
@@ -357,7 +405,7 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
     }
     const token = localStorage.getItem('token');
     if (!token) {
-      setErrorMessage('Debes iniciar sesión para editar la reseña');
+      setErrorMessage('Debes iniciar sesión');
       return;
     }
     try {
@@ -365,34 +413,55 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
         review_txt: editReviewText,
         rating: editRating
       }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setReviews(reviews.map(review => 
-        getActualReviewId(review) === userReviewId ? response.data : review
-      ));
+      const updatedFromApi = response.data?.review || response.data || {};
+      setReviews(reviews.map(review => {
+        if (getActualReviewId(review) !== userReviewId) return review;
+
+        const mergedUser =
+          review.userId ||
+          review.user ||
+          {
+            _id: currentUserId,
+            nombre: user?.nombre || user?.username || user?.email,
+            username: user?.username,
+            imagenPerfil: user?.imagenPerfil
+          };
+
+        const updatedReview = {
+          ...review,
+          ...updatedFromApi,
+          review_txt: updatedFromApi.review_txt ?? editReviewText,
+          rating: updatedFromApi.rating ?? editRating,
+          calificacion: updatedFromApi.calificacion ?? updatedFromApi.rating ?? editRating,
+          userId: mergedUser,
+          user: mergedUser,
+          userAvatar: mergedUser.imagenPerfil || review.userAvatar,
+          username: mergedUser.username || mergedUser.nombre || review.username,
+          fechaReview: updatedFromApi?.fechaReview || review.fechaReview || updatedFromApi?.updatedAt || new Date().toISOString(),
+          createdAt: updatedFromApi?.createdAt || review.createdAt || new Date().toISOString(),
+        };
+
+        return updatedReview;
+      }));
       setIsEditing(false);
       setEditReviewText('');
       setEditRating(0);
       setErrorMessage('');
     } catch (error) {
-      console.error('Error al actualizar la reseña:', error);
-      setErrorMessage(error.response?.data?.error || 'Error al actualizar la reseña');
+      console.error('Error al actualizar:', error);
+      setErrorMessage(error.response?.data?.error || 'Error al actualizar');
     }
   };
 
-  // Función para eliminar la reseña
+  // Función para eliminar reseña
   const handleDelete = async () => {
     if (!userReview) return;
-    
     if(window.confirm('¿Estás seguro de eliminar tu reseña?')){
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error("No se encontró token de autenticación");
-        }
+        if (!token) throw new Error("No token");
         
         await api.delete(`/api/reviews/${userReviewId}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -400,83 +469,88 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
         
         setReviews(prev => prev.filter(review => getActualReviewId(review) !== userReviewId));
       } catch (error) {
-        console.error("Error al eliminar la reseña:", error);
-        
-        // Mostrar mensaje de error específico del servidor si está disponible
-        if (error.response && error.response.data && error.response.data.error) {
-          setErrorMessage(error.response.data.error);
-        } else {
-          setErrorMessage('Error al eliminar la reseña. Inténtalo de nuevo.');
-        }
-        
-        // Limpiar mensaje de error después de 3 segundos
+        console.error("Error al eliminar:", error);
+        setErrorMessage(error.response?.data?.error || 'Error al eliminar');
         setTimeout(() => setErrorMessage(''), 3000);
       }
     }
   };
 
-  // Función para abrir el modal de reporte de usuario
+  // Función para abrir modal de reporte
   const openReportModal = (userId, reviewId = null) => {
     if (!user) {
-      alert("Debes iniciar sesión para reportar a un usuario.");
+      alert("Debes iniciar sesión para reportar.");
       return;
     }
-    
-    // No permitir auto-reportes
     if (userId === currentUserId) {
       alert("No puedes reportarte a ti mismo.");
       return;
     }
-    
     setReportedUserId(userId);
     setReportReviewId(reviewId);
     setReportModalOpen(true);
   };
 
-  // Función para obtener el nombre de usuario desde el objeto de reseña
+  // Helpers para obtener datos de usuario seguros
   const getUserName = (review) => {
     if (!review) return "Usuario";
-    // Primero intentar obtener el nombre de usuario denormalizado
     if (review.username) return review.username;
-    // Si no existe, intentar obtenerlo del objeto userId poblado
-    if (review.userId && typeof review.userId === 'object') {
-      return review.userId.nombre || review.userId.username || review.userId.email || "Usuario";
+    const u = review.userId || review.autor;
+    if (typeof u === 'object' && u) {
+      return u.nombre || u.username || u.email || "Usuario";
     }
     return "Usuario";
   };
 
-  // Función para obtener el ID de usuario desde el objeto de reseña
-  const getUserId = (review) => {
-    if (!review || !review.userId) return null;
-    
-    if (typeof review.userId === 'object') {
-      return review.userId?._id;
-    }
-    return review.userId;
+  const getUserAvatar = (review) => {
+    if (review.userAvatar) return review.userAvatar;
+    const u = review.userId || review.autor;
+    if (typeof u === 'object' && u && u.imagenPerfil) return u.imagenPerfil;
+    return 'https://res.cloudinary.com/ds6vpl6yk/image/upload/v1734188668/avatar_default_q9qkso.png';
   };
 
-  if (!movie && !movieId) {
-    return <div className="movie-reviews"><p>No se pudo cargar la información de la película</p></div>;
+  const getReviewUserId = (review) => {
+    if (!review) return null;
+    const u = review.userId || review.autor;
+    if (typeof u === 'object' && u) return u._id;
+    return u;
+  };
+
+  // DEBUGGING: Imprimir props para depuración
+  console.log("ReviewSection Render Props:", { itemId, onModel, hasItemData: !!itemData });
+
+  if (!itemId) {
+    console.warn("ReviewSection: itemId is missing/undefined");
+    return <div className="universal-reviews"><p>No se pudo cargar la información del contenido (Falta ID)</p></div>;
   }
 
   return (
-    <div className="movie-reviews">
-      <h3>Reseñas</h3>
+    <div className="universal-reviews">
+      <h3 className="reviews-title">Reseñas</h3>
       
-      {/* Mensaje de error */}
       {errorMessage && (
-        <div className="error-message">
-          {errorMessage}
+        <div className="error-message">{errorMessage}</div>
+      )}
+
+      {/* Componente de filtros */}
+      {filteredReviews.length > 0 && (
+        <div className="review-filters-container">
+          <ReviewFilters 
+            sortOption={sortOption}
+            setSortOption={setSortOption}
+            ratingFilter={ratingFilter}
+            setRatingFilter={setRatingFilter}
+          />
         </div>
       )}
 
-      {/* Si el usuario está autenticado y no tiene reseña publicada, se muestra el formulario de creación */}
+      {/* Formulario de nueva reseña */}
       {user && !userReview && !isEditing && (
         <form onSubmit={handleSubmit} className="review-form">
           <textarea
             value={newReview}
             onChange={(e) => setNewReview(e.target.value)}
-            placeholder="Escribe tu reseña sobre esta película..."
+            placeholder={`Escribe tu reseña sobre este contenido...`}
             required
           />
           <div className="rating-container">
@@ -493,7 +567,7 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
         </form>
       )}
 
-      {/* Si el usuario tiene una reseña, se muestra con opciones de editar y eliminar */}
+      {/* Reseña del usuario actual */}
       {user && userReview && (
         <div className="user-review">
           {isEditing ? (
@@ -508,18 +582,10 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
                 {renderStars(editRating, editHoverRating, setEditRating, setEditHoverRating)}
               </div>
               <div className="edit-buttons">
-                <button 
-                  type="submit" 
-                  className="update-review"
-                  disabled={!editRating || !editReviewText.trim()}
-                >
-                  Actualizar Reseña
+                <button type="submit" className="update-review" disabled={!editRating || !editReviewText.trim()}>
+                  Actualizar
                 </button>
-                <button 
-                  type="button" 
-                  className="cancel-edit" 
-                  onClick={() => setIsEditing(false)}
-                >
+                <button type="button" className="cancel-edit" onClick={() => setIsEditing(false)}>
                   Cancelar
                 </button>
               </div>
@@ -527,28 +593,38 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
           ) : (
             <div className="review-card user-review-card">
               <div className="review-header">
-                <strong>{user?.nombre || user?.email || user?.username || "Usuario"}</strong>
-                <span className="review-date">
-                  {new Date(userReview?.fechaReview).toLocaleDateString("es-ES")}
-                </span>
+                <div className="review-user-info">
+                    <img 
+                      src={getUserAvatar(userReview)} 
+                      alt="Avatar" 
+                      className="review-avatar"
+                      onError={(e) => e.target.src = 'https://res.cloudinary.com/ds6vpl6yk/image/upload/v1734188668/avatar_default_q9qkso.png'}
+                    />
+                    <div className="review-meta">
+                        <strong>{user?.nombre || user?.username || "Tú"}</strong>
+                        <span className="review-date">
+                        {new Date(userReview.fechaReview || userReview.createdAt).toLocaleDateString("es-ES")}
+                        </span>
+                    </div>
+                </div>
               </div>
-              <p className="review-text">{userReview?.review_txt}</p>
+              <p className="review-text">
+                {truncateText(userReview.review_txt || userReview.contenido, userReviewId)}
+              </p>
               <div className="review-rating">
-                {displayStars(userReview?.rating || 0)}
+                {displayStars(userReview.rating || userReview.calificacion)}
               </div>
               <div className="review-actions">
-                <button onClick={handleEdit} className="edit-button">Editar Reseña</button>
-                <button onClick={handleDelete} className="delete-button">Eliminar Reseña</button>
+                <button onClick={handleEdit} className="edit-button">Editar</button>
+                <button onClick={handleDelete} className="delete-button">Eliminar</button>
               </div>
 
-              {/* Contador de likes para la reseña del usuario */}
-              <div className="review-likes">
+              <div className="review-likes-section">
                 <span className="likes-count">
-                  {userReview?.likedReview?.length || 0} Me gusta
+                  {userReview.likedReview?.length || 0} Me gusta
                 </span>
               </div>
 
-              {/* Sección de comentarios para la reseña del usuario */}
               <div className="review-comments-section">
                 <button 
                   className="toggle-comments-button"
@@ -569,32 +645,16 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
         </div>
       )}
 
-      {/* Componente de filtros */}
-      {filteredReviews.length > 0 && (
-        <ReviewFilters 
-          sortOption={sortOption}
-          setSortOption={setSortOption}
-          ratingFilter={ratingFilter}
-          setRatingFilter={setRatingFilter}
-        />
-      )}
-
-      {/* Mostrar todas las reseñas (excluyendo la del usuario actual para evitar duplicados) */}
+      {/* Lista de reseñas de otros usuarios */}
       {loadingReviews ? (
-        <p>Cargando reseñas...</p>
+        <div className="loading-reviews">
+            <div className="spinner"></div>
+            <p>Cargando reseñas...</p>
+        </div>
       ) : filteredReviews.length > 0 ? (
         <div className="reviews-list">
           {filteredReviews
-            .filter(review => {
-              // Evitar mostrar la reseña del usuario actual dos veces
-              if (!user || !currentUserId) return true;
-              if (!review || !review.userId) return false;
-              
-              if (typeof review.userId === 'object') {
-                return review.userId?._id !== currentUserId;
-              }
-              return review.userId !== currentUserId;
-            })
+            .filter(review => getReviewUserId(review) !== currentUserId)
             .map((review) => {
               const reviewId = getActualReviewId(review);
               return (
@@ -602,7 +662,7 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
                 <div className="review-header">
                   <div className="review-user-info">
                     <img 
-                      src={review.userAvatar || (typeof review.userId === 'object' ? review.userId?.imagenPerfil : null) || 'https://res.cloudinary.com/ds6vpl6yk/image/upload/v1734188668/avatar_default_q9qkso.png'} 
+                      src={getUserAvatar(review)} 
                       alt="Avatar" 
                       className="review-avatar"
                       onError={(e) => e.target.src = 'https://res.cloudinary.com/ds6vpl6yk/image/upload/v1734188668/avatar_default_q9qkso.png'}
@@ -612,43 +672,42 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
                         <strong>{getUserName(review)}</strong>
                       </Link>
                       <span className="review-date">
-                        {review?.fechaReview ? new Date(review.fechaReview).toLocaleDateString("es-ES") : "Fecha no disponible"}
+                        {new Date(review.fechaReview || review.createdAt).toLocaleDateString("es-ES")}
                       </span>
                     </div>
                   </div>
                 </div>
-                <p className="review-text">{review?.review_txt || ""}</p>
+                <p>
+                  {truncateText(review.review_txt || review.contenido, reviewId)}
+                </p>
                 <div className="review-rating">
-                  {displayStars(review?.rating || 0)}
+                  {displayStars(review.rating || review.calificacion)}
                 </div>
                 
-                {/* Botón de Like y contador para reseñas */}
-                <div className="review-likes-section">
-                  <button 
-                    className={`like-button ${hasUserLikedReview(review) ? 'liked' : ''}`}
-                    onClick={() => handleReviewLikeToggle(review)}
-                    disabled={!user}
-                    title={user ? (hasUserLikedReview(review) ? "Quitar me gusta" : "Me gusta") : "Inicia sesión para dar me gusta"}
-                  >
-                    {hasUserLikedReview(review) ? <FaThumbsUp /> : <FaRegThumbsUp />}
-                    <span>{review?.likedReview?.length || 0}</span>
-                  </button>
-                </div>
+                <div className="review-actions-container">
+                  <div className="review-likes-section">
+                    <button 
+                      className={`like-button ${hasUserLikedReview(review) ? 'liked' : ''}`}
+                      onClick={() => handleReviewLikeToggle(review)}
+                      disabled={!user}
+                      title={user ? (hasUserLikedReview(review) ? "Quitar me gusta" : "Me gusta") : "Inicia sesión"}
+                    >
+                      {hasUserLikedReview(review) ? <FaThumbsUp /> : <FaRegThumbsUp />}
+                      <span>{review.likedReview?.length || 0}</span>
+                    </button>
+                  </div>
 
-                {user && (
-                  <button
-                    className="report-button"
-                    onClick={() => openReportModal(
-                      typeof review.userId === 'object' ? review.userId?._id : review.userId,
-                      reviewId
-                    )}
-                    title="Reportar usuario"
-                  >
-                    <FaFlag /> Reportar
-                  </button>
-                )}                
+                  {user && (
+                    <button
+                      className="report-button"
+                      onClick={() => openReportModal(getReviewUserId(review), reviewId)}
+                      title="Reportar usuario"
+                    >
+                      <FaFlag /> Reportar
+                    </button>
+                  )}
+                </div>
                 
-                {/* Sección de comentarios */}
                 <div className="review-comments-section">
                   <button 
                     className="toggle-comments-button"
@@ -669,15 +728,16 @@ const ReviewSection = ({ movieId, movie, onMovieUpdate }) => {
           })}
         </div>
       ) : (
-        <p className="no-reviews">No hay reseñas aún. ¡Sé el primero en reseñar esta película!</p>
+        !userReview && <p className="no-reviews">No hay reseñas aún. ¡Sé el primero en opinar!</p>
       )}
 
-      {/* Mensaje para usuarios no autenticados */}
       {!user && (
         <div className="login-prompt">
-          <p>Inicia sesión para dejar tu reseña y puntuar esta película.</p>
+          <p>Inicia sesión para dejar tu reseña.</p>
+          <Link to="/login" className="login-link">Iniciar Sesión</Link>
         </div>
       )}
+
       <ReportModal 
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}

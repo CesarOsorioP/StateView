@@ -10,7 +10,7 @@
     const [error, setError] = useState(null);
     const [artists, setArtists] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(20);
+    const itemsPerPage = 18;
     const [filters, setFilters] = useState({
         year: "all",
         yearRange: {
@@ -119,18 +119,17 @@
         return true;
     });
 
-    // Ordena por año
+    // Ordena por año o alfabéticamente
     const sortedAlbums = [...filteredAlbums].sort((a, b) => {
+        if (filters.sort === "alphabetical") {
+            const titleA = (a.titulo || a.nombre || a.Title || '').toLowerCase();
+            const titleB = (b.titulo || b.nombre || b.Title || '').toLowerCase();
+            return titleA.localeCompare(titleB, 'es');
+        }
         let yearA = a.fecha_estreno ? parseInt(a.fecha_estreno.substring(0, 4)) : 0;
         let yearB = b.fecha_estreno ? parseInt(b.fecha_estreno.substring(0, 4)) : 0;
         return filters.sort === "asc" ? yearA - yearB : yearB - yearA;
     });
-
-    // Lógica de paginación
-    const totalPages = Math.ceil(sortedAlbums.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentAlbums = sortedAlbums.slice(startIndex, endIndex);
 
     // Resetear página cuando cambien los filtros
     useEffect(() => {
@@ -164,209 +163,230 @@
         }
     };
 
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const getPaginationRange = () => {
-        const delta = 2;
-        const range = [];
-        const rangeWithDots = [];
-
-        for (let i = Math.max(2, currentPage - delta); 
-            i <= Math.min(totalPages - 1, currentPage + delta); i++) {
-        range.push(i);
-        }
-
-        if (currentPage - delta > 2) {
-        rangeWithDots.push(1, '...');
-        } else {
-        rangeWithDots.push(1);
-        }
-
-        rangeWithDots.push(...range);
-
-        if (currentPage + delta < totalPages - 1) {
-        rangeWithDots.push('...', totalPages);
-        } else {
-        rangeWithDots.push(totalPages);
-        }
-
-        return rangeWithDots;
-    };
-
     if (error) {
         return (
-        <div className="content-page">
-            <div className="error-container">
+        <div className="album-content-page">
+            <div className="album-error-container">
             <h2>Error</h2>
-            <p>{error}</p>
+            <p className="album-error-message">{error}</p>
             </div>
         </div>
         );
     }
 
     return (
-        <div className="content-page">
-        <div className="content-header">
+        <div className="album-content-page">
+        <div className="album-content-header">
             <h1>Álbumes</h1>
             <p>Explora y descubre los mejores álbumes musicales</p>
         </div>
 
-        <div className="filters-container compact-filters">
-            <div className="filter-section">
-            <h3>Filtros</h3>
-            
-            <div className="filter-group">
-                <label>Año</label>
-                <select 
-                name="year" 
-                value={filters.year} 
-                onChange={handleFilterChange}
-                className="filter-select"
-                >
-                {years.map(year => (
-                    <option key={year || 'unknown'} value={year || ''}>
-                    {year === "all" ? "Todos los años" : (year || 'Año desconocido')}
-                    </option>
-                ))}
-                </select>
-            </div>
-            
+        <div className="album-filters-bar-horizontal">
+            <select 
+            name="year" 
+            value={filters.year} 
+            onChange={handleFilterChange}
+            className="album-filter-select"
+            >
+            {years.map(year => (
+                <option key={year || 'unknown'} value={year || ''}>
+                {year === "all" ? "Todos los años" : (year || 'Año desconocido')}
+                </option>
+            ))}
+            </select>
             {filters.year === "all" && (
-                <div className="filter-group-range">
-                <div className="range-inputs">
-                    <input
-                    type="number"
-                    name="from"
-                    placeholder="Desde"
-                    min={minYear}
-                    max={maxYear}
-                    value={filters.yearRange.from}
-                    onChange={handleFilterChange}
-                    className="filter-input"
-                    />
-                    <span>-</span>
-                    <input
-                    type="number"
-                    name="to"
-                    placeholder="Hasta"
-                    min={minYear}
-                    max={maxYear}
-                    value={filters.yearRange.to}
-                    onChange={handleFilterChange}
-                    className="filter-input"
-                    />
-                </div>
-                </div>
+            <>
+                <input
+                type="number"
+                name="from"
+                placeholder="Desde"
+                min={minYear}
+                max={maxYear}
+                value={filters.yearRange.from}
+                onChange={handleFilterChange}
+                className="album-filter-input"
+                />
+                <span>-</span>
+                <input
+                type="number"
+                name="to"
+                placeholder="Hasta"
+                min={minYear}
+                max={maxYear}
+                value={filters.yearRange.to}
+                onChange={handleFilterChange}
+                className="album-filter-input"
+                />
+            </>
             )}
-
-            <div className="filter-group">
-                <label>Artista</label>
-                <select 
-                name="artist" 
-                value={filters.artist} 
-                onChange={handleFilterChange}
-                className="filter-select"
+            <select 
+            name="artist" 
+            value={filters.artist} 
+            onChange={handleFilterChange}
+            className="album-filter-select"
+            >
+            <option value="all">Todos los artistas</option>
+            {artists
+                .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                .map(artist => (
+                <option 
+                    key={artist.id || `artist-${artist.nombre}`} 
+                    value={artist.id || ''}
                 >
-                <option value="all">Todos los artistas</option>
-                {artists
-                    .sort((a, b) => a.nombre.localeCompare(b.nombre))
-                    .map(artist => (
-                    <option 
-                        key={artist.id || `artist-${artist.nombre}`} 
-                        value={artist.id || ''}
-                    >
-                        {artist.nombre || 'Artista desconocido'}
-                    </option>
-                ))}
-                </select>
-            </div>
-
-            <div className="filter-group">
-                <label>Ordenar por</label>
-                <select 
-                name="sort" 
-                value={filters.sort} 
-                onChange={handleFilterChange}
-                className="filter-select"
-                >
-                <option value="asc">Más antiguos</option>
-                <option value="desc">Más recientes</option>
-                </select>
-            </div>
-            
+                    {artist.nombre || 'Artista desconocido'}
+                </option>
+            ))}
+            </select>
+            <select 
+            name="sort" 
+            value={filters.sort} 
+            onChange={handleFilterChange}
+            className="album-filter-select"
+            >
+            <option value="asc">Más antiguos</option>
+            <option value="desc">Más recientes</option>
+            <option value="alphabetical">A - Z</option>
+            </select>
             <button 
-                className="reset-filters-btn"
-                onClick={() => setFilters({
+            className="album-clear-filters-btn"
+            onClick={() => setFilters({
                 year: "all",
                 yearRange: { from: "", to: "" },
                 artist: "all",
                 sort: "asc"
-                })}
+            })}
             >
-                Limpiar filtros
+            Limpiar
             </button>
-            </div>
         </div>
 
         {loading ? (
-            <div className="loading-container">
-            <div className="loading-spinner"></div>
+            <div className="album-loading-container">
+            <div className="album-loading-spinner"></div>
             <p>Cargando álbumes...</p>
             </div>
         ) : (
             <>
-            <div className="content-count">
-                Mostrando {startIndex + 1}-{Math.min(endIndex, sortedAlbums.length)} de {sortedAlbums.length} álbumes
-                {totalPages > 1 && (
-                <span className="page-indicator"> | Página {currentPage} de {totalPages}</span>
-                )}
+            <div className="album-content-count">
+                Mostrando {sortedAlbums.length} álbumes
             </div>
 
-            <div className="content-grid compact-grid">
-                {currentAlbums.map(album => (
-                <div key={album.album_id || album._id} className="content-card">
-                    <Link to={`/album/${album.album_id || album._id}`} className="content-link">
-                    <div className="poster-container">
+            <div className="album-pagination-bar">
+                {Array.from({ length: Math.ceil(sortedAlbums.length / itemsPerPage) }, (_, i) => (
+                <button
+                    key={i + 1}
+                    className={currentPage === i + 1 ? 'active' : ''}
+                    onClick={() => {
+                    setCurrentPage(i + 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                >
+                    {i + 1}
+                </button>
+                ))}
+                <div className="album-pagination-jump">
+                <span>Ir a:</span>
+                <input
+                    type="number"
+                    min="1"
+                    max={Math.ceil(sortedAlbums.length / itemsPerPage)}
+                    value={currentPage}
+                    onChange={(e) => {
+                    const page = parseInt(e.target.value);
+                    if (page >= 1 && page <= Math.ceil(sortedAlbums.length / itemsPerPage)) {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                    }}
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                            const page = parseInt(e.target.value);
+                            if (page >= 1 && page <= Math.ceil(sortedAlbums.length / itemsPerPage)) {
+                                setCurrentPage(page);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                        }
+                    }}
+                    className="album-pagination-input"
+                />
+                <span>de {Math.ceil(sortedAlbums.length / itemsPerPage)}</span>
+                </div>
+            </div>
+
+            <div className="album-content-grid compact-grid ultra-compact-grid">
+                {sortedAlbums.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(album => (
+                <div key={album.album_id || album._id} className="album-content-card">
+                    <Link to={`/album/${album.album_id || album._id}`} className="album-content-link">
+                    <div className="album-poster-container">
                         <img 
                         src={album.portada} 
                         alt={album.titulo || album.nombre || album.Title || 'Álbum'} 
-                        className="poster"
+                        className="album-poster"
                         onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = '/placeholder-image.jpg';
                         }}
                         />
                     </div>
-                    <div className="content-info">
-                        <h3 className="content-title">{album.titulo || album.nombre || album.Title || 'Álbum'}</h3>
-                        <p className="content-year">{album.fecha_estreno ? album.fecha_estreno.substring(0, 4) : ''}</p>
-                        <p className="content-artist">{album.artista && album.artista.nombre}</p>
+                    <div className="album-content-info">
+                        <h3 className="album-content-title">{album.titulo || album.nombre || album.Title || 'Álbum'}</h3>
+                        <p className="album-content-year">{album.fecha_estreno ? album.fecha_estreno.substring(0, 4) : ''}</p>
+                        <p className="album-content-artist">{album.artista && album.artista.nombre}</p>
                     </div>
                     </Link>
                 </div>
                 ))}
             </div>
 
-            {/* Paginación */}
-            <div className="pagination-bar">
-                {Array.from({ length: totalPages }, (_, i) => (
+            {sortedAlbums.length === 0 && (
+                <div className="album-no-results">
+                <h3>No se encontraron álbumes con los filtros seleccionados</h3>
+                <p>Intenta cambiar tus filtros para ver más resultados</p>
+                </div>
+            )}
+
+            {/* Paginación al final */}
+            {sortedAlbums.length > 0 && (
+                <div className="album-pagination-bar">
+                {Array.from({ length: Math.ceil(sortedAlbums.length / itemsPerPage) }, (_, i) => (
                     <button
                     key={i + 1}
                     className={currentPage === i + 1 ? 'active' : ''}
-                    onClick={() => handlePageChange(i + 1)}
+                    onClick={() => {
+                        setCurrentPage(i + 1);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                     >
                     {i + 1}
                     </button>
                 ))}
-            </div>
-
-            {sortedAlbums.length === 0 && (
-                <div className="no-results">
-                <h3>No se encontraron álbumes con los filtros seleccionados</h3>
-                <p>Intenta cambiar tus filtros para ver más resultados</p>
+                <div className="album-pagination-jump">
+                    <span>Ir a:</span>
+                    <input
+                    type="number"
+                    min="1"
+                    max={Math.ceil(sortedAlbums.length / itemsPerPage)}
+                    value={currentPage}
+                    onChange={(e) => {
+                        const page = parseInt(e.target.value);
+                        if (page >= 1 && page <= Math.ceil(sortedAlbums.length / itemsPerPage)) {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                    }}
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                            const page = parseInt(e.target.value);
+                            if (page >= 1 && page <= Math.ceil(sortedAlbums.length / itemsPerPage)) {
+                                setCurrentPage(page);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                        }
+                    }}
+                    className="album-pagination-input"
+                    />
+                    <span>de {Math.ceil(sortedAlbums.length / itemsPerPage)}</span>
+                </div>
                 </div>
             )}
             </>

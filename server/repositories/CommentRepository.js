@@ -24,7 +24,7 @@ class CommentRepository {
 
   async find(filter) {
     return await Comment.find(filter)
-      .populate('userId', 'nombre email username');
+      .populate('userId', 'nombre email username imagenPerfil');
   }
 }
 

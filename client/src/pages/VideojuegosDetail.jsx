@@ -4,11 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { 
   FaHeart, FaRegHeart, FaGamepad
 } from 'react-icons/fa';
-import ReviewSection from '../components//Videojuegos/ReviewSection';
+import ReviewSection from '../components/Peliculas/ReviewSection';
 import "./pageStyles/VideojuegosDetail.css";
 import api from '../api/api';
 
-const GameDetail = () => {
+const VideojuegosDetail = () => {
   const { gameId } = useParams();
   const { user } = useAuth();
   const [game, setGame] = useState(null);
@@ -133,9 +133,9 @@ const GameDetail = () => {
       <hr />
 
       {/* Componente ReviewSection que maneja toda la lógica de reseñas */}
-      {game && <ReviewSection gameId={gameId} game={game} />}
+      {game && <ReviewSection itemId={game._id || game.juego_id} itemData={game} onModel="Videojuego" />}
     </div>
   );
 };
 
-export default GameDetail;
+export default VideojuegosDetail;

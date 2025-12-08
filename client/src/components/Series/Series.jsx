@@ -14,7 +14,7 @@ const Series = () => {
   const [genres, setGenres] = useState(["all"]);
   const [years, setYears] = useState(["all"]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 18;
 
   useEffect(() => {
     const fetchSeries = async () => {
@@ -59,6 +59,12 @@ const Series = () => {
   });
 
   const sortedSeries = [...filteredSeries].sort((a, b) => {
+    if (filters.sort === "alphabetical") {
+      const titleA = (a.titulo || '').toLowerCase();
+      const titleB = (b.titulo || '').toLowerCase();
+      return titleA.localeCompare(titleB, 'es');
+    }
+    
     const yearA = a.fechaInicio ? parseInt(a.fechaInicio.substring(0, 4)) : 0;
     const yearB = b.fechaInicio ? parseInt(b.fechaInicio.substring(0, 4)) : 0;
     
@@ -96,20 +102,20 @@ const Series = () => {
   };
 
   return (
-    <div className="content-page">
-      <div className="content-header">
+    <div className="series-content-page">
+      <div className="series-content-header">
         <h1>Series</h1>
-        <p>Explora y descubre las mejores series de televisión</p>
+        <p>Explora y descubre las mejores series de televisión y streaming</p>
       </div>
 
-      <div className="filters-container compact-filters">
-        <div className="filter-group">
+      <div className="series-filters-container compact-filters">
+        <div className="series-filter-group">
           <label>Año</label>
           <select 
             name="year" 
             value={filters.year} 
             onChange={handleFilterChange}
-            className="filter-select"
+            className="series-filter-select"
           >
             {years.map(year => (
               <option key={year} value={year}>
@@ -119,13 +125,13 @@ const Series = () => {
           </select>
         </div>
 
-        <div className="filter-group">
+        <div className="series-filter-group">
           <label>Género</label>
           <select 
             name="genre" 
             value={filters.genre} 
             onChange={handleFilterChange}
-            className="filter-select"
+            className="series-filter-select"
           >
             {genres.map(genre => (
               <option key={genre} value={genre}>
@@ -135,54 +141,85 @@ const Series = () => {
           </select>
         </div>
 
-        <div className="filter-group">
+        <div className="series-filter-group">
           <label>Ordenar por</label>
           <select 
             name="sort" 
             value={filters.sort} 
             onChange={handleFilterChange}
-            className="filter-select"
+            className="series-filter-select"
           >
             <option value="asc">Más antiguas</option>
             <option value="desc">Más recientes</option>
+            <option value="alphabetical">A - Z</option>
           </select>
         </div>
       </div>
 
       {loading ? (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
+        <div className="series-loading-container">
+          <div className="series-loading-spinner"></div>
           <p>Cargando series...</p>
         </div>
       ) : (
         <>
-          <div className="content-count">
+          <div className="series-content-count">
             Mostrando {sortedSeries.length} series
           </div>
 
-          <div className="pagination-bar">
+          <div className="series-pagination-bar">
             {Array.from({ length: Math.ceil(sortedSeries.length / itemsPerPage) }, (_, i) => (
               <button
                 key={i + 1}
                 className={currentPage === i + 1 ? 'active' : ''}
-                onClick={() => setCurrentPage(i + 1)}
+                onClick={() => {
+                  setCurrentPage(i + 1);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
                 {i + 1}
               </button>
             ))}
+            <div className="series-pagination-jump">
+              <span>Ir a:</span>
+              <input
+                type="number"
+                min="1"
+                max={Math.ceil(sortedSeries.length / itemsPerPage)}
+                value={currentPage}
+                onChange={(e) => {
+                  const page = parseInt(e.target.value);
+                  if (page >= 1 && page <= Math.ceil(sortedSeries.length / itemsPerPage)) {
+                    setCurrentPage(page);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    const page = parseInt(e.target.value);
+                    if (page >= 1 && page <= Math.ceil(sortedSeries.length / itemsPerPage)) {
+                      setCurrentPage(page);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }
+                }}
+                className="series-pagination-input"
+              />
+              <span>de {Math.ceil(sortedSeries.length / itemsPerPage)}</span>
+            </div>
           </div>
 
-          <div className="content-grid compact-grid">
+          <div className="series-content-grid compact-grid">
             {sortedSeries.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(serie => (
-              <div key={serie.serie_id || serie._id} className="content-card">
-                <Link to={`/serie/${serie.serie_id || serie._id}`} className="content-link">
-                  <div className="poster-container">
-                    <img src={serie.poster} alt={serie.titulo} className="poster" />
+              <div key={serie.serie_id || serie._id} className="series-content-card">
+                <Link to={`/serie/${serie.serie_id || serie._id}`} className="series-content-link">
+                  <div className="series-poster-container">
+                    <img src={serie.poster} alt={serie.titulo} className="series-poster" />
                   </div>
-                  <div className="content-info">
-                    <h3 className="content-title">{serie.titulo}</h3>
-                    <p className="content-year">{serie.fechaInicio ? serie.fechaInicio.substring(0, 4) : ''}</p>
-                    <p className="content-artist">{serie.genero}</p>
+                  <div className="series-content-info">
+                    <h3 className="series-content-title">{serie.titulo}</h3>
+                    <p className="series-content-year">{serie.fechaInicio ? serie.fechaInicio.substring(0, 4) : ''}</p>
+                    <p className="series-content-artist">{serie.genero}</p>
                   </div>
                 </Link>
               </div>
@@ -190,9 +227,54 @@ const Series = () => {
           </div>
 
           {sortedSeries.length === 0 && (
-            <div className="no-results">
+            <div className="series-no-results">
               <h3>No se encontraron series con los filtros seleccionados</h3>
               <p>Intenta cambiar tus filtros para ver más resultados</p>
+            </div>
+          )}
+
+          {/* Paginación al final */}
+          {sortedSeries.length > 0 && (
+            <div className="series-pagination-bar">
+              {Array.from({ length: Math.ceil(sortedSeries.length / itemsPerPage) }, (_, i) => (
+                <button
+                  key={i + 1}
+                  className={currentPage === i + 1 ? 'active' : ''}
+                  onClick={() => {
+                    setCurrentPage(i + 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <div className="series-pagination-jump">
+                <span>Ir a:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={Math.ceil(sortedSeries.length / itemsPerPage)}
+                  value={currentPage}
+                  onChange={(e) => {
+                    const page = parseInt(e.target.value);
+                    if (page >= 1 && page <= Math.ceil(sortedSeries.length / itemsPerPage)) {
+                      setCurrentPage(page);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      const page = parseInt(e.target.value);
+                      if (page >= 1 && page <= Math.ceil(sortedSeries.length / itemsPerPage)) {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }
+                  }}
+                  className="series-pagination-input"
+                />
+                <span>de {Math.ceil(sortedSeries.length / itemsPerPage)}</span>
+              </div>
             </div>
           )}
         </>

@@ -158,8 +158,45 @@ class ReviewService {
     if (query.itemId && query.onModel) {
       const item = await findItemById(query.itemId, query.onModel);
       if (item && item.reviews && item.reviews.length > 0) {
-        // Retornamos las reseñas denormalizadas ordenadas por fecha descendente
-        return item.reviews.sort((a, b) => new Date(b.fechaReview) - new Date(a.fechaReview));
+        // Obtener reseñas completas desde la colección para tener información de likes
+        const fullReviews = await ReviewRepository.find({ itemId: item._id });
+        
+        // Combinar datos denormalizados con información completa de likes
+        const enrichedReviews = item.reviews.map(denormReview => {
+          // Convertir a objeto plano si es necesario
+          const denormObj = denormReview.toObject ? denormReview.toObject() : denormReview;
+          const reviewIdToMatch = denormObj.reviewId || denormObj._id;
+          
+          const fullReview = fullReviews.find(fr => {
+            if (!fr || !fr._id) return false;
+            return fr._id.toString() === reviewIdToMatch?.toString();
+          });
+          
+          if (fullReview) {
+            // Combinar: usar datos denormalizados pero con likedReview completo
+            return {
+              ...denormObj,
+              likedReview: fullReview.likedReview || [],
+              _id: fullReview._id,
+              reviewId: fullReview._id
+            };
+          }
+          
+          // Si no se encuentra la reseña completa, usar solo la denormalizada
+          return {
+            ...denormObj,
+            likedReview: [],
+            _id: denormObj.reviewId,
+            reviewId: denormObj.reviewId
+          };
+        });
+        
+        // Ordenar por fecha descendente
+        return enrichedReviews.sort((a, b) => {
+          const dateA = new Date(a.fechaReview || a.createdAt || 0);
+          const dateB = new Date(b.fechaReview || b.createdAt || 0);
+          return dateB - dateA;
+        });
       }
       // Si no hay reseñas denormalizadas, buscar en la colección de reviews (fallback)
       const itemReviews = await ReviewRepository.find({ itemId: item._id });
@@ -257,7 +294,16 @@ class ReviewService {
     if (!review) {
       throw new Error('Reseña no encontrada.');
     }
-    const alreadyLiked = review.likedReview.some(like => like.id_liked_review.equals(currentUser));
+    // Ensure likedReview is an array
+    if (!review.likedReview) {
+      review.likedReview = [];
+    }
+    
+    // Safer comparison using toString() to handle both String and ObjectId
+    const alreadyLiked = review.likedReview.some(like => 
+      like.id_liked_review && like.id_liked_review.toString() === currentUser.toString()
+    );
+    
     if (alreadyLiked) {
       throw new Error('Ya has dado me gusta a esta reseña.');
     }
@@ -313,7 +359,17 @@ class ReviewService {
     if (!review) {
       throw new Error('Reseña no encontrada.');
     }
-    const likeIndex = review.likedReview.findIndex(like => like.id_liked_review.equals(currentUser));
+    
+    // Ensure likedReview is an array
+    if (!review.likedReview) {
+      review.likedReview = [];
+    }
+
+    // Safer comparison
+    const likeIndex = review.likedReview.findIndex(like => 
+      like.id_liked_review && like.id_liked_review.toString() === currentUser.toString()
+    );
+    
     if (likeIndex === -1) {
       throw new Error('No has dado me gusta a esta reseña.');
     }

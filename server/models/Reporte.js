@@ -17,6 +17,11 @@ const reporteSchema = new Schema({
     ref: 'Review', // Opcional, solo si se está reportando una reseña en particular
     required: false
   },
+  comment: {
+    type: Schema.Types.ObjectId,
+    ref: 'Comment', // Opcional, solo si se está reportando un comentario en particular
+    required: false
+  },
   // Campo para almacenar el contenido reportado
   reportedContent: {
     texto: {

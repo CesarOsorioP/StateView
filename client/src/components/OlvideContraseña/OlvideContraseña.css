@@ -82,40 +82,21 @@ h1 {
     box-shadow: 0 7px 14px rgba(106, 90, 205, 0.4); /* Sombra morada */
 }
 
-.login-link {
+.olvide-login-link {
     text-align: center;
     margin-top: 1.5rem;
-    color: #aaa; /* Color similar a login-footer */
+    color: #a0a0a0; /* Gris claro para el texto base */
+    font-size: 0.95rem;
 }
 
-.login-link a {
-    color: #9370db; /* Morado claro como auth-link */
+.olvide-login-link a {
+    color: #4a9eff; /* Azul vibrante para el enlace */
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
+    transition: color 0.2s ease;
 }
 
-.login-link a:hover {
-    color: #b19cd9; /* Morado más claro al hover */
+.olvide-login-link a:hover {
+    color: #6bb0ff; /* Azul más claro al hover */
     text-decoration: underline;
-}
-
-/* Footer */
-.olvide-footer {
-    background-color: #121212; /* Igual que el fondo principal */
-    color: #777; /* Color similar a login-footer */
-    padding: 1.5rem;
-    margin-top: auto;
-    border-top: 1px solid #333; /* Borde superior sutil */
-}
-
-.quick-links a {
-    color: #9370db; /* Morado claro como enlaces */
-}
-
-.quick-links a:hover {
-    color: #b19cd9; /* Morado más claro */
-}
-
-.copyright {
-    color: #666; /* Texto más discreto */
 }

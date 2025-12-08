@@ -86,9 +86,6 @@
     font-weight: bold;
 }
 
-.login-link a:hover {
-    text-decoration: underline;
-}
 
 .alert {
     padding: 1rem;

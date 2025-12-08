@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   FaHeart, FaRegHeart, FaHeadphones, FaCheck
 } from 'react-icons/fa';
-import ReviewSection from '../components/Albumes/ReviewSection';
+import ReviewSection from '../components/Peliculas/ReviewSection';
 import "./pageStyles/AlbumDetail.css";
 import api from '../api/api';
 
@@ -158,7 +158,7 @@ const AlbumDetail = () => {
       <hr />
 
       {/* Componente ReviewSection que maneja toda la lógica de reseñas */}
-      {album && <ReviewSection albumId={albumId} album={album} />}
+      {album && <ReviewSection itemId={album._id || albumId} itemData={album} onModel="Album" />}
     </div>
   );
 };

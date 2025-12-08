@@ -120,6 +120,7 @@ const personaSchema = new mongoose.Schema({
     enum: ['Activo', 'Restringido', 'Advertido', 'Desactivado'],
     default: 'Activo'
   },
+  restrictedUntil: { type: Date, default: null },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
   insignias: [insigniaSchema],

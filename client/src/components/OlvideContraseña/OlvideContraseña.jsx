@@ -72,26 +72,10 @@ const OlvideContraseñaPage = () => {
                     </button>
                 </form>
 
-                <p className="login-link">
+                <p className="olvide-login-link">
                     ¿Ya tienes una cuenta? <Link to="/login">¡Inicia sesión aquí!</Link>
                 </p>
             </main>
-
-            <footer className="olvide-footer">
-                <div className="footer-content">
-                    <h2>StateView</h2>
-                    <p>Visualiza y gestiona tus datos de forma sencilla</p>
-                    
-                    <div className="quick-links">
-                        <Link to="/">Inicio</Link>
-                        <Link to="/features">Características</Link>
-                        <Link to="/pricing">Precios</Link>
-                        <Link to="/contact">Contacto</Link>
-                    </div>
-                    
-                    <p className="copyright">© 2025 StateView - Todos los derechos reservados</p>
-                </div>
-            </footer>
         </div>
     );
 };

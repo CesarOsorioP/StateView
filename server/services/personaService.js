@@ -72,8 +72,19 @@ class PersonaService {
     if (!estado || !estadosPermitidos.includes(estado)) {
       throw new Error(`Estado no válido. Debe ser uno de: ${estadosPermitidos.join(', ')}`);
     }
+
+    const updatePayload = { estado };
+
+    if (estado === 'Restringido') {
+      // Bloqueo temporal por 3 días
+      const tresDias = 3 * 24 * 60 * 60 * 1000;
+      updatePayload.restrictedUntil = new Date(Date.now() + tresDias);
+    } else {
+      // Para otros estados, limpiar la restricción temporal
+      updatePayload.restrictedUntil = null;
+    }
     
-    const personaActualizada = await PersonaRepository.update(id, { estado });
+    const personaActualizada = await PersonaRepository.update(id, updatePayload);
     if (!personaActualizada) {
       throw new Error('Persona no encontrada');
     }

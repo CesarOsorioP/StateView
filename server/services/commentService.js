@@ -131,7 +131,45 @@ class CommentService {
     try {
         const review = await Review.findById(reviewId);
         if (review && review.comments && review.comments.length > 0) {
-          return review.comments.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
+          // Obtener comentarios completos desde la colección para tener información de likes
+          const fullComments = await CommentRepository.find({ reviewId });
+          
+          // Combinar datos denormalizados con información completa de likes
+          const enrichedComments = review.comments.map(denormComment => {
+            // Convertir a objeto plano si es necesario
+            const denormObj = denormComment.toObject ? denormComment.toObject() : denormComment;
+            const commentIdToMatch = denormObj.commentId || denormObj._id;
+            
+            const fullComment = fullComments.find(fc => {
+              if (!fc || !fc._id) return false;
+              return fc._id.toString() === commentIdToMatch?.toString();
+            });
+            
+            if (fullComment) {
+              // Combinar: usar datos denormalizados pero con liked_comment completo
+              return {
+                ...denormObj,
+                liked_comment: fullComment.liked_comment || [],
+                _id: fullComment._id,
+                commentId: fullComment._id
+              };
+            }
+            
+            // Si no se encuentra el comentario completo, usar solo el denormalizado
+            return {
+              ...denormObj,
+              liked_comment: [],
+              _id: denormObj.commentId,
+              commentId: denormObj.commentId
+            };
+          });
+          
+          // Ordenar por fecha descendente
+          return enrichedComments.sort((a, b) => {
+            const dateA = new Date(a.fechaCreacion || a.createdAt || 0);
+            const dateB = new Date(b.fechaCreacion || b.createdAt || 0);
+            return dateB - dateA;
+          });
         }
     } catch(err) {
         console.log("Error al buscar review para comentarios:", err.message);
@@ -182,28 +220,84 @@ class CommentService {
     if (!currentUser) {
       throw new Error('Usuario no autenticado.');
     }
-    const comment = await CommentRepository.findById(commentId);
-    if (!comment) {
-      throw new Error('Comentario no encontrado.');
+    
+    if (!commentId) {
+      throw new Error('ID de comentario no proporcionado.');
     }
-    const alreadyLiked = comment.liked_comment.some(like =>
-      like.id_liked_comment.equals(currentUser)
-    );
+    
+    // Intentar buscar el comentario en la colección Comment
+    let comment = await CommentRepository.findById(commentId);
+    
+    // Si no se encuentra, podría ser un comentario denormalizado
+    // En ese caso, necesitamos buscar en todas las reviews para encontrar el comentario
+    if (!comment) {
+      // Buscar el comentario en las reviews denormalizadas
+      const reviews = await Review.find({ "comments.commentId": commentId });
+      if (reviews.length > 0) {
+        // El comentario existe como denormalizado, pero necesitamos el comentario completo
+        // Intentar buscar de nuevo con el ID exacto (puede ser un problema de formato)
+        const mongoose = require('mongoose');
+        if (mongoose.Types.ObjectId.isValid(commentId)) {
+          comment = await CommentRepository.findById(new mongoose.Types.ObjectId(commentId));
+        }
+      }
+      
+      if (!comment) {
+        throw new Error('Comentario no encontrado.');
+      }
+    }
+    
+    // Ensure liked_comment is an array
+    if (!comment.liked_comment) {
+      comment.liked_comment = [];
+    }
+    
+    // Safer comparison using toString() to handle both String and ObjectId
+    const alreadyLiked = comment.liked_comment.some(like => {
+      if (!like || !like.id_liked_comment) return false;
+      
+      if (typeof like.id_liked_comment === 'object' && like.id_liked_comment) {
+        const likeUserId = like.id_liked_comment._id || like.id_liked_comment;
+        return likeUserId?.toString() === currentUser.toString();
+      }
+      return like.id_liked_comment?.toString() === currentUser.toString();
+    });
+    
     if (alreadyLiked) {
       throw new Error('Ya has dado me gusta a este comentario.');
     }
+    
     comment.liked_comment.push({
       id_liked_comment: currentUser,
       nombre_persona_comment: userName || 'Anónimo',
       id_persona_comment: currentUser
     });
-    const updatedComment = await CommentRepository.update(comment);
+    
+    let updatedComment;
+    try {
+      updatedComment = await CommentRepository.update(comment);
+      console.log(`[likeComment] Like agregado exitosamente - Total likes: ${updatedComment.liked_comment.length}`);
+    } catch (updateError) {
+      console.error(`[likeComment] Error al actualizar comentario:`, updateError);
+      throw new Error('Error al actualizar el comentario: ' + updateError.message);
+    }
 
-    // Actualizar likesCount en la Reseña
-    await Review.updateOne(
-      { _id: comment.reviewId, "comments.commentId": commentId },
-      { $inc: { "comments.$.likesCount": 1 } }
-    );
+    // Actualizar likesCount en la Reseña (si existe)
+    try {
+      // Convertir commentId a ObjectId si es necesario para la comparación
+      const mongoose = require('mongoose');
+      const commentObjectId = mongoose.Types.ObjectId.isValid(commentId) 
+        ? new mongoose.Types.ObjectId(commentId) 
+        : commentId;
+      
+      await Review.updateOne(
+        { _id: comment.reviewId, "comments.commentId": commentObjectId },
+        { $inc: { "comments.$.likesCount": 1 } }
+      );
+    } catch (updateError) {
+      // Si falla la actualización del Review, no es crítico, solo logueamos
+      console.log('No se pudo actualizar likesCount en Review (puede ser comentario no denormalizado):', updateError.message);
+    }
 
     // Crear notificación de like comment
     if (comment.userId.toString() !== currentUser.toString()) {
@@ -233,24 +327,64 @@ class CommentService {
     if (!currentUser) {
       throw new Error('Usuario no autenticado.');
     }
-    const comment = await CommentRepository.findById(commentId);
+    
+    if (!commentId) {
+      throw new Error('ID de comentario no proporcionado.');
+    }
+    
+    // Intentar buscar el comentario en la colección Comment
+    let comment = await CommentRepository.findById(commentId);
+    
+    // Si no se encuentra, intentar con ObjectId si es válido
+    if (!comment) {
+      const mongoose = require('mongoose');
+      if (mongoose.Types.ObjectId.isValid(commentId)) {
+        comment = await CommentRepository.findById(new mongoose.Types.ObjectId(commentId));
+      }
+    }
+    
     if (!comment) {
       throw new Error('Comentario no encontrado.');
     }
-    const likeIndex = comment.liked_comment.findIndex(like =>
-      like.id_liked_comment.equals(currentUser)
-    );
+    
+    // Ensure liked_comment is an array
+    if (!comment.liked_comment) {
+      comment.liked_comment = [];
+    }
+    
+    // Safer comparison
+    const likeIndex = comment.liked_comment.findIndex(like => {
+      if (!like || !like.id_liked_comment) return false;
+      
+      if (typeof like.id_liked_comment === 'object' && like.id_liked_comment) {
+        const likeUserId = like.id_liked_comment._id || like.id_liked_comment;
+        return likeUserId?.toString() === currentUser.toString();
+      }
+      return like.id_liked_comment?.toString() === currentUser.toString();
+    });
+    
     if (likeIndex === -1) {
       throw new Error('No has dado me gusta a este comentario.');
     }
     comment.liked_comment.splice(likeIndex, 1);
     const updatedComment = await CommentRepository.update(comment);
 
-    // Actualizar likesCount en la Reseña
-    await Review.updateOne(
-      { _id: comment.reviewId, "comments.commentId": commentId },
-      { $inc: { "comments.$.likesCount": -1 } }
-    );
+    // Actualizar likesCount en la Reseña (si existe)
+    try {
+      // Convertir commentId a ObjectId si es necesario para la comparación
+      const mongoose = require('mongoose');
+      const commentObjectId = mongoose.Types.ObjectId.isValid(commentId) 
+        ? new mongoose.Types.ObjectId(commentId) 
+        : commentId;
+      
+      await Review.updateOne(
+        { _id: comment.reviewId, "comments.commentId": commentObjectId },
+        { $inc: { "comments.$.likesCount": -1 } }
+      );
+    } catch (updateError) {
+      // Si falla la actualización del Review, no es crítico, solo logueamos
+      console.log('No se pudo actualizar likesCount en Review (puede ser comentario no denormalizado):', updateError.message);
+    }
 
     return updatedComment.liked_comment.length;
   }

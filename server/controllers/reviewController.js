@@ -1,5 +1,22 @@
 // controllers/reviewController.js
 const ReviewService = require('../services/reviewService');
+const Persona = require('../models/Persona');
+
+async function getDisplayName(user) {
+  if (!user) return 'Usuario';
+  const direct = user.username || user.nombre;
+  if (direct) return direct;
+  // Si no viene en req.user, intentar obtener desde la BD
+  try {
+    const persona = await Persona.findById(user.id || user._id);
+    if (persona) {
+      return persona.username || persona.nombre || persona.email || 'Usuario';
+    }
+  } catch (e) {
+    // fallback silencioso
+  }
+  return user.email || 'Usuario';
+}
 
 /**
  * Crea una reseña utilizando el ReviewService.
@@ -93,7 +110,7 @@ async function likeReview(req, res) {
   try {
     const reviewId = req.params.reviewId;
     const currentUser = req.user && (req.user.id || req.user._id);
-    const userName = req.user.nombre || "Anónimo";
+    const userName = await getDisplayName(req.user);
     const totalLikes = await ReviewService.likeReview(reviewId, currentUser, userName);
     res.status(200).json({
       message: 'Me gusta agregado a la reseña.',

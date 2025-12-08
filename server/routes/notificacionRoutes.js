@@ -18,6 +18,9 @@ router.put('/:id/leer', notificacionController.marcarLeida);
 // Marcar todas las notificaciones como leídas
 router.put('/leer-todas', notificacionController.marcarTodasLeidas);
 
+// Eliminar todas las notificaciones
+router.delete('/todas', notificacionController.eliminarTodasNotificaciones);
+
 // Ruta para crear una notificación de prueba (temporal)
 router.post('/test', notificacionController.createTestNotification);
 

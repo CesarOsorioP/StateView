@@ -75,8 +75,19 @@ const ListaDetalle = () => {
         throw new Error('No se encontró el token de autenticación');
       }
 
+      // El backend espera tipos en minúsculas: 'pelicula', 'serie', 'videojuego', 'album'
+      // El API de búsqueda devuelve: 'pelicula', 'serie', 'videojuego', 'album'
+      // Así que usamos directamente el tipo del contenido
+      const tipoBackend = contenido.type;
+
+      console.log('Agregando elemento:', {
+        tipo: tipoBackend,
+        contenidoId: contenido._id,
+        listaId: id
+      });
+
       const response = await api.post(`/api/listas/${id}/elementos`, {
-        tipo: contenido.type,
+        tipo: tipoBackend,
         contenido: contenido._id
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -88,7 +99,13 @@ const ListaDetalle = () => {
       setSearchResults([]);
     } catch (err) {
       console.error('Error al agregar elemento:', err);
-      alert('Error al agregar el elemento a la lista');
+      const errorMessage = err.response?.data?.error || err.message || 'Error al agregar el elemento a la lista';
+      console.error('Detalles del error:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+      alert(errorMessage);
     }
   };
 
@@ -143,13 +160,16 @@ const ListaDetalle = () => {
   const getImageUrl = (elemento) => {
     // Si es un elemento denormalizado con campos directos
     if (elemento.imagen) return elemento.imagen;
-    if (elemento.titulo && !elemento.contenido) return '/placeholder-image.jpg';
+    if (elemento.poster) return elemento.poster;
+    if (elemento.portada) return elemento.portada;
     
     // Si tiene contenido anidado
     const contenido = elemento.contenido || elemento;
     if (contenido.poster) return contenido.poster;
     if (contenido.portada) return contenido.portada;
     if (contenido.imagen) return contenido.imagen;
+    
+    // Placeholder por defecto
     return '/placeholder-image.jpg';
   };
 
@@ -216,9 +236,6 @@ const ListaDetalle = () => {
             <div className="elemento-info">
               <h3>{getTitulo(elemento)}</h3>
               <p>{elemento.tipo || elemento.tipoModelo || 'Contenido'}</p>
-              {elemento.rating && (
-                <p>⭐ {elemento.rating.toFixed(1)}</p>
-              )}
             </div>
             {user && lista.creador && (user._id === lista.creador._id || user._id === lista.creador) && (
               <button
@@ -265,7 +282,7 @@ const ListaDetalle = () => {
               <div className="search-results">
                 {searchResults
                   .filter(result => 
-                    (result.type === 'movie' || result.type === 'serie' || result.type === 'game' || result.type === 'album') && 
+                    (result.type === 'pelicula' || result.type === 'serie' || result.type === 'videojuego' || result.type === 'album') && 
                     (result.titulo || result.nombre)
                   )
                   .map((result) => (
@@ -281,7 +298,12 @@ const ListaDetalle = () => {
                       />
                       <div className="elemento-info">
                         <h3>{result.titulo || result.nombre}</h3>
-                        <p>{result.type}</p>
+                        <p>
+                          {result.type === 'pelicula' ? 'Película' : 
+                           result.type === 'serie' ? 'Serie' : 
+                           result.type === 'videojuego' ? 'Videojuego' : 
+                           result.type === 'album' ? 'Álbum' : result.type}
+                        </p>
                         {result.artista && <p>Artista: {result.artista.nombre}</p>}
                       </div>
                       <button
@@ -294,7 +316,7 @@ const ListaDetalle = () => {
                     </div>
                   ))}
                 {searchResults.filter(result => 
-                  (result.type === 'movie' || result.type === 'serie' || result.type === 'game' || result.type === 'album') && 
+                  (result.type === 'pelicula' || result.type === 'serie' || result.type === 'videojuego' || result.type === 'album') && 
                   (result.titulo || result.nombre)
                 ).length === 0 && searchQuery.trim() && !searchLoading && (
                   <div className="no-results-message">No se encontraron resultados para "{searchQuery}".</div>

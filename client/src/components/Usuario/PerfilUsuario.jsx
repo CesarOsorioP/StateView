@@ -68,6 +68,23 @@ const getContentPath = (tipo) => {
   return CONTENT_TYPE_PATHS[tipo] || CONTENT_TYPE_PATHS[tipo.toLowerCase()] || tipo.toLowerCase();
 };
 
+const getContentId = (content, tipo) => {
+  const t = (tipo || content?.tipo || '').toLowerCase();
+  const generic = content?.contenido_id || content?.idContenido;
+  switch (t) {
+    case 'pelicula':
+      return content?.pelicula_id || generic || content?._id;
+    case 'serie':
+      return content?.serie_id || generic || content?._id;
+    case 'videojuego':
+      return content?.juego_id || content?.videojuego_id || generic || content?._id;
+    case 'album':
+      return content?.album_id || generic || content?._id;
+    default:
+      return content?.pelicula_id || content?.serie_id || content?.juego_id || content?.videojuego_id || content?.album_id || generic || content?._id;
+  }
+};
+
 const formatDate = (dateString) => {
   try {
     console.log('Formatting date string:', dateString);
@@ -194,15 +211,7 @@ const UserCard = React.memo(({ user, cacheBuster }) => {
   );
 });
 
-const StarRating = React.memo(({ rating, maxStars = 5 }) => (
-  <div className="review-rating">
-    {[...Array(maxStars)].map((_, i) => (
-      <span key={i} className={`star ${i < rating ? 'filled' : ''}`}>
-        ★
-      </span>
-    ))}
-  </div>
-));
+
 
 const Pagination = React.memo(({ currentPage, totalPages, onPageChange, onNext, onPrev }) => {
   if (totalPages <= 1) return null;
@@ -259,13 +268,12 @@ const LikedWatchedCard = React.memo(({ item }) => {
         <div className="reviewed-content-info">
           <h4>
             <Link 
-              to={`/${getContentPath(item.tipo || content.tipo)}/${content._id || content.juego_id || content.album_id || content.pelicula_id || content.serie_id}`} 
+              to={`/${getContentPath(item.tipo || content.tipo)}/${getContentId(content, item.tipo || content.tipo)}`} 
               className="content-title-link"
             >
               {title}
             </Link>
           </h4>
-          <StarRating rating={rating} />
           <p className="review-text">{description}</p>
         </div>
       </div>
@@ -290,13 +298,12 @@ const ReviewCard = React.memo(({ review }) => (
       <div className="reviewed-content-info">
         <h4>
           <Link 
-            to={`/${getContentPath(review.tipo)}/${review.contenido_id}`} 
+            to={`/${getContentPath(review.tipo)}/${getContentId(review, review.tipo)}`} 
             className="content-title-link"
           >
             {review.contenido_titulo}
           </Link>
         </h4>
-        <StarRating rating={review.calificacion} />
         <p className="review-text">{review.contenido}</p>
       </div>
     </div>
@@ -320,13 +327,12 @@ const CommentCard = React.memo(({ comment }) => (
       <div className="commented-content-info">
         <h4>
           <Link 
-            to={`/${getContentPath(comment.tipo)}/${comment.contenido_id}`} 
+            to={`/${getContentPath(comment.tipo)}/${getContentId(comment, comment.tipo)}`} 
             className="content-title-link"
           >
             {comment.contenido_titulo}
           </Link>
         </h4>
-        <StarRating rating={comment.calificacion || 0} />
         <p className="comment-text">{comment.contenido}</p>
       </div>
     </div>
@@ -918,32 +924,49 @@ const PerfilUsuario = () => {
       {ui.isEditing && (
         <div className="edit-profile-modal">
           <div className="user-form">
-            <h2>Editar Perfil</h2>
-            <div className="form-group">
-              <label htmlFor="nombre">Nombre de usuario</label>
-              <input
-                type="text"
-                id="nombre"
-                name="nombre"
-                value={formData.nombre}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Tu nombre de usuario"
-              />
+            <div className="user-form-header">
+              <div>
+                <p className="form-kicker">Personaliza tu perfil</p>
+                <h2>Editar Perfil</h2>
+                <p className="form-subtitle">Actualiza tu nombre, bio e imágenes.</p>
+              </div>
+              <button 
+                className="close-modal-btn" 
+                onClick={() => updateUi({ isEditing: false })}
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
             </div>
-            <div className="form-group">
-              <label htmlFor="email">Correo electrónico</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Tu correo electrónico"
-              />
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label htmlFor="nombre">Nombre de usuario</label>
+                <input
+                  type="text"
+                  id="nombre"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Tu nombre de usuario"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="email">Correo electrónico</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Tu correo electrónico"
+                />
+              </div>
             </div>
-            <div className="form-group">
+
+            <div className="form-group full-width">
               <label htmlFor="descripcion">Biografía</label>
               <textarea
                 id="descripcion"
@@ -955,24 +978,32 @@ const PerfilUsuario = () => {
                 rows="4"
               />
             </div>
-            <div className="form-group">
-              <label>Imagen de perfil</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFileUpload(e.target.files[0], 'profile')}
-                className="form-input"
-              />
+
+            <div className="form-grid files-row">
+              <div className="form-group">
+                <label>Imagen de perfil</label>
+                <label className="file-input">
+                  <span>Subir foto</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e.target.files[0], 'profile')}
+                  />
+                </label>
+              </div>
+              <div className="form-group">
+                <label>Banner de perfil</label>
+                <label className="file-input">
+                  <span>Subir banner</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e.target.files[0], 'banner')}
+                  />
+                </label>
+              </div>
             </div>
-            <div className="form-group">
-              <label>Banner de perfil</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFileUpload(e.target.files[0], 'banner')}
-                className="form-input"
-              />
-            </div>
+
             <div className="form-buttons">
               <button 
                 className="form-button primary"
