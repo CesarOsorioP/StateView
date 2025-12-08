@@ -15,6 +15,7 @@ const ListaDetalle = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     const fetchLista = async () => {
@@ -42,6 +43,7 @@ const ListaDetalle = () => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
+    setHasSearched(true);
     if (!searchQuery.trim()) return;
 
     setSearchLoading(true);
@@ -268,7 +270,12 @@ const ListaDetalle = () => {
                 type="text"
                 className="search-input"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (!e.target.value.trim()) {
+                    setHasSearched(false);
+                  }
+                }}
                 placeholder="Buscar películas, series, juegos o álbumes..."
               />
               <button type="submit" className="search-button">
@@ -318,7 +325,7 @@ const ListaDetalle = () => {
                 {searchResults.filter(result => 
                   (result.type === 'pelicula' || result.type === 'serie' || result.type === 'videojuego' || result.type === 'album') && 
                   (result.titulo || result.nombre)
-                ).length === 0 && searchQuery.trim() && !searchLoading && (
+                ).length === 0 && searchQuery.trim() && !searchLoading && hasSearched && (
                   <div className="no-results-message">No se encontraron resultados para "{searchQuery}".</div>
                 )}
               </div>

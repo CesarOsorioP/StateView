@@ -195,14 +195,6 @@ const NotificacionesNav = () => {
               ))
             )}
           </div>
-
-          {notificaciones.length > 0 && (
-            <div className="notificaciones-footer">
-              <Link to="/notificaciones" className="ver-todas-btn">
-                Ver todas las notificaciones
-              </Link>
-            </div>
-          )}
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import "./Signup.css";
 import api from "../../api/api";
 
@@ -145,8 +146,8 @@ const Signup = () => {
             />
             <label htmlFor="signup-terminos">
               Acepto los{" "}
-              <a href="/terminos">Términos y Condiciones</a> y la{" "}
-              <a href="/privacidad">Política de Privacidad</a>
+              <Link to="/404">Términos y Condiciones</Link> y la{" "}
+              <Link to="/404">Política de Privacidad</Link>
             </label>
           </div>
 

@@ -32,6 +32,7 @@ import Toast from './components/Toast/Toast';
 import SearchResults from './pages/SearchResults';
 import NotificacionesList from './components/Notificaciones/NotificacionesList';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
+import NotFound from './pages/NotFound';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -74,6 +75,7 @@ const AppRoutes = () => {
             <NotificacionesList />
           </ProtectedRoute>
         } />
+        <Route path="404" element={<NotFound />} />
       </Routes>
       <Footer />
       <Toast />

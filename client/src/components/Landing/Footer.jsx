@@ -14,9 +14,6 @@ const Footer = () => {
           <h4>Enlaces rápidos</h4>
           <ul className="footer-links">
             <li><a href="/">Inicio</a></li>
-            <li><a href="/features">Características</a></li>
-            <li><a href="/pricing">Precios</a></li>
-            <li><a href="/contact">Contacto</a></li>
           </ul>
         </div>
         
