@@ -25,16 +25,12 @@ const ReportModal = ({ isOpen, onClose, reportedUserId, reviewId = null, comment
     setError('');
 
     try {
-      await api.post('http://localhost:5000/api/reportes', {
+      await api.post('/api/reportes', {
         reporter: user.id || user._id,
         reportedUser: reportedUserId,
         review: reviewId || null,
         comment: commentId || null,
         motivo: motivo
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
       });
 
       setSuccess(true);
