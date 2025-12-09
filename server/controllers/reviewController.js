@@ -1,5 +1,6 @@
 // controllers/reviewController.js
 const ReviewService = require('../services/reviewService');
+const { invalidateReviewsCache } = require('../middlewares/cacheMiddleware');
 const Persona = require('../models/Persona');
 
 async function getDisplayName(user) {
@@ -38,6 +39,10 @@ async function createReview(req, res) {
     };
 
     const result = await ReviewService.createReview(reviewData);
+    
+    // Invalidar caché de reviews
+    await invalidateReviewsCache();
+    
     res.status(201).json({
       message: 'Reseña creada exitosamente.',
       review: result.review,
@@ -74,6 +79,10 @@ async function updateReview(req, res) {
     // Se asume que el middleware de autenticación ya ha asignado a req.user
     const currentUser = req.user && (req.user.id || req.user._id);
     const updatedReview = await ReviewService.updateReview(reviewId, req.body, currentUser);
+    
+    // Invalidar caché de reviews
+    await invalidateReviewsCache();
+    
     res.status(200).json({
       message: 'Reseña actualizada correctamente.',
       review: updatedReview
@@ -94,6 +103,10 @@ async function deleteReview(req, res) {
     const reviewId = req.params.reviewId;
     const currentUser = req.user && (req.user.id || req.user._id);
     await ReviewService.deleteReview(reviewId, currentUser);
+    
+    // Invalidar caché de reviews
+    await invalidateReviewsCache();
+    
     res.status(200).json({ message: 'Reseña eliminada correctamente.' });
   } catch (error) {
     console.error('[deleteReview] Error:', error);
@@ -112,6 +125,10 @@ async function likeReview(req, res) {
     const currentUser = req.user && (req.user.id || req.user._id);
     const userName = await getDisplayName(req.user);
     const totalLikes = await ReviewService.likeReview(reviewId, currentUser, userName);
+    
+    // Invalidar caché de reviews (los likes afectan la respuesta)
+    await invalidateReviewsCache();
+    
     res.status(200).json({
       message: 'Me gusta agregado a la reseña.',
       totalLikes
@@ -132,6 +149,10 @@ async function unlikeReview(req, res) {
     const reviewId = req.params.reviewId;
     const currentUser = req.user && (req.user.id || req.user._id);
     const totalLikes = await ReviewService.unlikeReview(reviewId, currentUser);
+    
+    // Invalidar caché de reviews (los likes afectan la respuesta)
+    await invalidateReviewsCache();
+    
     res.status(200).json({
       message: 'Me gusta removido de la reseña.',
       totalLikes

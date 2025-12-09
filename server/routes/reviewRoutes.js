@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middlewares/authMiddleware');
+const { cacheReviewsMiddleware } = require('../middlewares/cacheMiddleware');
 const { 
   createReview, 
   getReviews, 
@@ -12,8 +13,8 @@ const {
 
 // Crear una reseña (requiere autenticación)
 router.post('/', protect, createReview);
-// Obtener reseñas (público)
-router.get('/', getReviews);
+// Obtener reseñas (público) (con caché - 15 min)
+router.get('/', cacheReviewsMiddleware(900), getReviews);
 // Actualizar una reseña (requiere autenticación)
 router.put('/:reviewId', protect, updateReview);
 // Eliminar una reseña (requiere autenticación)

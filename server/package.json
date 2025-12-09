@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "test": "jest --verbose"
+    "test": "jest --verbose",
+    "test:redis": "node test-redis.js",
+    "check:upstash": "node scripts/check-upstash-keys.js",
+    "test:landing": "node scripts/test-landing-cache.js"
   },
   "keywords": [],
   "author": "",
@@ -14,7 +17,7 @@
     "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
     "body-parser": "^2.2.0",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.5.0",
@@ -25,9 +28,10 @@
     "mongodb": "^6.15.0",
     "mongoose": "^8.13.2",
     "multer": "^2.0.1",
-    "multer-storage-cloudinary": "^4.0.0",
+    "multer-storage-cloudinary": "^2.2.1",
     "nodemailer": "^7.0.3",
     "pdfkit": "^0.17.1",
+    "redis": "^4.7.0",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0"
   },

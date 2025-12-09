@@ -18,6 +18,9 @@ async function refreshAlbum(req, res) {
     }
     const albumGuardado = await saveAlbumFromLastfm(artist, album);
 
+    // Invalidar caché de álbumes
+    await invalidateAlbumesCache();
+
     // Emitir actualización del dashboard de contenido
     if (req.io) {
       const albumCount = await Album.countDocuments();
@@ -85,6 +88,10 @@ async function eliminarAlbum(req, res) {
     if (!albumEliminado) {
       return res.status(404).json({ error: 'Álbum no encontrado.' });
     }
+    
+    // Invalidar caché de álbumes
+    await invalidateAlbumesCache();
+    
     // Emitir actualización del dashboard de contenido
     if (req.io) {
       const albumCount = await Album.countDocuments();

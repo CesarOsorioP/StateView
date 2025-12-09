@@ -1,4 +1,5 @@
 const { saveSerieFromOMDb, searchSeriesEnOMDb, saveSerieById } = require('../services/serieService');
+const { invalidateSeriesCache } = require('../middlewares/cacheMiddleware');
 const Serie = require('../models/Serie');
 const mongoose = require('mongoose');
 
@@ -9,6 +10,10 @@ async function agregarSeriePorId(req, res) {
       return res.status(400).json({ error: 'Falta el parámetro "imdbId"' });
     }
     const serie = await saveSerieById(imdbId);
+    
+    // Invalidar caché de series
+    await invalidateSeriesCache();
+    
     res.json({ message: 'Serie agregada correctamente', data: serie });
   } catch (error) {
     console.error('Error en agregarSeriePorId:', error);
@@ -27,6 +32,10 @@ async function refreshSerie(req, res) {
       return res.status(400).json({ error: 'Falta el parámetro "title"' });
     }
     const serie = await saveSerieFromOMDb(title);
+    
+    // Invalidar caché de series
+    await invalidateSeriesCache();
+    
     res.json({ message: 'Serie guardada desde OMDb API', data: serie });
   } catch (error) {
     res.status(500).json({ error: `Error actualizando la serie: ${error.message}` });
@@ -79,6 +88,10 @@ async function eliminarSerie(req, res) {
     if (!serie) {
       return res.status(404).json({ error: 'Serie no encontrada' });
     }
+    
+    // Invalidar caché de series
+    await invalidateSeriesCache();
+    
     res.json({ message: 'Serie eliminada correctamente', data: serie });
   } catch (error) {
     res.status(500).json({ error: `Error eliminando la serie: ${error.message}` });

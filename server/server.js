@@ -56,6 +56,48 @@ app.use(cors({
 // Conecta a MongoDB Atlas
 connectDB();
 
+// Inicializar Redis (no bloqueante)
+const { getRedisClient, cache } = require('./config/redis');
+getRedisClient()
+  .then(async (client) => {
+    if (client) {
+      // Test de conexión usando la función helper
+      try {
+        const testKey = 'test:connection:' + Date.now();
+        const testValue = { status: 'ok', timestamp: Date.now() };
+        
+        // Usar la función helper cache.set en lugar de client.setEx directamente
+        const saved = await cache.set(testKey, testValue, 10);
+        if (saved) {
+          const test = await cache.get(testKey);
+          console.log('✅ Redis test exitoso:', test ? 'Datos guardados y recuperados correctamente' : 'Error al recuperar');
+        } else {
+          console.warn('⚠️  Redis test: No se pudo guardar el test');
+        }
+        
+        // Listar algunas claves para verificar
+        try {
+          const keys = await client.keys('*');
+          console.log(`📊 Total de claves en Redis: ${keys.length}`);
+          if (keys.length > 0) {
+            console.log('📋 Primeras 5 claves:', keys.slice(0, 5));
+          }
+        } catch (keysError) {
+          console.warn('⚠️  No se pudieron listar las claves:', keysError.message);
+        }
+      } catch (err) {
+        console.error('❌ Redis test falló:', err.message);
+        console.error('❌ Redis test stack:', err.stack);
+      }
+    } else {
+      console.warn('⚠️  Redis client es null');
+    }
+  })
+  .catch(err => {
+    console.warn('Redis no disponible, la aplicación continuará sin caché:', err.message);
+    console.error('Redis error stack:', err.stack);
+  });
+
 // Middleware para parsear JSON y archivos
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

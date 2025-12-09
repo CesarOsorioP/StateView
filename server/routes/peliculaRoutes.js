@@ -1,6 +1,7 @@
 // routes/peliculaRoutes.js
 const express = require('express');
 const router = express.Router();
+const { cachePeliculasMiddleware } = require('../middlewares/cacheMiddleware');
 const { 
   refreshPelicula, 
   obtenerPeliculas, 
@@ -25,8 +26,8 @@ router.get('/buscar', buscarPeliculas);
 // Ejemplo: GET /api/peliculas/refresh?title=Inception
 router.get('/refresh', refreshPelicula);
 
-// Endpoint para obtener todas las películas almacenadas
-router.get('/', obtenerPeliculas);
+// Endpoint para obtener todas las películas almacenadas (con caché - 30 min)
+router.get('/', cachePeliculasMiddleware(1800), obtenerPeliculas);
 
 // Endpoint para obtener una película por itemId (_id de MongoDB)
 // IMPORTANTE: Esta ruta debe ir antes de /:movieId para evitar conflictos

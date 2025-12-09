@@ -1,5 +1,6 @@
 // controllers/peliculaController.js
 const { savePeliculaFromOMDb, searchPeliculasEnOMDb, savePeliculaFromOMDbById } = require('../services/peliculaService');
+const { invalidatePeliculasCache } = require('../middlewares/cacheMiddleware');
 const Pelicula = require('../models/Pelicula');
 const mongoose = require('mongoose');
 
@@ -10,6 +11,10 @@ async function agregarPeliculaPorId(req, res) {
       return res.status(400).json({ error: 'Falta el parámetro "imdbId"' });
     }
     const pelicula = await savePeliculaFromOMDbById(imdbId);
+    
+    // Invalidar caché de películas
+    await invalidatePeliculasCache();
+    
     res.json({ message: 'Película agregada correctamente', data: pelicula });
   } catch (error) {
     console.error('Error en agregarPeliculaPorId:', error);
@@ -105,6 +110,9 @@ async function eliminarPelicula(req, res) {
 
     await Pelicula.deleteOne({ _id: pelicula._id });
     console.log('Película eliminada:', pelicula.titulo);
+    
+    // Invalidar caché de películas
+    await invalidatePeliculasCache();
     
     res.json({ message: 'Película eliminada correctamente', data: pelicula });
   } catch (error) {

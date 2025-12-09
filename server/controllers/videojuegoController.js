@@ -1,5 +1,6 @@
 // controllers/videojuegoController.js
 const { saveVideojuegoFromRawg, searchVideojuegosEnRawg, saveVideojuegoById } = require('../services/videojuegoService');
+const { invalidateVideojuegosCache } = require('../middlewares/cacheMiddleware');
 const Videojuego = require('../models/Videojuego');
 const mongoose = require('mongoose');
 
@@ -10,6 +11,10 @@ async function agregarVideojuegoPorId(req, res) {
       return res.status(400).json({ error: 'Falta el parámetro "gameId"' });
     }
     const videojuego = await saveVideojuegoById(gameId);
+    
+    // Invalidar caché de videojuegos
+    await invalidateVideojuegosCache();
+    
     res.json({ message: 'Videojuego agregado correctamente', data: videojuego });
   } catch (error) {
     console.error('Error en agregarVideojuegoPorId:', error);
@@ -24,6 +29,10 @@ async function refreshVideojuego(req, res) {
       return res.status(400).json({ error: 'Falta el parámetro "title"' });
     }
     const videojuego = await saveVideojuegoFromRawg(title);
+    
+    // Invalidar caché de videojuegos
+    await invalidateVideojuegosCache();
+    
     res.json({ message: 'Videojuego guardado desde RAWG API', data: videojuego });
   } catch (error) {
     res.status(500).json({ error: `Error actualizando el videojuego: ${error.message}` });
@@ -74,6 +83,10 @@ async function eliminarVideojuego(req, res) {
     if (!juego) {
       return res.status(404).json({ error: 'Videojuego no encontrado' });
     }
+    
+    // Invalidar caché de videojuegos
+    await invalidateVideojuegosCache();
+    
     res.json({ message: 'Videojuego eliminado correctamente', data: juego });
   } catch (error) {
     res.status(500).json({ error: `Error eliminando el videojuego: ${error.message}` });
