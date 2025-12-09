@@ -620,7 +620,17 @@ const PerfilUsuario = () => {
       
       // Usar la ruta correcta según el tipo de imagen
       const endpoint = type === 'profile' ? '/api/upload/profile' : '/api/upload/banner';
-      const response = await makeRequest('POST', endpoint, formData);
+      
+      // Para FormData, usar api directamente con configuración correcta
+      // NO establecer Content-Type manualmente, axios lo hace automáticamente con el boundary
+      const token = localStorage.getItem('token');
+      const response = await api.post(endpoint, formData, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          // NO establecer Content-Type - axios lo establece automáticamente para FormData
+        },
+        timeout: 30000, // 30 segundos para uploads (más tiempo que el default)
+      });
       
       if (response.data.url) {
         const fieldName = type === 'profile' ? 'imagenPerfil' : 'imagenBanner';
@@ -662,7 +672,15 @@ const PerfilUsuario = () => {
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-      updateUi({ error: 'Error al subir la imagen' });
+      if (error.code === 'ERR_NETWORK' || error.response?.status === 502) {
+        updateUi({ error: 'Error de conexión con el servidor. Por favor, intenta nuevamente.' });
+      } else if (error.response?.status === 413) {
+        updateUi({ error: 'La imagen es demasiado grande. Por favor, usa una imagen más pequeña.' });
+      } else if (error.response?.status === 500) {
+        updateUi({ error: error.response?.data?.error || 'Error del servidor al subir la imagen. Verifica los logs del servidor.' });
+      } else {
+        updateUi({ error: error.response?.data?.error || 'Error al subir la imagen' });
+      }
     } finally {
       updateUi({ loading: false });
     }

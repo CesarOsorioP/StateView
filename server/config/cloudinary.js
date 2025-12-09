@@ -1,4 +1,5 @@
-const cloudinary = require('cloudinary').v2;
+const cloudinaryModule = require('cloudinary');
+const cloudinary = cloudinaryModule.v2;
 const multer = require('multer');
 
 // Intentar importar CloudinaryStorage de diferentes formas según la versión
@@ -46,8 +47,9 @@ try {
     throw new Error('CloudinaryStorage no es un constructor');
   }
   
+  // IMPORTANTE: multer-storage-cloudinary necesita el objeto completo de cloudinary, no solo v2
   storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
+    cloudinary: cloudinaryModule, // Pasar el objeto completo, no cloudinary.v2
     params: {
       folder: 'stateview',
       allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
